@@ -1,8 +1,8 @@
-module mocks.Mocks;
+module dmocks.Mocks;
 
-import mocks.MockObject;
-import mocks.Repository; 
-import mocks.Util; 
+import dmocks.MockObject;
+import dmocks.Repository; 
+import dmocks.Util; 
 import std.stdio;
 import std.variant;
 //import std.boxer; // Because std.variant doesn't allow delegates.
@@ -25,6 +25,7 @@ public class Mocker {
         void Replay () {
             _repository.Replay();
         }
+        alias Replay replay;
 
         /**
           * Record method calls starting at this point. These calls are not
@@ -33,6 +34,7 @@ public class Mocker {
         void Record () {
             _repository.BackToRecord();
         }
+        alias Record record;
 
         /**
           * Check to see if there are any expected calls that haven't been
@@ -42,11 +44,13 @@ public class Mocker {
         void Verify () {
             _repository.Verify();
         }
+        alias Verify verify;
 
         /** Get a mock object of the given type. */
         T Mock (T) () {
             return new Mocked!(T)(_repository);
         }
+        alias Mock mock;
 
         /**
           * Only for non-void methods. Start an expected call; this returns
@@ -63,6 +67,7 @@ public class Mocker {
         ExternalCall Expect (T) (T ignored) {
             return new ExternalCall(_repository.LastCall());
         }
+        alias Expect expect;
         
         /**
           * For void and non-void methods. Start an expected call; this returns
@@ -80,6 +85,7 @@ public class Mocker {
         ExternalCall LastCall () {
             return new ExternalCall(_repository.LastCall());
         }
+        alias LastCall lastCall;
     }
 }
 
@@ -113,6 +119,7 @@ public class ExternalCall {
         _call.ReturnValue(Variant(value));
         return this;
     }
+    alias Return returnValue;
 
     /**
       * The arguments for this call will be ignored.
@@ -121,6 +128,7 @@ public class ExternalCall {
         _call.IgnoreArguments = true;
         return this;
     }
+    alias IgnoreArguments ignoreArguments;
 
     /**
       * This call must be repeated at least min times and can be repeated at
@@ -133,6 +141,7 @@ public class ExternalCall {
         _call.Repeat(Interval(min, max));
         return this;
     }
+    alias Repeat repeat;
 
     /**
       * This call must be repeated exactly i times.
@@ -148,6 +157,7 @@ public class ExternalCall {
     ExternalCall RepeatAny () {
         return Repeat(0, int.max);
     }
+    alias RepeatAny repeatAny;
 
     /**
       * When the method is executed (with matching arguments), execute the
@@ -166,6 +176,7 @@ public class ExternalCall {
         _call.Action(a);
         return this;
     }
+    alias Do action;
 
     /**
       * When the method is called, throw the given exception. If there are any
@@ -175,6 +186,7 @@ public class ExternalCall {
         _call.Throw(e);
         return this;
     }
+    alias Throw throwException;
 }
 
 version (MocksTest) {

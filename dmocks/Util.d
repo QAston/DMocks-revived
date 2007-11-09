@@ -1,4 +1,4 @@
-module mocks.Util;
+module dmocks.Util;
 
 static import std.conv;
 import std.utf;

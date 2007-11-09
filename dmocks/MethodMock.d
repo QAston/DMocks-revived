@@ -1,6 +1,6 @@
-module mocks.MethodMock;
+module dmocks.MethodMock;
 
-import mocks.Repository;
+import dmocks.Repository;
 import std.stdio;
 import std.traits;
 import std.metastrings;

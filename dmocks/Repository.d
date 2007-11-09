@@ -1,7 +1,7 @@
-module mocks.Repository;
+module dmocks.Repository;
 
-import mocks.Util;
-import mocks.Model;
+import dmocks.Util;
+import dmocks.Model;
 import std.variant;
 import std.stdio;
 

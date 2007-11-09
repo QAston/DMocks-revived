@@ -1,4 +1,4 @@
-module mocks.Model;
+module dmocks.Model;
 
 interface IMocked {
     string GetUnmockedTypeNameString ();

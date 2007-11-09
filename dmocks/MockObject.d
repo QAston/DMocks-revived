@@ -1,9 +1,9 @@
-module mocks.MockObject;
+module dmocks.MockObject;
 
-import mocks.Util;
-import mocks.Repository;
-import mocks.MethodMock;
-import mocks.Model;
+import dmocks.Util;
+import dmocks.Repository;
+import dmocks.MethodMock;
+import dmocks.Model;
 import std.stdio;
 
 
