@@ -1,0 +1,19 @@
+Done:
+    - Expect(obj.method).Do(delegate) -- execute this delegate in place of obj.method.
+    - Exceptions (throw!)
+
+Soon:
+    - DOCUMENTATION
+    - Ordered expectations.
+    - Partial mocks. If there's no expectation, fall back on the base class.
+
+Maybe:
+    - Expect(obj.method).PassThrough() -- delegate to the original method.
+    - Mock free functions?
+        Have to do some sort of manual name mangling, probably. Need a runtime function built to do these mocks. But it's done through multiple successive calls....
+    - Thread safety
+
+When I figure out something clever:
+    - Don't mock opEquals, toHash if they're the same as the ones in Object. Maybe not anything that's the same as in Object. (Relatively high priority.)
+    - Mock templated methods
+    - Expect(obj.voidmethod);
