@@ -43,6 +43,7 @@ string ReturningMethod (string name, T, U...)() {
         }
     }+/
     string args = String!(U)();
+    string argArgs = Arguments!(U);
     string nameArgs = `"` ~ name ~ (U.length == 0 ? `"` : `", ` ~ Arguments!(U)());
     string retArgs = T.stringof ~ (U.length == 0 ? `` : `, ` ~ args);
     return `override ` ~ T.stringof ~ " " ~ name ~ "(" ~ TypedArguments!(U)() ~ ")" ~
@@ -58,6 +59,14 @@ string ReturningMethod (string name, T, U...)() {
                     _owner.Match!(` ~ args ~ `)(this, ` ~ nameArgs ~ `);
             if (call is null) {
                 throw new ExpectationViolationException();
+            }
+
+            if (call.PassThrough()) {
+                static if (__traits(compiles, super.` ~ name ~ `(` ~ argArgs ~ `))) {
+                    return super.` ~ name ~ `(` ~ argArgs ~ `);
+                } else {
+                    throw new InvalidOperationException("Attempted to pass through to an abstract or interface method. This operation is not allowed.");
+                }
             }
 
             if (call.ToThrow() !is null) {
@@ -95,6 +104,7 @@ string ReturningMethod (string name, T, U...)() {
  ++/
 string VoidMethod (string name, U...)() {
     string args = String!(U)();
+    string argArgs = Arguments!(U);
     string nameArgs = `"` ~ name ~ (U.length == 0 ? `"` : `", ` ~ Arguments!(U)());
     string retArgs = `void` ~ (U.length == 0 ? `` : `, ` ~ args);
     return "override void " ~ name ~ "(" ~ TypedArguments!(U)() ~ ")"  ~ 
@@ -107,6 +117,15 @@ string VoidMethod (string name, U...)() {
                     _owner.Match!(` ~ args ~ `)(this, ` ~ nameArgs ~ `);
             if (call is null) {
                 throw new ExpectationViolationException();
+            }
+
+            if (call.PassThrough()) {
+                static if (__traits(compiles, super.` ~ name ~ `(` ~ argArgs ~ `))) {
+                    super.` ~ name ~ `(` ~ argArgs ~ `);
+                    return;
+                } else {
+                    throw new InvalidOperationException("Attempted to pass through to an abstract or interface method. This operation is not allowed.");
+                }
             }
 
             if (call.ToThrow() !is null) {
@@ -123,7 +142,7 @@ string VoidMethod (string name, U...)() {
                 }
 
                 //writefln("executing action");
-                func(` ~ Arguments!(U)() ~ `);
+                func(` ~ argArgs ~ `);
                 //writefln("executed action");
             } else {
                 //writefln("i no can has action");

@@ -152,12 +152,14 @@ public interface ICall {
     // This will have to get an override to deal with errors as well,
     // if that's the case and when Tango updates to dmd2.
     void Throw (Exception e);
+    void SetPassThrough ();
 }
 
 public class Call (U...) : ICall {
     private {
         bool _ignoreArguments;
         bool _void;
+        bool _passThrough;
         Variant _returnValue;
         Arguments!(U) _arguments;
         IMocked _mocked;
@@ -178,7 +180,7 @@ public class Call (U...) : ICall {
 
     override string toString () {
         return _mocked.GetUnmockedTypeNameString() ~ `.` ~ _name ~ _arguments.toString ~
-                " Expected: " ~ mocks.Util.toString(_callCount) ~
+                " Expected: " ~ dmocks.Util.toString(_callCount) ~
                 " Actual " ~ _repeat.toString;
     }
 
@@ -246,6 +248,14 @@ public class Call (U...) : ICall {
 
     Variant Action () {
         return _action;
+    }
+
+    void SetPassThrough () {
+        _passThrough = true;
+    }
+
+    bool PassThrough () {
+        return _passThrough;
     }
 
     this (IMocked mocked, string name, Arguments!(U) arguments) {
@@ -426,7 +436,7 @@ template Arguments (U...) {
             override string toString () { 
                 string value = "(";
                 foreach (u; Arguments) {
-                    value ~= mocks.Util.toString(u) ~ ", ";
+                    value ~= dmocks.Util.toString(u) ~ ", ";
                 }
 
                 return value[0..$-2] ~ ")";

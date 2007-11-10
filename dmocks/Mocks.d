@@ -5,7 +5,6 @@ import dmocks.Repository;
 import dmocks.Util; 
 import std.stdio;
 import std.variant;
-//import std.boxer; // Because std.variant doesn't allow delegates.
 
 /++
     A class through which one creates mock objects and manages expected calls. 
@@ -187,6 +186,18 @@ public class ExternalCall {
         return this;
     }
     alias Throw throwException;
+
+    /**
+      * Instead of returning or throwing a given value, pass the call through to
+      * the base class. This is dangerous -- the private fields of the class may
+      * not be set up properly, so only use this when the function does not depend
+      * on these fields. Things such as using Object's toHash and opEquals when your
+      * class doesn't override them and you use associative arrays.
+      */
+    ExternalCall PassThrough () {
+        _call.SetPassThrough();
+        return this;
+    }
 }
 
 version (MocksTest) {
@@ -306,17 +317,34 @@ version (MocksTest) {
     }
 
     unittest {
-        writef("private methods mocked test...");
+        writef("passthrough test...");
         scope(failure) writefln("failed");
         scope(success) writefln("success");
 
         Mocker r = new Mocker();
-        auto o = r.Mock!(HasPrivateMethods);
+        auto o = r.Mock!(Object);
+        o.toString;
+        r.LastCall().PassThrough();
+
         r.Replay();
-        try {
-            o.method;
-            assert (false, "expected exception not thrown");
-        } catch (ExpectationViolationException) {}
+        string str = o.toString;
+        writefln("%s", str);
+    }
+
+    unittest {
+        writef("associative arrays test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
+
+        Mocker r = new Mocker();
+        auto o = r.Mock!(Object);
+        r.Expect(o.toHash()).PassThrough().RepeatAny;
+        r.Expect(o.opEquals(null)).IgnoreArguments().PassThrough().RepeatAny;
+
+        r.Replay();
+        int[Object] i;
+        i[o] = 5;
+        int j = i[o];
     }
 
     /+

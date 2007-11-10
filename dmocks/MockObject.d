@@ -9,7 +9,10 @@ import std.stdio;
 
 template Mocked (T) {
     class Mocked : T, IMocked {
-        version (MocksTest) pragma (msg, Body!(T)());
+        version (MocksTest) {
+            pragma (msg, T.stringof);
+            pragma (msg, Body!(T)());
+        }
         mixin (Body!(T)());
     }
 }
@@ -37,6 +40,9 @@ version (MocksTest) {
     class Templated(T) {}
     interface IM {
         void bar ();
+    }
+    class ConstructorArg {
+        this (int i) {}
     }
 
     unittest {
@@ -67,12 +73,23 @@ version (MocksTest) {
         writef("execute mock method unit test...");
         scope(failure) writefln("failed");
         scope(success) writefln("success");
-        // We just need to be able to create the object, really.
         auto r = new MockRepository();
         auto o = new Mocked!(Object)(r);
         o.toString();
         assert (r.LastCall() !is null);
     }
+    
+    /*
+    unittest {
+        writef("constructor argument unit test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
+        auto r = new MockRepository();
+        auto o = new Mocked!(ConstructorArg)(r);
+        o.toString();
+        assert (r.LastCall() !is null);
+    }
+    */
 
     void main () {
         writefln("All tests pass.");
