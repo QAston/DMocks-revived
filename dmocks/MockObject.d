@@ -9,7 +9,7 @@ import std.stdio;
 
 template Mocked (T) {
     class Mocked : T, IMocked {
-        version (MocksTest) {
+        version (MocksDebug) {
             pragma (msg, T.stringof);
             pragma (msg, Body!(T)());
         }
@@ -20,11 +20,10 @@ template Mocked (T) {
 string Body (T) () {
     return 
    ` 
-        private MockRepository _owner;
+        public MockRepository _owner;
         this (MockRepository owner) {
             _owner = owner;
         }
-        string GetUnmockedTypeNameString () { return "` ~ T.stringof ~ `"; }
         ` ~  BodyPart!(T, 0)(); 
 }
 

@@ -6,7 +6,7 @@ import std.variant;
 import std.stdio;
 
 public class MockRepository {
-    private ICall[] _calls;
+    private ICall[] _calls = [];
     private bool _recording = true;
     private ICall _lastCall;
 
@@ -29,11 +29,16 @@ public {
     }
 
     ICall Match(U...)(IMocked mocked, string name, U args) {
+        version(MocksDebug) writefln("about to match");
         auto match = new Call!(U)(mocked, name, new Arguments!(U)(args));
+        version(MocksDebug) writefln("created call");
 
         foreach (icall; _calls) {
+            version(MocksDebug) writefln("checking call");
             if (icall == match) {
+                version(MocksDebug) writefln("found a match");
                 icall.Called();
+                version(MocksDebug) writefln("called the match");
                 return icall;
             }
         }
@@ -163,7 +168,7 @@ public class Call (U...) : ICall {
         Variant _returnValue;
         Arguments!(U) _arguments;
         IMocked _mocked;
-        string _name;
+        string _name = "unknown";
         Interval _repeat;
         int _callCount;
         Variant _action;
@@ -179,9 +184,20 @@ public class Call (U...) : ICall {
     }
 
     override string toString () {
-        return _mocked.GetUnmockedTypeNameString() ~ `.` ~ _name ~ _arguments.toString ~
+        version(MocksDebug) writefln("trying get arg string");
+        string args = (_arguments == null) ? "(<unknown>)" : _arguments.toString;
+        version(MocksDebug) writefln("trying get callcount string");
+        string callCount = dmocks.Util.toString(_callCount);
+        version(MocksDebug) writefln("trying get repeat string");
+        string expected = _repeat.toString;
+        version(MocksDebug) writefln("putting it together");
+        string ret = _name ~ args ~ " Expected: " ~ expected ~ " Actual: " ~ callCount;
+        version(MocksDebug) writefln("returning");
+        return ret;
+        /*
+        return _mocked.GetUnmockedTypeNameString() ~ `.` ~ _name ~ args ~
                 " Expected: " ~ dmocks.Util.toString(_callCount) ~
-                " Actual " ~ _repeat.toString;
+                " Actual " ~ _repeat.toString;*/
     }
 
     bool Satisfied () {
@@ -234,10 +250,14 @@ public class Call (U...) : ICall {
     }
 
     void Called () {
+        version(MocksDebug) writefln("call called");
         _callCount++;
+        version(MocksDebug) writefln("checking against repeat");
         if (_callCount > _repeat.Max) {
+            version(MocksDebug) writefln("repeat violated");
             throw new ExpectationViolationException(this);
         }
+        version(MocksDebug) writefln("repeat verified");
     }
 
     // TODO: only accept delegates with arguments of same type as this

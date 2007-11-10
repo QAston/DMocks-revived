@@ -3,6 +3,7 @@ module dmocks.Mocks;
 import dmocks.MockObject;
 import dmocks.Repository; 
 import dmocks.Util; 
+import std.gc;
 import std.stdio;
 import std.variant;
 
@@ -46,8 +47,22 @@ public class Mocker {
         alias Verify verify;
 
         /** Get a mock object of the given type. */
-        T Mock (T) () {
-            return new Mocked!(T)(_repository);
+        T Mock (T : Object) () {
+            // WARNING: THIS IS UGLY AND IMPLEMENTATION-SPECIFIC
+            void*[] mem = cast(void*[])malloc(__traits(classInstanceSize, Mocked!(T)));
+            version(MocksDebug) writefln("got a pointer");
+            mem[0] = (Mocked!(T)).classinfo.vtbl.ptr;
+            version(MocksDebug) writefln("set the vtbl ptr");
+            auto t = cast(Mocked!(T))(mem.ptr);
+            version(MocksDebug) writefln("casted");
+            assert (t !is null);
+            t._owner = _repository;
+            version(MocksDebug) writefln("set repository");
+            T retval = cast(T)t;
+            version(MocksDebug) writefln("cast to T");
+            assert (retval !is null);
+            version(MocksDebug) writefln("returning");
+            return retval;
         }
         alias Mock mock;
 
@@ -202,6 +217,16 @@ public class ExternalCall {
 
 version (MocksTest) {
     unittest {
+        writef("collect test...");
+        scope(success) writefln("success");
+        scope(failure) writefln("failure");
+
+        Mocker m = new Mocker();
+        m.Mock!(Object);
+        fullCollect();
+    }
+
+    unittest {
         writef("LastCall test...");
         scope(success) writefln("success");
         scope(failure) writefln("failure");
@@ -235,7 +260,12 @@ version (MocksTest) {
 
         Mocker m = new Mocker();
         Object o = m.Mock!(Object);
-        m.Expect(o.toString).Return("foom?");
+        //m.Expect(o.toString).Return("foom?");
+        m.Expect(o.toString).Repeat(0);
+        m.Replay();
+        try {
+            o.toString;
+        } catch (Exception e) {}
     }
 
     unittest {
@@ -328,7 +358,7 @@ version (MocksTest) {
 
         r.Replay();
         string str = o.toString;
-        writefln("%s", str);
+        assert (str == "dmocks.MockObject.Mocked!(Object).Mocked", str);
     }
 
     unittest {

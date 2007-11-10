@@ -17,9 +17,10 @@ string Methods (T, string name) () {
     foreach (method; __traits(getVirtualFunctions, T, name)) {
         alias typeof(method) func;
         static if (is(ReturnType!(func) == void)) {
-            methodBodies ~= VoidMethod!(name, ParameterTypeTuple!(func));
+            methodBodies ~= VoidMethod!(T.stringof, name, ParameterTypeTuple!(func));
         } else {
             methodBodies ~= ReturningMethod!(
+                                T.stringof,
                                 name,
                                 ReturnType!(func),
                                 ParameterTypeTuple!(func));
@@ -33,7 +34,7 @@ string Methods (T, string name) () {
     Returns a string containing the overload for a single function.
     This function has a return value.
  ++/
-string ReturningMethod (string name, T, U...)() {
+string ReturningMethod (string type, string name, T, U...)() {
     /+
     static if (U.length == 0) {
         if (name == "toHash") {
@@ -42,25 +43,31 @@ string ReturningMethod (string name, T, U...)() {
             return ``;
         }
     }+/
+    string qualified = type ~ `.` ~ name;
     string args = String!(U)();
     string argArgs = Arguments!(U);
-    string nameArgs = `"` ~ name ~ (U.length == 0 ? `"` : `", ` ~ Arguments!(U)());
+    string nameArgs = `"` ~ qualified ~ (U.length == 0 ? `"` : `", ` ~ Arguments!(U)());
     string retArgs = T.stringof ~ (U.length == 0 ? `` : `, ` ~ args);
     return `override ` ~ T.stringof ~ " " ~ name ~ "(" ~ TypedArguments!(U)() ~ ")" ~
         `{
+            version(MocksDebug)version(MocksDebug) writefln("checking _owner...");
             if (_owner is null) {
                 throw new Exception("owner cannot be null!");
             }
+            version(MocksDebug) writefln("checking _owner.Recording...");
             if (_owner.Recording) {
                 _owner.Record!(` ~ args ~ `)(this, ` ~ nameArgs ~ `);
                 return (` ~ T.stringof ~ `).init;
             } 
+            version(MocksDebug) writefln("checking for matching call...");
             auto call = cast(Call!(` ~ args ~ `))
                     _owner.Match!(` ~ args ~ `)(this, ` ~ nameArgs ~ `);
+            version(MocksDebug) writefln("checking if call is null...");
             if (call is null) {
                 throw new ExpectationViolationException();
             }
 
+            version(MocksDebug) writefln("checking for passthrough...");
             if (call.PassThrough()) {
                 static if (__traits(compiles, super.` ~ name ~ `(` ~ argArgs ~ `))) {
                     return super.` ~ name ~ `(` ~ argArgs ~ `);
@@ -69,25 +76,28 @@ string ReturningMethod (string name, T, U...)() {
                 }
             }
 
+            version(MocksDebug) writefln("checking for something to throw...");
             if (call.ToThrow() !is null) {
+                version(MocksDebug) writefln("throwing");
                 throw call.ToThrow();
             }
 
+            version(MocksDebug) writefln("checking for delegate to execute...");
             auto action = call.Action();
             if (action.hasValue() && action.peek!(` ~ T.stringof ~ ` delegate (` ~ args ~ `))) {
                 auto func = *action.peek!(` ~ T.stringof ~ ` delegate (` ~ args ~ `));
-                //writefln("i can has action");
+                //version(MocksDebug) writefln("i can has action");
                 if (func is null) {
-                    writefln("noooo they be stealin mah action");
+                    version(MocksDebug) writefln("noooo they be stealin mah action");
                     throw new InvalidOperationException("The specified delegate was of the wrong type.");
                 }
 
-                //writefln("executing action");
+                //version(MocksDebug) writefln("executing action");
                 auto ret = func(` ~ Arguments!(U)() ~ `);
-                //writefln("executed action");
+                //version(MocksDebug) writefln("executed action");
                 return ret;
             } else {
-                //writefln("i no can has action");
+                //version(MocksDebug) writefln("i no can has action");
             }
             if (!call.ReturnValue().hasValue()) {
                 return (` ~ T.stringof ~ `).init;
@@ -102,10 +112,11 @@ string ReturningMethod (string name, T, U...)() {
     Returns a string containing the overload for a single function.
     This function does not have a return value. 
  ++/
-string VoidMethod (string name, U...)() {
+string VoidMethod (string type, string name, U...)() {
+    string qualified = type ~ `.` ~ name;
     string args = String!(U)();
     string argArgs = Arguments!(U);
-    string nameArgs = `"` ~ name ~ (U.length == 0 ? `"` : `", ` ~ Arguments!(U)());
+    string nameArgs = `"` ~ qualified ~ (U.length == 0 ? `"` : `", ` ~ Arguments!(U)());
     string retArgs = `void` ~ (U.length == 0 ? `` : `, ` ~ args);
     return "override void " ~ name ~ "(" ~ TypedArguments!(U)() ~ ")"  ~ 
         `{
@@ -135,17 +146,17 @@ string VoidMethod (string name, U...)() {
             auto action = call.Action();
             if (action.hasValue() && action.peek!(void delegate (` ~ args ~ `))) {
                 auto func = *action.peek!(void delegate (` ~ args ~ `));
-                //writefln("i can has action");
+                //version(MocksDebug) writefln("i can has action");
                 if (func is null) {
-                    //writefln("noooo they be stealin mah action");
+                    //version(MocksDebug) writefln("noooo they be stealin mah action");
                     throw new InvalidOperationException("The specified delegate was of the wrong type.");
                 }
 
-                //writefln("executing action");
+                //version(MocksDebug) writefln("executing action");
                 func(` ~ argArgs ~ `);
-                //writefln("executed action");
+                //version(MocksDebug) writefln("executed action");
             } else {
-                //writefln("i no can has action");
+                //version(MocksDebug) writefln("i no can has action");
             }
         }
         `;
