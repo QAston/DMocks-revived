@@ -4,15 +4,16 @@ Done:
     - Aliases to support java coding style
     - Constructor-agnostic mocks
     - Expect(obj.method).PassThrough() -- delegate to the original method.
+    - An easier way of setting up recurring methods.
+    - Something to deal with associative arrays more elegantly. Probably the PassThrough stuff.
+    - Ordered expectations.
 
 Soon:
     - DOCUMENTATION
-    - Ordered expectations.
-    - Partial mocks. If there's no expectation, fall back on the base class.
-    - Something to deal with associative arrays more elegantly. Probably the PassThrough stuff.
-    - An easier way of setting up recurring methods.
 
 Maybe:
+    - Partial mocks. If there's no expectation, fall back on the base class. This will work decently with
+        the passthrough stuff, except -- CONSTRUCTOR NOT CALLED
     - Mock free functions?
         Have to do some sort of manual name mangling, probably. Need a runtime function built to do these mocks. But it's done through multiple successive calls....
         template MockFunc (alias func) {

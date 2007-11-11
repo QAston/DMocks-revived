@@ -5,16 +5,102 @@ import dmocks.Model;
 import std.variant;
 import std.stdio;
 
+version(MocksDebug) version = OrderDebug;
+
 public class MockRepository {
     private ICall[] _calls = [];
     private bool _recording = true;
+    private bool _ordered = false;
     private ICall _lastCall;
+    private ICall _lastOrdered;
+
+    private void CheckOrder(ICall current, ICall previous) {
+        version(OrderDebug) writefln("CheckOrder: init");
+        version(OrderDebug) writefln("CheckOrder: current: %s", dmocks.Util.toString(current));
+        if (current !is null)
+            version(OrderDebug) writefln("CheckOrder: current.Last: %s", dmocks.Util.toString(current.LastCall));
+        version(OrderDebug) writefln("CheckOrder: previous: %s", dmocks.Util.toString(previous));
+        if (current !is null)
+            version(OrderDebug) writefln("CheckOrder: previous.Next: %s", dmocks.Util.toString(current.NextCall));
+        if (current is null || (current.LastCall is null && previous !is null && previous.NextCall is null)) {
+            version(OrderDebug) writefln("CheckOrder: nothing to do, returning");
+            return; // nothing to do
+        }
+
+        /* The user set up:
+           m.Expect(foo.bar(5)).Repeat(3, 4).Return(blah);
+           m.Expect(foo.bar(3)).Repeat(2).Return(blah);
+           So I need to track the last two calls.
+
+           Or:
+           m.Expect(baz.foobar)...
+           m.Expect(foo.bar(5)).Repeat(0, 2).Return(blah);
+           m.Expect(foo.bar(3)).Repeat(2).Return(blah);
+           Then, I basically have a linked list to traverse. And it must be
+           both ways.
+         */
+        auto last = previous;
+        while (last !is null && last.NextCall !is null) {
+            version(OrderDebug) writefln("CheckOrder: checking forward");
+            if (last.NextCall == cast(Object)current) {
+                break;
+            }
+            if (last.Repeat().Min > 0) {
+                // We expected this to be called between _lastCall and icall.
+                version(OrderDebug) writefln("CheckOrder: got one");
+                ThrowForwardOrderException(previous, current);
+            }
+
+            last = last.NextCall;
+        }
+
+        last = current;
+        while (last !is null && last.LastCall !is null) {
+            version(OrderDebug) writefln("CheckOrder: checking backward");
+            if (last.LastCall == cast(Object)previous) {
+                break;
+            }
+            if (last.Repeat().Min > 0) {
+                // We expected this to be called between _lastCall and icall.
+                version(OrderDebug) writefln("CheckOrder: got one");
+                ThrowBackwardOrderException(previous, current);
+            }
+
+            last = last.LastCall;
+        }
+    }
+
+    private void ThrowBackwardOrderException(ICall previous, ICall current) {
+        string msg = 
+                "Ordered calls received in wrong order: \n" ~
+                "Before: " ~ dmocks.Util.toString(current) ~ "\n" ~
+                "Expected: " ~ current.LastCall().toString ~ "\n" ~
+                "Actual: " ~ dmocks.Util.toString(current);
+        throw new ExpectationViolationException(msg);
+    }
+
+    private void ThrowForwardOrderException(ICall previous, ICall actual) {
+        string msg =
+                "Ordered calls received in wrong order: \n" ~
+                "After: " ~ dmocks.Util.toString(previous) ~ "\n" ~
+                "Expected: " ~ previous.NextCall().toString ~ "\n" ~
+                "Actual: " ~ dmocks.Util.toString(actual);
+        throw new ExpectationViolationException(msg);
+    }
 
 public {
     bool Recording () { return _recording; }
-    void Replay () { _recording = false; }
+    void Replay () { 
+        _recording = false; 
+        _lastCall = null;
+    }
     void BackToRecord () { _recording = true; }
     ICall LastCall () { return _lastCall; }
+    void Ordered (bool value) { 
+        version(MocksDebug) writefln("SETTING ORDERED: %s", value);
+        _ordered = value; 
+    }
+    bool Ordered () { return _ordered; }
 
     void Record(U...)(IMocked mocked, string name, U args) {
         ICall call;
@@ -24,6 +110,15 @@ public {
         } else {
             call = new Call!(U)(mocked, name, new Arguments!(U)());
         }
+
+        if (_ordered) {
+            call.LastCall = _lastOrdered;
+            if (_lastOrdered !is null) {
+                _lastOrdered.NextCall = call;
+            }
+            _lastOrdered = call;
+        }
+
         _calls ~= call;
         _lastCall = call;
     }
@@ -39,6 +134,9 @@ public {
                 version(MocksDebug) writefln("found a match");
                 icall.Called();
                 version(MocksDebug) writefln("called the match");
+                CheckOrder(icall, _lastCall);
+
+                _lastCall = icall;
                 return icall;
             }
         }
@@ -148,6 +246,7 @@ public interface ICall {
     Variant ReturnValue ();
     void ReturnValue (Variant value);
     void Repeat (Interval value);
+    Interval Repeat ();
     void Called ();
     bool Void ();
     bool Satisfied ();
@@ -158,6 +257,10 @@ public interface ICall {
     // if that's the case and when Tango updates to dmd2.
     void Throw (Exception e);
     void SetPassThrough ();
+    ICall LastCall ();
+    void LastCall (ICall call);
+    ICall NextCall ();
+    void NextCall (ICall call);
 }
 
 public class Call (U...) : ICall {
@@ -173,6 +276,8 @@ public class Call (U...) : ICall {
         int _callCount;
         Variant _action;
         Exception _toThrow;
+        ICall _lastCall = null;
+        ICall _nextCall = null;
     }
 
     void Throw (Exception e) {
@@ -212,18 +317,27 @@ public class Call (U...) : ICall {
         }
     }
 
+    Interval Repeat () { return _repeat; }
+
     override int opEquals (Object other) {
         auto call = cast(typeof(this)) other;
-        if (call is null) return false;
+        if (call is null) {
+            version(MocksDebug) writefln("Call.opEquals: wrong type");
+            return false;
+        }
+
         if (call._mocked !is _mocked) {
+            version(MocksDebug) writefln("Call.opEquals: wrong mock");
             return false;
         }
         
         if (call._name != _name) {
+            version(MocksDebug) writefln("Call.opEquals: wrong method; expected %s; was %s", _name, call._name);
             return false;
         }
 
         if ((!_ignoreArguments) && (_arguments != call._arguments)) {
+            version(MocksDebug) writefln("Call.opEquals: wrong arguments");
             return false;
         }
         return true;
@@ -276,6 +390,24 @@ public class Call (U...) : ICall {
 
     bool PassThrough () {
         return _passThrough;
+    }
+
+    ICall LastCall () {
+        return _lastCall;
+    }
+
+    void LastCall (ICall call) {
+        version(MocksDebug) writefln("SETTING LASTCALL: ", dmocks.Util.toString(call)); 
+        _lastCall = call;
+    }
+
+    ICall NextCall () {
+        return _nextCall;
+    }
+
+    void NextCall (ICall call) {
+        version(MocksDebug) writefln("SETTING NEXTCALL: ", dmocks.Util.toString(call)); 
+        _nextCall = call;
     }
 
     this (IMocked mocked, string name, Arguments!(U) arguments) {
@@ -489,9 +621,10 @@ version (MocksTest) {
     }
 }
 
-public class ExpectationViolationException : Error {
+public class ExpectationViolationException : Exception {
     private static string _defaultMessage = "An unexpected call has occurred."; 
     this () { super(_defaultMessage); }
+    this (string msg) { super(msg); }
     this (ICall call) {
         //this();
         if (call !is null) {

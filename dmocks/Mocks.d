@@ -46,21 +46,47 @@ public class Mocker {
         }
         alias Verify verify;
 
+        /**
+          * By default, all expectations are unordered. If I want to require that
+          * one call happen immediately after another, I call Mocker.Ordered, make
+          * those expectations, and call Mocker.Unordered to avoid requiring a
+          * particular order afterward.
+          *
+          * Currently, the support for ordered expectations is rather poor. It works
+          * well enough for expectations with a constant number of repetitions, but
+          * with a range, it tends to fail: once you call one method the minimum number
+          * of times, you can omit that method in subsequent invocations of the set.
+          */
+        void Ordered () {
+            _repository.Ordered(true);
+        }
+
+        void Unordered () {
+            _repository.Ordered(false);
+        }
+
         /** Get a mock object of the given type. */
         T Mock (T : Object) () {
             // WARNING: THIS IS UGLY AND IMPLEMENTATION-SPECIFIC
             void*[] mem = cast(void*[])malloc(__traits(classInstanceSize, Mocked!(T)));
-            version(MocksDebug) writefln("got a pointer");
             mem[0] = (Mocked!(T)).classinfo.vtbl.ptr;
+            setTypeInfo(typeid(Mocked!(T)), mem.ptr);
+
             version(MocksDebug) writefln("set the vtbl ptr");
+
             auto t = cast(Mocked!(T))(mem.ptr);
+
             version(MocksDebug) writefln("casted");
+
             assert (t !is null);
             t._owner = _repository;
+
             version(MocksDebug) writefln("set repository");
+
             T retval = cast(T)t;
+
             version(MocksDebug) writefln("cast to T");
-            assert (retval !is null);
+            version(MocksDebug) assert (retval !is null);
             version(MocksDebug) writefln("returning");
             return retval;
         }
@@ -390,6 +416,64 @@ version (MocksTest) {
         int[Object] i;
         i[o] = 5;
         int j = i[o];
+    }
+
+    unittest {
+        writef("ordering in order test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
+
+        Mocker r = new Mocker();
+        auto o = r.Mock!(Object);
+        r.Ordered;
+        o.toHash;
+        o.toString;
+
+        r.Replay();
+        o.toHash;
+        o.toString;
+        r.Verify;
+    }
+
+    unittest {
+        writef("ordering not in order test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
+
+        Mocker r = new Mocker();
+        auto o = r.Mock!(Object);
+        r.Ordered;
+        o.toHash;
+        o.toString;
+
+        r.Replay();
+        try {
+            o.toString;
+            o.toHash;
+            assert (false);
+        } catch (ExpectationViolationException) {}
+    }
+
+    unittest {
+        writef("ordering interposed test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
+
+        Mocker r = new Mocker();
+        auto o = r.Mock!(Object);
+        r.Ordered;
+        o.toHash;
+        o.toString;
+        r.Unordered;
+        o.print;
+
+        r.Replay();
+        try {
+            o.toHash;
+            o.print;
+            o.toString;
+            assert (false);
+        } catch (ExpectationViolationException) {}
     }
 
     /+

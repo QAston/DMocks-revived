@@ -7,8 +7,10 @@ string toString (T) (T value) {
         return ArrayToString(value);
     } else static if (__traits(isScalar, T)) {
         return std.conv.toString(value);
+    } else static if (__traits(compiles, value is null)) {
+        return ((value is null) ? "<null>" : value.toString());
     } else {
-        return value.toString();
+        return value.toString;
     }
 }
 
