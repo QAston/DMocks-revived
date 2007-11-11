@@ -9,11 +9,10 @@ Done:
     - Ordered expectations.
 
 Soon:
-    - DOCUMENTATION
+    - DOCUMENTATION (which is being worked on)
 
 Maybe:
-    - Partial mocks. If there's no expectation, fall back on the base class. This will work decently with
-        the passthrough stuff, except -- CONSTRUCTOR NOT CALLED
+    - Partial mocks. If there's no expectation, fall back on the base class. This will work decently with the passthrough stuff, except -- CONSTRUCTOR NOT CALLED
     - Mock free functions?
         Have to do some sort of manual name mangling, probably. Need a runtime function built to do these mocks. But it's done through multiple successive calls....
         template MockFunc (alias func) {

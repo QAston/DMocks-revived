@@ -468,12 +468,9 @@ version (MocksTest) {
         o.print;
 
         r.Replay();
-        try {
-            o.toHash;
-            o.print;
-            o.toString;
-            assert (false);
-        } catch (ExpectationViolationException) {}
+        o.toHash;
+        o.print;
+        o.toString;
     }
 
     unittest {

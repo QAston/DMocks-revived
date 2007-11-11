@@ -93,6 +93,7 @@ public {
     void Replay () { 
         _recording = false; 
         _lastCall = null;
+        _lastOrdered = null;
     }
     void BackToRecord () { _recording = true; }
     ICall LastCall () { return _lastCall; }
@@ -112,6 +113,7 @@ public {
         }
 
         if (_ordered) {
+            call.Ordered = true;
             call.LastCall = _lastOrdered;
             if (_lastOrdered !is null) {
                 _lastOrdered.NextCall = call;
@@ -134,7 +136,10 @@ public {
                 version(MocksDebug) writefln("found a match");
                 icall.Called();
                 version(MocksDebug) writefln("called the match");
-                CheckOrder(icall, _lastCall);
+                if (icall.Ordered) {
+                    CheckOrder(icall, _lastOrdered);
+                    _lastOrdered = icall;
+                }
 
                 _lastCall = icall;
                 return icall;
@@ -236,7 +241,6 @@ public {
     An abstract representation of a method call.
  ++/
 public interface ICall {
-    //string Name ();
     // Interfaces don't include the stuff in Object by default.
     // If we want == with an interface, we include it explicitly.
     // Rather ugly.
@@ -252,15 +256,16 @@ public interface ICall {
     bool Satisfied ();
     Variant Action ();
     void Action (Variant value);
-    // TODO Tango's Error doesn't inherit from Exception, I think.
-    // This will have to get an override to deal with errors as well,
-    // if that's the case and when Tango updates to dmd2.
+    // TODO Error doesn't inherit from Exception, I think.
+    // This will have to get an override to deal with errors as well.
     void Throw (Exception e);
     void SetPassThrough ();
     ICall LastCall ();
     void LastCall (ICall call);
     ICall NextCall ();
     void NextCall (ICall call);
+    void Ordered (bool value);
+    bool Ordered ();
 }
 
 public class Call (U...) : ICall {
@@ -268,6 +273,7 @@ public class Call (U...) : ICall {
         bool _ignoreArguments;
         bool _void;
         bool _passThrough;
+        bool _ordered;
         Variant _returnValue;
         Arguments!(U) _arguments;
         IMocked _mocked;
@@ -409,6 +415,9 @@ public class Call (U...) : ICall {
         version(MocksDebug) writefln("SETTING NEXTCALL: ", dmocks.Util.toString(call)); 
         _nextCall = call;
     }
+
+    void Ordered (bool value) { _ordered = value; }
+    bool Ordered () { return _ordered; }
 
     this (IMocked mocked, string name, Arguments!(U) arguments) {
         _mocked = mocked;
