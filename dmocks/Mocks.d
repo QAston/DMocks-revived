@@ -79,7 +79,7 @@ public class Mocker {
           * ---
           */
         ExternalCall Expect (T) (T ignored) {
-            return new ExternalCall(_repository.LastCall());
+            return LastCall();
         }
         alias Expect expect;
         
@@ -100,6 +100,20 @@ public class Mocker {
             return new ExternalCall(_repository.LastCall());
         }
         alias LastCall lastCall;
+
+        /**
+          * Set up a result for a method, but without any backend accounting for it.
+          * Things where you want to allow this method to be called, but you aren't
+          * currently testing for it.
+          */
+        ExternalCall Allowing (T) (T ignored) {
+            return Allowing;
+        }
+
+        /** Ditto */
+        ExternalCall Allowing (T = void) () {
+            return LastCall().RepeatAny();
+        }
     }
 }
 
@@ -112,6 +126,7 @@ public class Mocker {
     Object o = m.Mock!(Object);
     o.toString;
     m.LastCall().Return("Are you still there?").Repeat(1, 12);
+    ---
  ++/
 public class ExternalCall {
     private ICall _call;
