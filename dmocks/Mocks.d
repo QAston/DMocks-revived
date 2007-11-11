@@ -133,7 +133,7 @@ public class Mocker {
           * currently testing for it.
           */
         ExternalCall Allowing (T) (T ignored) {
-            return Allowing;
+            return LastCall().RepeatAny;
         }
 
         /** Ditto */
@@ -474,6 +474,22 @@ version (MocksTest) {
             o.toString;
             assert (false);
         } catch (ExpectationViolationException) {}
+    }
+
+    unittest {
+        writef("allowing test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
+
+        Mocker r = new Mocker();
+        auto o = r.Mock!(Object);
+        r.Allowing(o.toString);
+
+        r.Replay();
+        o.toString;
+        o.toString;
+        o.toString;
+        r.Verify;
     }
 
     /+
