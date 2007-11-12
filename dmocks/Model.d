@@ -1,10 +1,5 @@
 module dmocks.Model;
 
-interface IMocked {
-}
+interface IMocked {}
 
-class FakeMocked : IMocked {
-    string GetUnmockedTypeNameString () {
-        return "FakeMocked";
-    }
-}
+class FakeMocked : IMocked {}
