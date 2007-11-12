@@ -29,6 +29,16 @@ string Methods (T, string name) () {
     return methodBodies;
 }
 
+string Constructor (T) () {
+    static if (!__traits(compiles, T._ctor)) {
+        return ``;
+    } else {
+        return `this (` ~ TypedArguments!(ParameterTypeTuple!(T._ctor)) ~ `) {
+            super(` ~ Arguments!(ParameterTypeTuple!(T._ctor))() ~ `);
+        }`;
+    }
+}
+
 
 /++
     Returns a string containing the overload for a single function.

@@ -66,7 +66,7 @@ public class Mocker {
         }
 
         /** Get a mock object of the given type. */
-        T Mock (T : Object) () {
+        T Mock (T) () {
             // WARNING: THIS IS UGLY AND IMPLEMENTATION-SPECIFIC
             void*[] mem = cast(void*[])malloc(__traits(classInstanceSize, Mocked!(T)));
             mem[0] = (Mocked!(T)).classinfo.vtbl.ptr;
@@ -257,6 +257,59 @@ public class ExternalCall {
 }
 
 version (MocksTest) {
+    class Templated(T) {}
+    interface IM {
+        void bar ();
+    }
+
+    class ConstructorArg {
+        this (int i) {}
+    }
+
+    unittest {
+        writef("nontemplated mock unit test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
+        (new Mocker()).Mock!(Object);
+    }
+
+    unittest {
+        writef("templated mock unit test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
+        (new Mocker()).Mock!(Templated!(int));
+    }
+
+    unittest {
+        writef("templated mock unit test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
+        (new Mocker()).Mock!(IM);
+    }
+
+    unittest {
+        writef("execute mock method unit test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
+        auto r = new Mocker();
+        auto o = r.Mock!(Object);
+        o.toString();
+        assert (r.LastCall()._call !is null);
+    }
+
+    unittest {
+        writef("constructor argument unit test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
+        auto r = new Mocker();
+        r.Mock!(ConstructorArg);
+    }
+
+    void main () {
+        writefln("All tests pass.");
+    }
+
+
     unittest {
         writef("collect test...");
         scope(success) writefln("success");
@@ -333,10 +386,10 @@ version (MocksTest) {
         scope(failure) writefln("failed");
         scope(success) writefln("success");
 
-        MockRepository r = new MockRepository();
-        auto o = new Mocked!(Object)(r);
+        auto r = new Mocker();
+        auto o = r.Mock!(Object);
         o.toString;
-        r.LastCall().Repeat(Interval(2, 2));
+        r.LastCall().Repeat(2, 2);
         r.Replay();
         try {
             r.Verify();
