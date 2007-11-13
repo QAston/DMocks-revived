@@ -67,6 +67,8 @@ public class Mocker {
 
         /** Get a mock object of the given type. */
         T Mock (T) () {
+            static assert (is(T == class) || is(T == interface), 
+                    "only classes and interfaces can be mocked");
             // WARNING: THIS IS UGLY AND IMPLEMENTATION-SPECIFIC
             void*[] mem = cast(void*[])malloc(__traits(classInstanceSize, Mocked!(T)));
             mem[0] = (Mocked!(T)).classinfo.vtbl.ptr;
