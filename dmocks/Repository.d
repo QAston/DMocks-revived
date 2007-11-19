@@ -14,6 +14,14 @@ public class MockRepository {
     private ICall _lastCall;
     private ICall _lastOrdered;
 
+    private void CheckLastCallSetup() {
+        if (_lastCall is null || _lastCall.HasAction) {
+            return;
+        }
+
+        throw new MocksSetupException("Last call: need to return a value, throw an exception, execute a delegate, or pass through to base function. Call is: " ~ _lastCall.toString);
+    }
+
     private void CheckOrder(ICall current, ICall previous) {
         version(OrderDebug) writefln("CheckOrder: init");
         version(OrderDebug) writefln("CheckOrder: current: %s", dmocks.Util.toString(current));
@@ -91,6 +99,7 @@ public class MockRepository {
 public {
     bool Recording () { return _recording; }
     void Replay () { 
+        CheckLastCallSetup();
         _recording = false; 
         _lastCall = null;
         _lastOrdered = null;
@@ -103,7 +112,8 @@ public {
     }
     bool Ordered () { return _ordered; }
 
-    void Record(U...)(IMocked mocked, string name, U args) {
+    void Record(U...)(IMocked mocked, string name, U args, bool returns) {
+        CheckLastCallSetup();
         ICall call;
         // I hate having to check for an empty tuple.
         static if (U.length) {
@@ -111,6 +121,7 @@ public {
         } else {
             call = new Call!(U)(mocked, name, new Arguments!(U)());
         }
+        call.Void(!returns);
 
         if (_ordered) {
             call.Ordered = true;
@@ -190,8 +201,8 @@ public {
             int args = 3;
             
             MockRepository r = new MockRepository();
-            r.Record!(int)(m, name, args);
-            r.Record!(int)(m, name, args);
+            r.Record!(int)(m, name, args, false);
+            r.Record!(int)(m, name, args, false);
             ICall call = r.Match!(int)(m, name, args);
             assert (call !is null);
             call = r.Match!(int)(m, name, args + 5);
@@ -207,8 +218,8 @@ public {
             int args = 3;
             
             MockRepository r = new MockRepository();
-            r.Record!(int)(m, name, args);
-            r.Record!(int)(m, name, args);
+            r.Record!(int)(m, name, args, false);
+            r.Record!(int)(m, name, args, false);
             r._lastCall.IgnoreArguments = true;
             ICall call = r.Match!(int)(m, name, args);
             assert (call !is null);
@@ -225,7 +236,7 @@ public {
             int args = 3;
             
             MockRepository r = new MockRepository();
-            r.Record!(int)(m, name, args);
+            r.Record!(int)(m, name, args, false);
             ICall call = r.Match!(int)(m, name, args);
             assert (call !is null);
             try {
@@ -253,6 +264,8 @@ public interface ICall {
     Interval Repeat ();
     void Called ();
     bool Void ();
+    void Void (bool value);
+    bool HasAction ();
     bool Satisfied ();
     Variant Action ();
     void Action (Variant value);
@@ -284,6 +297,14 @@ public class Call (U...) : ICall {
         Exception _toThrow;
         ICall _lastCall = null;
         ICall _nextCall = null;
+    }
+
+    bool HasAction () {
+        return _void 
+            || _passThrough
+            || _returnValue.hasValue 
+            || _toThrow !is null 
+            || _action.hasValue;
     }
 
     void Throw (Exception e) {
@@ -445,6 +466,17 @@ version (MocksTest) {
         assert (a == b);
         assert (a != c);
         assert (d != c);
+    }
+
+    unittest {
+        writef("Call.HasAction test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
+
+        auto o = new FakeMocked();
+        auto name = "Thwackum";
+        auto args = new Arguments!(int)(5);
+        auto b = new Call!(int)(o, name, args);
     }
 
     unittest {
@@ -632,14 +664,15 @@ version (MocksTest) {
 
 public class ExpectationViolationException : Exception {
     private static string _defaultMessage = "An unexpected call has occurred."; 
-    this () { super(_defaultMessage); }
+    this () { super(typeof(this).stringof ~ ": " ~  _defaultMessage); }
     this (string msg) { super(msg); }
     this (ICall call) {
         //this();
+        string msg = typeof(this).stringof ~ ": ";
         if (call !is null) {
-            super (call.toString());
+            super (msg ~ call.toString());
         } else {
-            super (_defaultMessage);
+            super (msg ~ _defaultMessage);
         }
     }
 
@@ -653,6 +686,12 @@ public class ExpectationViolationException : Exception {
             auto call = new Call!()(o, "toString", new Arguments!());
             new ExpectationViolationException(call); 
         }
+    }
+}
+
+public class MocksSetupException : Exception {
+    this (string msg) {
+        super (typeof(this).stringof ~ ": " ~ msg);
     }
 }
 

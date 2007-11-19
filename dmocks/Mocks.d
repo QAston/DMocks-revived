@@ -4,8 +4,10 @@ import dmocks.MockObject;
 import dmocks.Repository; 
 import dmocks.Util; 
 import std.gc;
-import std.stdio;
 import std.variant;
+
+version (MocksDebug) import std.stdio;
+version (MocksTest) import std.stdio;
 
 /++
     A class through which one creates mock objects and manages expected calls. 
@@ -307,11 +309,6 @@ version (MocksTest) {
         r.Mock!(ConstructorArg);
     }
 
-    void main () {
-        writefln("All tests pass.");
-    }
-
-
     unittest {
         writef("collect test...");
         scope(success) writefln("success");
@@ -356,8 +353,7 @@ version (MocksTest) {
 
         Mocker m = new Mocker();
         Object o = m.Mock!(Object);
-        //m.Expect(o.toString).Return("foom?");
-        m.Expect(o.toString).Repeat(0);
+        m.Expect(o.toString).Repeat(0).Return("mrow?");
         m.Replay();
         try {
             o.toString;
@@ -391,7 +387,7 @@ version (MocksTest) {
         auto r = new Mocker();
         auto o = r.Mock!(Object);
         o.toString;
-        r.LastCall().Repeat(2, 2);
+        r.LastCall().Repeat(2, 2).Return("mew.");
         r.Replay();
         try {
             r.Verify();
@@ -481,8 +477,8 @@ version (MocksTest) {
         Mocker r = new Mocker();
         auto o = r.Mock!(Object);
         r.Ordered;
-        o.toHash;
-        o.toString;
+        r.Expect(o.toHash).Return(5);
+        r.Expect(o.toString).Return("mow!");
 
         r.Replay();
         o.toHash;
@@ -498,8 +494,8 @@ version (MocksTest) {
         Mocker r = new Mocker();
         auto o = r.Mock!(Object);
         r.Ordered;
-        o.toHash;
-        o.toString;
+        r.Expect(o.toHash).Return(5);
+        r.Expect(o.toString).Return("mow!");
 
         r.Replay();
         try {
@@ -517,8 +513,8 @@ version (MocksTest) {
         Mocker r = new Mocker();
         auto o = r.Mock!(Object);
         r.Ordered;
-        o.toHash;
-        o.toString;
+        r.Expect(o.toHash).Return(5);
+        r.Expect(o.toString).Return("mow!");
         r.Unordered;
         o.print;
 
@@ -535,7 +531,7 @@ version (MocksTest) {
 
         Mocker r = new Mocker();
         auto o = r.Mock!(Object);
-        r.Allowing(o.toString);
+        r.Allowing(o.toString).Return("foom?");
 
         r.Replay();
         o.toString;
@@ -544,49 +540,24 @@ version (MocksTest) {
         r.Verify;
     }
 
-    /+
-    // Not supported -- templated methods. A templated class with methods
-    // using those template arguments is fine. Templated methods are not
-    // virtual.
-    class Foo {
-        void bar (T) (T value) { writefln("Broken test!"); }
-    }
-
     unittest {
-        writef("templated method verify test...");
+        writef("nothing for method to do test...");
+        scope(failure) writefln("failed");
         scope(success) writefln("success");
-        scope(failure) writefln("failure");
-        writefln("\n%s", __traits(allMembers, Foo));
-        writefln("%s", __traits(getVirtualFunctions, Foo, "bar").length);
 
-        Mocker m = new Mocker();
-        auto o = m.Mock!(Foo);
-        o.bar!(int)(5);
-
-        m.Replay();
-
-        o.bar!(int)(5);
-
-        m.Verify();
-    }
-
-    unittest {
-        writef("templated method too many invocations test...");
-        scope(success) writefln("success");
-        scope(failure) writefln("failure");
-
-        Mocker m = new Mocker();
-        auto o = m.Mock!(Foo);
-        o.bar!(int)(5);
-
-        m.Replay();
-
-        o.bar!(int)(5);
         try {
-            o.bar!(int)(5);
-            //o.toString();
-            assert (false, "expected exception not thrown");
-        } catch (ExpectationViolationException) {}
+            Mocker r = new Mocker();
+            auto o = r.Mock!(Object);
+            r.Allowing(o.toString);
+
+            r.Replay();
+            assert (false, "expected a mocks setup exception");
+        } catch (MocksSetupException e) {
+        }
     }
-    +/
+
+    void main () {
+        writefln("All tests pass.");
+    }
+
 }

@@ -54,7 +54,7 @@ struct Interval {
 }
 
 class InvalidOperationException : Exception {
-    this () { super("The requested operation is not valid."); }
-    this (string msg) { super(msg); }
+    this () { super(typeof(this).stringof ~ "The requested operation is not valid."); }
+    this (string msg) { super(typeof(this).stringof ~ msg); }
 }
 

@@ -66,7 +66,7 @@ string ReturningMethod (string type, string name, T, U...)() {
             }
             version(MocksDebug) writefln("checking _owner.Recording...");
             if (_owner.Recording) {
-                _owner.Record!(` ~ args ~ `)(this, ` ~ nameArgs ~ `);
+                _owner.Record!(` ~ args ~ `)(this, ` ~ nameArgs ~ `, true);
                 return (` ~ T.stringof ~ `).init;
             } 
             version(MocksDebug) writefln("checking for matching call...");
@@ -131,7 +131,7 @@ string VoidMethod (string type, string name, U...)() {
     return "override void " ~ name ~ "(" ~ TypedArguments!(U)() ~ ")"  ~ 
         `{
             if (_owner.Recording) {
-                _owner.Record!(` ~ args ~ `)(this, ` ~ nameArgs ~ `);
+                _owner.Record!(` ~ args ~ `)(this, ` ~ nameArgs ~ `, false);
                 return;
             } 
             auto call = cast(Call!(` ~ args ~ `))
