@@ -8,6 +8,7 @@ import std.stdio;
 version(MocksDebug) version = OrderDebug;
 
 public class MockRepository {
+    private bool _allowDefaults = false;
     private ICall[] _calls = [];
     private bool _recording = true;
     private bool _ordered = false;
@@ -15,11 +16,11 @@ public class MockRepository {
     private ICall _lastOrdered;
 
     private void CheckLastCallSetup() {
-        if (_lastCall is null || _lastCall.HasAction) {
+        if (_allowDefaults || _lastCall is null || _lastCall.HasAction) {
             return;
         }
 
-        throw new MocksSetupException("Last call: need to return a value, throw an exception, execute a delegate, or pass through to base function. Call is: " ~ _lastCall.toString);
+        throw new MocksSetupException("Last call: if you do not specify the AllowDefaults option, you need to return a value, throw an exception, execute a delegate, or pass through to base function. The call is: " ~ _lastCall.toString);
     }
 
     private void CheckOrder(ICall current, ICall previous) {
@@ -97,6 +98,7 @@ public class MockRepository {
     }
 
 public {
+    void AllowDefaults (bool value) { _allowDefaults = value; }
     bool Recording () { return _recording; }
     void Replay () { 
         CheckLastCallSetup();
