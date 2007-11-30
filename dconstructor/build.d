@@ -1,30 +1,40 @@
 /**
   * Currently, this can't build anything unless there is an explicity
   * constructor for that class or for one of its base classes.
+  * I can change that for d2, but not d1.
   */
-module build_simple;
+module build;
 
-import std.traits;
-
-version (BuildTest)
-    import std.stdio;
+version (Tango) {
+    import tango.core.Traits;
+    alias char[] string;
+    template ParameterTypeTuple(alias dg) {
+        alias ParameterTupleOf!(dg) ParameterTypeTuple;
+    }
+} else {
+    import std.traits;
+}
 
 string get_deps(T)() {
-    string ret = "return new " ~ T.stringof ~ "(";
-    foreach (i, U; ParameterTypeTuple!(T._ctor)) {
-        static assert (
-            is (U == class) ||
-            is (U == interface),
-            "type " ~ T.stringof ~ " depends on type " ~ U.stringof
-                ~ ", which is not a class or an interface.");
-
-        ret ~= `parent.get!(` ~ U.stringof ~ `)`;
-        static if (i < (ParameterTypeTuple!(T._ctor)).length - 1) {
-            ret ~= ", ";
-        }
+    static if (is (typeof (new T) == T)) {
+        return `return new ` ~ T.stringof ~ `();`;
+    } else {
+        return `return new ` ~ T.stringof ~ `(` ~
+                get_deps_impl!(T, 0)()
+                ~ `);`;
     }
-    ret ~= ");";
-    return ret;
+}
+
+string get_deps_impl(T, int i)() {
+    static if (i < ParameterTypeTuple!(T._ctor).length) {
+        string ret = `parent.get!(` ~ ParameterTypeTuple!(T._ctor)[i].stringof
+                ~ `)`;
+        static if (i < ParameterTypeTuple!(T._ctor).length - 1) 
+            ret ~= `,`;
+        return ret ~ get_deps_impl!(T, i + 1)();
+    } else {
+        return ``;
+    }
 }
 
 interface IObjectBuilder {
@@ -52,6 +62,9 @@ class Builder {
     }
 
     Builder bind (TVisible, TImpl)() {
+        static assert (is (TImpl : TVisible),
+                "binding failure: cannot convert type " ~ TImpl.stringof
+                ~ " to type " ~ TVisible.stringof);
         builders[TVisible.stringof] = new ObjectBuilder!(TImpl)();
         return this;
     }
@@ -68,8 +81,14 @@ version (BuildTest) {
     interface IFrumious {}
 
     class Frumious : IFrumious {
-        public Bar kid;
-        this (Bar bar) { kid = bar; }
+        public Foo kid;
+        this (Foo bar) { kid = bar; }
+    }
+
+    unittest {
+        auto b = new Builder();
+        auto o = b.get!(Object)();
+        assert (o !is null);
     }
 
     unittest {
@@ -94,6 +113,27 @@ version (BuildTest) {
         auto frum = cast(Frumious)o;
         assert (frum !is null);
         assert (frum.kid !is null);
+    }
+
+    /*
+    unittest {
+        // This shouldn't compile. The body of this test will be commented
+        // out in the general case for that reason.
+        auto b = new Builder();
+        b.bind!(Frumious, Foo);
+    }
+    */
+
+    unittest {
+        auto b = new Builder();
+        b.bind!(IFrumious, Frumious)();
+        b.bind!(Foo, Bar)();
+        auto o = b.get!(IFrumious)();
+        assert (o !is null);
+        auto frum = cast(Frumious)o;
+        assert (frum !is null);
+        assert (frum.kid !is null);
+        assert (cast(Bar)frum.kid !is null);
     }
 
     void main () {}
