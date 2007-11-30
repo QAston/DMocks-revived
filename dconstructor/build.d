@@ -58,6 +58,14 @@ class ObjectBuilder(T) : IObjectBuilder {
     }
 }
 
+class StaticBuilder : IObjectBuilder {
+    private Object _provided;
+    this (Object o) { _provided = o; }
+    Object build (Builder parent) {
+        return _provided;
+    }
+}
+
 class Builder {
     IObjectBuilder[string] _builders;
     Object[string] _built;
@@ -90,6 +98,11 @@ class Builder {
                 "binding failure: cannot convert type " ~ TImpl.stringof
                 ~ " to type " ~ TVisible.stringof);
         _builders[TVisible.stringof] = new ObjectBuilder!(TImpl)();
+        return this;
+    }
+
+    Builder provide (T) (T obj) {
+        _builders[T.stringof] = new StaticBuilder(obj);
         return this;
     }
 }
@@ -171,11 +184,17 @@ version (BuildTest) {
     class Wha : Singleton {}
 
     unittest {
-        assert (is (Wha : Singleton));
         auto b = new Builder();
         auto one = b.get!(Wha)();
         auto two = b.get!(Wha)();
         assert (one is two);
+    }
+
+    unittest {
+        auto b = new Builder();
+        auto o = new Object;
+        b.provide(o);
+        assert (b.get!(Object) is o);
     }
 
     void main () {}
