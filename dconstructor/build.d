@@ -12,33 +12,15 @@ private {
     import dconstructor.util;
 }
 
-interface IObjectBuilder {
-    Object build (Builder parent);
-}
 
-class ObjectBuilder(T) : IObjectBuilder {
-    Object build (Builder parent) {
-        static if (is (T == class)) {
-            mixin (get_deps!(T)());
-        } else {
-            throw new BindingException("no bindings exist for type " 
-                    ~ T.stringof);
-        }
-    }
-}
-
-class StaticBuilder : IObjectBuilder {
-    private Object _provided;
-    this (Object o) { _provided = o; }
-    Object build (Builder parent) {
-        return _provided;
-    }
-}
-
-
+/**
+  * The main object builder. Use it to create objects.
+  */
 class Builder {
-    IObjectBuilder[string] _builders;
-    Object[string] _built;
+    private {
+        IObjectBuilder[string] _builders;
+        Object[string] _built;
+    }
 
     /**
       * Get an instance of class/interface T.
@@ -99,6 +81,32 @@ class Builder {
         return this;
     }
 }
+
+
+
+interface IObjectBuilder {
+    Object build (Builder parent);
+}
+
+class ObjectBuilder(T) : IObjectBuilder {
+    Object build (Builder parent) {
+        static if (is (T == class)) {
+            mixin (get_deps!(T)());
+        } else {
+            throw new BindingException("no bindings exist for type " 
+                    ~ T.stringof);
+        }
+    }
+}
+
+class StaticBuilder : IObjectBuilder {
+    private Object _provided;
+    this (Object o) { _provided = o; }
+    Object build (Builder parent) {
+        return _provided;
+    }
+}
+
 
 version (BuildTest) {
     class Foo {
