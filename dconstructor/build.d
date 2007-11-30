@@ -5,46 +5,15 @@
   */
 module dconstructor.build;
 
-import dconstructor.singleton;
-
-version (Tango) {
-    import tango.core.Traits;
-    alias char[] string;
-    template ParameterTypeTuple(alias dg) {
-        alias ParameterTupleOf!(dg) ParameterTypeTuple;
-    }
-} else {
-    import std.traits;
-}
-
-string get_deps(T)() {
-    static if (is (typeof (new T) == T)) {
-        return `return new ` ~ T.stringof ~ `();`;
-    } else {
-        return `return new ` ~ T.stringof ~ `(` ~
-                get_deps_impl!(T, 0)()
-                ~ `);`;
-    }
-}
-
-string get_deps_impl(T, int i)() {
-    static if (i < ParameterTypeTuple!(T._ctor).length) {
-        string ret = `parent.get!(` ~ ParameterTypeTuple!(T._ctor)[i].stringof
-                ~ `)`;
-        static if (i < ParameterTypeTuple!(T._ctor).length - 1) 
-            ret ~= `,`;
-        return ret ~ get_deps_impl!(T, i + 1)();
-    } else {
-        return ``;
-    }
+private {
+    import dconstructor.singleton;
+    import dconstructor.object_builder;
+    import dconstructor.exception;
+    import dconstructor.util;
 }
 
 interface IObjectBuilder {
     Object build (Builder parent);
-}
-
-class BindingException : Exception {
-    this (string msg) { super(msg); }
 }
 
 class ObjectBuilder(T) : IObjectBuilder {
@@ -52,8 +21,8 @@ class ObjectBuilder(T) : IObjectBuilder {
         static if (is (T == class)) {
             mixin (get_deps!(T)());
         } else {
-            throw new BindingException("no bindings exist for type " ~
-                    T.stringof);
+            throw new BindingException("no bindings exist for type " 
+                    ~ T.stringof);
         }
     }
 }
@@ -66,10 +35,18 @@ class StaticBuilder : IObjectBuilder {
     }
 }
 
+
 class Builder {
     IObjectBuilder[string] _builders;
     Object[string] _built;
 
+    /**
+      * Get an instance of class/interface T.
+      * If T is an interface and there are no bindings for it, throw a
+      * BindingException.
+      * If T is a singleton (if it implements the Singleton interface), 
+      * build a copy if none exist, else return the existing copy.
+      */
     T get(T)() {
         if (is (T : Singleton)) {
             if (T.stringof in _built) {
@@ -86,6 +63,15 @@ class Builder {
             _builders[T.stringof] = b;
         }
 
+        /*
+           This'd be a worthwhile check, except it eliminates the possibility
+           of the user requesting null be inserted, and it's handled elsewhere.
+
+        if (obj is null) {
+            throw new BindingException("Aw, man, I'm really sorry. I think a cast must have failed on me. Maybe there's a bad binding somewhere, or maybe you told me to give null, but I dunno, man, this isn't good.");
+        }
+        */
+
         if (is (T : Singleton)) {
             _built[T.stringof] = cast(Object)obj;
         }
@@ -93,6 +79,9 @@ class Builder {
         return obj;
     }
 
+    /**
+      * When someone asks for TVisible, give them a TImpl instead.
+      */
     Builder bind (TVisible, TImpl)() {
         static assert (is (TImpl : TVisible),
                 "binding failure: cannot convert type " ~ TImpl.stringof
@@ -101,6 +90,10 @@ class Builder {
         return this;
     }
 
+    /** 
+      * For the given type, rather than creating an object automatically, 
+      * whenever anything requires that type, return the given object.
+      */
     Builder provide (T) (T obj) {
         _builders[T.stringof] = new StaticBuilder(obj);
         return this;
