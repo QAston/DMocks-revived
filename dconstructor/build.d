@@ -3,7 +3,9 @@
   * constructor for that class or for one of its base classes.
   * I can change that for d2, but not d1.
   */
-module build;
+module dconstructor.build;
+
+import dconstructor.singleton;
 
 version (Tango) {
     import tango.core.Traits;
@@ -41,31 +43,53 @@ interface IObjectBuilder {
     Object build (Builder parent);
 }
 
+class BindingException : Exception {
+    this (string msg) { super(msg); }
+}
+
 class ObjectBuilder(T) : IObjectBuilder {
     Object build (Builder parent) {
         static if (is (T == class)) {
             mixin (get_deps!(T)());
         } else {
-            return null;
+            throw new BindingException("no bindings exist for type " ~
+                    T.stringof);
         }
     }
 }
 
 class Builder {
-    IObjectBuilder[string] builders;
+    IObjectBuilder[string] _builders;
+    Object[string] _built;
+
     T get(T)() {
-        if (T.stringof in builders) {
-            return cast(T)(builders[T.stringof].build(this));
-        } else {
-            return cast(T)(new ObjectBuilder!(T)()).build(this);
+        if (is (T : Singleton)) {
+            if (T.stringof in _built) {
+                return cast(T)_built[T.stringof];
+            }
         }
+
+        T obj;
+        if (T.stringof in _builders) {
+            obj = cast(T)(_builders[T.stringof].build(this));
+        } else {
+            auto b = new ObjectBuilder!(T)();
+            obj = cast(T)b.build(this);
+            _builders[T.stringof] = b;
+        }
+
+        if (is (T : Singleton)) {
+            _built[T.stringof] = cast(Object)obj;
+        }
+
+        return obj;
     }
 
     Builder bind (TVisible, TImpl)() {
         static assert (is (TImpl : TVisible),
                 "binding failure: cannot convert type " ~ TImpl.stringof
                 ~ " to type " ~ TVisible.stringof);
-        builders[TVisible.stringof] = new ObjectBuilder!(TImpl)();
+        _builders[TVisible.stringof] = new ObjectBuilder!(TImpl)();
         return this;
     }
 }
@@ -134,6 +158,24 @@ version (BuildTest) {
         assert (frum !is null);
         assert (frum.kid !is null);
         assert (cast(Bar)frum.kid !is null);
+    }
+
+    unittest {
+        auto b = new Builder();
+        try {
+            b.get!(IFrumious)();
+            assert (false, "expected exception not thrown");
+        } catch (BindingException e) {}
+    }
+
+    class Wha : Singleton {}
+
+    unittest {
+        assert (is (Wha : Singleton));
+        auto b = new Builder();
+        auto one = b.get!(Wha)();
+        auto two = b.get!(Wha)();
+        assert (one is two);
     }
 
     void main () {}
