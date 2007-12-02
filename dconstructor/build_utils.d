@@ -16,9 +16,9 @@ version (Tango) {
 
 string get_deps(T)() {
     static if (is (typeof (new T) == T)) {
-        return `return new ` ~ T.stringof ~ `();`;
+        return `return new T();`;
     } else {
-        return `return new ` ~ T.stringof ~ `(` ~
+        return `return new T(` ~
                 get_deps_impl!(T, 0)()
                 ~ `);`;
     }
@@ -26,8 +26,7 @@ string get_deps(T)() {
 
 string get_deps_impl(T, int i)() {
     static if (i < ParameterTypeTuple!(T._ctor).length) {
-        string ret = `parent.get!(` ~ ParameterTypeTuple!(T._ctor)[i].stringof
-                ~ `)`;
+        string ret = `parent.get!(ParameterTypeTuple!(T._ctor)[i])`;
         static if (i < ParameterTypeTuple!(T._ctor).length - 1) 
             ret ~= `,`;
         return ret ~ get_deps_impl!(T, i + 1)();
