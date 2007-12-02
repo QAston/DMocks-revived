@@ -1,17 +1,31 @@
-/**
-  * Currently, this can't build anything unless there is an explicity
-  * constructor for that class or for one of its base classes.
-  * I can change that for d2, but not d1.
-  */
 module dconstructor.build;
 
 private {
     import dconstructor.singleton;
     import dconstructor.object_builder;
+    import dconstructor.aggregate;
     import dconstructor.exception;
     import dconstructor.util;
+    import dconstructor.traits;
+    
+    version(BuildTest) {
+        version (Tango) {
+            import tango.io.Stdout;
+        } else {
+            import std.stdio;
+        }
+    }
 }
 
+public Builder builder;
+
+static this () {
+    builder = new Builder();
+}
+
+string mangleof(T, U)() {
+    return T.stringof ~ "[" ~ U.stringof ~ "]";
+}
 
 /**
   * The main object builder. Use it to create objects.
@@ -19,6 +33,7 @@ private {
 class Builder {
     private {
         IObjectBuilder[string] _builders;
+        IListBuilder[string] _lists;
         Object[string] _built;
     }
 
@@ -30,35 +45,56 @@ class Builder {
       * build a copy if none exist, else return the existing copy.
       */
     T get(T)() {
-        if (is (T : Singleton)) {
-            if (T.stringof in _built) {
-                return cast(T)_built[T.stringof];
+        static if (isAssociativeArray!(T)) {
+            string mangle = T.stringof;
+            if (mangle in _dicts) {
+                return cast(T) _dicts[mangle].deps;
+            } else {
+                throw new BindingException("Nothing registered to build an " ~
+                        "associative array of type " ~ T.stringof ~ ".");
             }
-        }
+        } else static if (isArray!(T)) {
+            if (T.stringof in _lists) {
+                IListBuilder listBuilder = _lists[T.stringof];
+                return cast(T) listBuilder.deps;
+            } else {
+                throw new BindingException("Nothing registered to build an " ~
+                        "array of type " ~ T.stringof ~ ".");
+            }
+        } else static if (is (T == class) || is (T == interface)) { 
+            if (is (T : Singleton)) {
+                if (T.stringof in _built) {
+                    return cast(T)_built[T.stringof];
+                }
+            }
 
-        T obj;
-        if (T.stringof in _builders) {
-            obj = cast(T)(_builders[T.stringof].build(this));
+            T obj;
+            if (T.stringof in _builders) {
+                obj = cast(T)(_builders[T.stringof].build(this));
+            } else {
+                auto b = new ObjectBuilder!(T)();
+                obj = cast(T)b.build(this);
+                _builders[T.stringof] = b;
+            }
+
+            /*
+               This'd be a worthwhile check, except it eliminates the possibility
+               of the user requesting null be inserted, and it's handled elsewhere.
+
+            if (obj is null) {
+                throw new BindingException("Aw, man, I'm really sorry. I think a cast must have failed on me. Maybe there's a bad binding somewhere, or maybe you told me to give null, but I dunno, man, this isn't good.");
+            }
+            */
+
+            if (is (T : Singleton)) {
+                _built[T.stringof] = cast(Object)obj;
+            }
+
+            return obj;
         } else {
-            auto b = new ObjectBuilder!(T)();
-            obj = cast(T)b.build(this);
-            _builders[T.stringof] = b;
+            static assert (false, "can only build objects, arrays, and " ~
+                    "associative arrays");
         }
-
-        /*
-           This'd be a worthwhile check, except it eliminates the possibility
-           of the user requesting null be inserted, and it's handled elsewhere.
-
-        if (obj is null) {
-            throw new BindingException("Aw, man, I'm really sorry. I think a cast must have failed on me. Maybe there's a bad binding somewhere, or maybe you told me to give null, but I dunno, man, this isn't good.");
-        }
-        */
-
-        if (is (T : Singleton)) {
-            _built[T.stringof] = cast(Object)obj;
-        }
-
-        return obj;
     }
 
     /**
@@ -80,33 +116,12 @@ class Builder {
         _builders[T.stringof] = new StaticBuilder(obj);
         return this;
     }
-}
 
-
-
-interface IObjectBuilder {
-    Object build (Builder parent);
-}
-
-class ObjectBuilder(T) : IObjectBuilder {
-    Object build (Builder parent) {
-        static if (is (T == class)) {
-            mixin (get_deps!(T)());
-        } else {
-            throw new BindingException("no bindings exist for type " 
-                    ~ T.stringof);
-        }
+    Builder fillList (TVal) (TVal[] elems) {
+        _lists[typeof(elems).stringof] = new GlobalListBuilder!(TVal)(elems);
+        return this;
     }
 }
-
-class StaticBuilder : IObjectBuilder {
-    private Object _provided;
-    this (Object o) { _provided = o; }
-    Object build (Builder parent) {
-        return _provided;
-    }
-}
-
 
 version (BuildTest) {
     class Foo {
@@ -124,6 +139,7 @@ version (BuildTest) {
     }
 
     unittest {
+        // tests no explicit constructor
         auto b = new Builder();
         auto o = b.get!(Object)();
         assert (o !is null);
@@ -185,6 +201,7 @@ version (BuildTest) {
     class Wha : Singleton {}
 
     unittest {
+        // tests no explicit constructor and singleton
         auto b = new Builder();
         auto one = b.get!(Wha)();
         auto two = b.get!(Wha)();
@@ -196,6 +213,27 @@ version (BuildTest) {
         auto o = new Object;
         b.provide(o);
         assert (b.get!(Object) is o);
+    }
+
+    unittest {
+        assert (builder !is null);
+    }
+
+    class Bandersnatch : IFrumious {}
+
+    class Snark {
+        public IFrumious[] frumiousity;
+        this (IFrumious[] frums) { frumiousity = frums; }
+    }
+
+    unittest {
+        IFrumious one = builder.get!(Frumious);
+        IFrumious two = builder.get!(Bandersnatch);
+        builder.fillList([one, two]);
+        
+        auto snark = builder.get!(Snark);
+        assert (snark.frumiousity[0] is one);
+        assert (snark.frumiousity[1] is two);
     }
 
     void main () {}
