@@ -1,6 +1,7 @@
 module dmocks.Mocks;
 
 import dmocks.MockObject;
+import dmocks.Factory;
 import dmocks.Repository; 
 import dmocks.Util; 
 import std.gc;
@@ -69,6 +70,8 @@ public class Mocker {
 
         /** Get a mock object of the given type. */
         T Mock (T) () {
+            return MockFactory.Mock!(T)(_repository);
+            /*
             static assert (is(T == class) || is(T == interface), 
                     "only classes and interfaces can be mocked");
             // WARNING: THIS IS UGLY AND IMPLEMENTATION-SPECIFIC
@@ -93,6 +96,7 @@ public class Mocker {
             version(MocksDebug) assert (retval !is null);
             version(MocksDebug) writefln("returning");
             return retval;
+            */
         }
         alias Mock mock;
 
@@ -580,15 +584,49 @@ version (MocksTest) {
         assert (o.toString == string.init);
     }
 
-    class Smthng {
+    interface IFace {
+        void foo (string s);
+    }
+
+    class Smthng : IFace {
         void foo (string s) { }
     }
 
     unittest {
+        writefln("going through the guts of Smthng.");
+        auto foo = new Smthng();
+        auto guts = *(cast(int**)&foo);
+        auto len = __traits(classInstanceSize, Smthng) / size_t.sizeof; 
+        auto end = guts + len;
+        for (; guts < end; guts++) {
+            writefln("\t%x", *guts);
+        } 
+    }
+
+    unittest {
+        writef("mock interface test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
         auto r = new Mocker;
-        auto o = r.Mock!(Smthng);
+        IFace o = r.Mock!(IFace);
+        version(MocksDebug) writefln("about to call once...");
         o.foo("hallo");
         r.Replay;
+        version(MocksDebug) writefln("about to call twice...");
+        o.foo("hallo");
+        r.Verify;
+    }
+
+    unittest {
+        writef("cast mock to interface test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
+        auto r = new Mocker;
+        IFace o = r.Mock!(Smthng);
+        version(MocksDebug) writefln("about to call once...");
+        o.foo("hallo");
+        r.Replay;
+        version(MocksDebug) writefln("about to call twice...");
         o.foo("hallo");
         r.Verify;
     }

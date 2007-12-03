@@ -111,9 +111,14 @@ string ReturningMethod (string type, string name, T, U...)() {
                 version(MocksDebug) writefln("i no can has action");
             }
             if (!call.ReturnValue().hasValue()) {
+                version(MocksDebug) writefln("no return value set");
                 return (` ~ T.stringof ~ `).init;
             }
-            return call.ReturnValue().coerce!(` ~ T.stringof ~ `);
+
+            version(MocksDebug) writefln("getting a value to return...");
+            auto retval = call.ReturnValue().coerce!(` ~ T.stringof ~ `); 
+            version(MocksDebug) writefln("returning...");
+            return retval;
         }
         `;
                 //throw new ExpectationViolationException!(` ~ args ~ `)(` ~ nameArgs ~ `);
@@ -162,17 +167,17 @@ string VoidMethod (string type, string name, U...)() {
             alias typeof(delegate(` ~ args ~ `){}) action_type;
             if (action.hasValue() && action.peek!(action_type)) {
                 auto func = *action.peek!(action_type);
-                //version(MocksDebug) writefln("i can has action");
+                version(MocksDebug) writefln("i can has action");
                 if (func is null) {
-                    //version(MocksDebug) writefln("noooo they be stealin mah action");
+                    version(MocksDebug) writefln("noooo they be stealin mah action");
                     throw new InvalidOperationException("The specified delegate was of the wrong type.");
                 }
 
-                //version(MocksDebug) writefln("executing action");
+                version(MocksDebug) writefln("executing action");
                 func(` ~ argArgs ~ `);
-                //version(MocksDebug) writefln("executed action");
+                version(MocksDebug) writefln("executed action");
             } else {
-                //version(MocksDebug) writefln("i no can has action");
+                version(MocksDebug) writefln("i no can has action");
             }
         }
         `;
