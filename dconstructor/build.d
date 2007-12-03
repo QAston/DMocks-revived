@@ -113,7 +113,7 @@ class Builder {
       * whenever anything requires that type, return the given object.
       */
     Builder provide (T) (T obj) {
-        _builders[T.stringof] = new StaticBuilder(obj);
+        _builders[T.stringof] = new StaticBuilder(cast(Object)obj);
         return this;
     }
 

@@ -26,7 +26,7 @@ string get_deps(T)() {
 
 string get_deps_impl(T, int i)() {
     static if (i < ParameterTypeTuple!(T._ctor).length) {
-        string ret = `parent.get!(ParameterTypeTuple!(T._ctor)[i])`;
+        string ret = `parent.get!(ParameterTypeTuple!(T._ctor)[` ~ (to_string!(i)) ~ `])`;
         static if (i < ParameterTypeTuple!(T._ctor).length - 1) 
             ret ~= `,`;
         return ret ~ get_deps_impl!(T, i + 1)();
