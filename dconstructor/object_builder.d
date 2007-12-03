@@ -4,6 +4,7 @@ private {
     import dconstructor.singleton;
     import dconstructor.exception;
     import dconstructor.util;
+    import dconstructor.traits;
     import dconstructor.build;
     import dconstructor.build_utils;
 }
