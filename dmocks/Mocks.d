@@ -580,6 +580,19 @@ version (MocksTest) {
         assert (o.toString == string.init);
     }
 
+    class Smthng {
+        void foo (string s) { }
+    }
+
+    unittest {
+        auto r = new Mocker;
+        auto o = r.Mock!(Smthng);
+        o.foo("hallo");
+        r.Replay;
+        o.foo("hallo");
+        r.Verify;
+    }
+
     void main () {
         writefln("All tests pass.");
     }
