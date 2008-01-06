@@ -23,20 +23,10 @@ static this () {
     builder = new Builder();
 }
 
-string mangleof(T, U)() {
-    return T.stringof ~ "[" ~ U.stringof ~ "]";
-}
-
 /**
   * The main object builder. Use it to create objects.
   */
 class Builder {
-    private {
-        IObjectBuilder[string] _builders;
-        IListBuilder[string] _lists;
-        Object[string] _built;
-    }
-
     /**
       * Get an instance of class/interface T.
       * If T is an interface and there are no bindings for it, throw a
@@ -45,56 +35,27 @@ class Builder {
       * build a copy if none exist, else return the existing copy.
       */
     T get(T)() {
-        static if (isAssociativeArray!(T)) {
-            string mangle = T.stringof;
-            if (mangle in _dicts) {
-                return cast(T) _dicts[mangle].deps;
-            } else {
-                throw new BindingException("Nothing registered to build an " ~
-                        "associative array of type " ~ T.stringof ~ ".");
+        string mangle = T.stringof;
+        static if (is (T : Singleton)) {
+            // No inheritance for non-classes, so this is safe....
+            if (mangle in _built) {
+                return cast(T)_built[mangle];
             }
-        } else static if (isArray!(T)) {
-            if (T.stringof in _lists) {
-                IListBuilder listBuilder = _lists[T.stringof];
-                return cast(T) listBuilder.deps;
-            } else {
-                throw new BindingException("Nothing registered to build an " ~
-                        "array of type " ~ T.stringof ~ ".");
-            }
-        } else static if (is (T == class) || is (T == interface)) { 
-            if (is (T : Singleton)) {
-                if (T.stringof in _built) {
-                    return cast(T)_built[T.stringof];
-                }
-            }
-
-            T obj;
-            if (T.stringof in _builders) {
-                obj = cast(T)(_builders[T.stringof].build(this));
-            } else {
-                auto b = new ObjectBuilder!(T)();
-                obj = cast(T)b.build(this);
-                _builders[T.stringof] = b;
-            }
-
-            /*
-               This'd be a worthwhile check, except it eliminates the possibility
-               of the user requesting null be inserted, and it's handled elsewhere.
-
-            if (obj is null) {
-                throw new BindingException("Aw, man, I'm really sorry. I think a cast must have failed on me. Maybe there's a bad binding somewhere, or maybe you told me to give null, but I dunno, man, this isn't good.");
-            }
-            */
-
-            if (is (T : Singleton)) {
-                _built[T.stringof] = cast(Object)obj;
-            }
-
-            return obj;
-        } else {
-            static assert (false, "can only build objects, arrays, and " ~
-                    "associative arrays");
         }
+
+        if (!(mangle in _builders)) {
+            _builders[mangle] = getBuilder!(T);
+        }
+
+        auto b = cast(AbstractBuilder!(T)) _builders[mangle];
+        T obj = b.build(this);
+
+        static if (is (T : Singleton)) {
+            // No inheritance for non-classes, so this is safe....
+            _built[T.stringof] = cast(Object)obj;
+        }
+
+        return obj;
     }
 
     /**
@@ -104,7 +65,9 @@ class Builder {
         static assert (is (TImpl : TVisible),
                 "binding failure: cannot convert type " ~ TImpl.stringof
                 ~ " to type " ~ TVisible.stringof);
-        _builders[TVisible.stringof] = new ObjectBuilder!(TImpl)();
+        // again, only possible b/c no inheritance for structs
+        _builders[TVisible.stringof] = 
+            new DelegatingBuilder!(TVisible, TImpl)();
         return this;
     }
 
@@ -113,14 +76,42 @@ class Builder {
       * whenever anything requires that type, return the given object.
       */
     Builder provide (T) (T obj) {
-        _builders[T.stringof] = new StaticBuilder(cast(Object)obj);
+        _builders[T.stringof] = new StaticBuilder(obj);
         return this;
     }
 
     Builder fillList (TVal) (TVal[] elems) {
-        _lists[typeof(elems).stringof] = new GlobalListBuilder!(TVal)(elems);
+        _builders[typeof(elems).stringof] = new GlobalListBuilder!(TVal)(elems);
         return this;
     }
+
+
+    private {
+        ISingleBuilder[string] _builders;
+        Object[string] _built;
+        AbstractBuilder!(T) getBuilder(T)() {
+            static if (is (T : T[]) || is (T V : V[K])) {
+                static assert (false, "Cannot build an array or associative array; you have to provide it."); 
+            } else static if (is (T == struct)) {
+                return new StructBuilder!(T);
+            } else static if (is (T == class)) {
+                return new ObjectBuilder!(T);
+            } else {
+                throw new BindingException 
+                    ("Cannot build " ~ T.stringof ~ 
+                     ": no bindings, not provided, and cannot create an " ~
+                     "instance. You must bind interfaces and provide " ~
+                     "primitives manually.");
+            }
+        }
+    }
+}
+
+// For storing AbstractBuilder!(T) arrays for heterogenous T
+interface ISingleBuilder {}
+
+abstract class AbstractBuilder(T) : ISingleBuilder {
+    T build (Builder parent);
 }
 
 version (BuildTest) {

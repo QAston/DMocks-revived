@@ -6,13 +6,19 @@ version (Tango) {
         const bool isAssociativeArray = isAssocArrayType!(T);
     }
 } else {
+    public import std.traits;
+    template ParameterTupleOf(T) {
+        alias ParameterTypeTuple!(T) ParameterTupleOf;
+    }
+    template ParameterTupleOf(alias T) {
+        alias ParameterTypeTuple!(T) ParameterTupleOf;
+    }
+
     static if (__VERSION__ < 2000) {
         template isAssociativeArray(T) {
             const bool isAssociativeArray = 
                 is (typeof (T.init.keys[0])[typeof(T.init.values[0])] == T);
         }
-    } else {
-        public import std.traits;
     }
 }
 

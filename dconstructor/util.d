@@ -1,6 +1,6 @@
 module dconstructor.util;
 
-version (Tango) {
+static if (!is(typeof(string))) {
     alias char[] string;
 }
 
