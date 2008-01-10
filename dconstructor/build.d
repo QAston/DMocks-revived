@@ -3,6 +3,7 @@ module dconstructor.build;
 private {
     import dconstructor.singleton;
     import dconstructor.object_builder;
+    import dconstructor.multibuilder;
     import dconstructor.aggregate;
     import dconstructor.exception;
     import dconstructor.util;
@@ -28,26 +29,25 @@ static this () {
   */
 class Builder {
     /**
-      * Get an instance of class/interface T.
+      * Get an instance of type T. T can be anything -- primitive, array,
+      * interface, struct, or class.
+      *
       * If T is an interface and there are no bindings for it, throw a
       * BindingException.
+      *
       * If T is a singleton (if it implements the Singleton interface), 
       * build a copy if none exist, else return the existing copy.
       */
     T get(T)() {
-        string mangle = T.stringof;
         static if (is (T : Singleton)) {
+            string mangle = T.stringof;
             // No inheritance for non-classes, so this is safe....
             if (mangle in _built) {
                 return cast(T)_built[mangle];
             }
         }
 
-        if (!(mangle in _builders)) {
-            _builders[mangle] = getBuilder!(T);
-        }
-
-        auto b = cast(AbstractBuilder!(T)) _builders[mangle];
+        auto b = get_or_add!(T)();
         T obj = b.build(this);
 
         static if (is (T : Singleton)) {
@@ -56,6 +56,16 @@ class Builder {
         }
 
         return obj;
+    }
+
+    /**
+      * The next call to bind, provide, etc will only apply to the given type.
+      * Subsequent calls will not apply to the given type unless you call this
+      * method again.
+      */
+    Builder on(T)() {
+        _context = T.stringof;
+        return this;
     }
 
     /**
@@ -74,22 +84,74 @@ class Builder {
     /** 
       * For the given type, rather than creating an object automatically, 
       * whenever anything requires that type, return the given object.
+      * Implicit singletonization. This is required for structs, if you want to
+      * set any of the fields (since by default static opCall is not called).
       */
     Builder provide (T) (T obj) {
-        _builders[T.stringof] = new StaticBuilder(obj);
+        _builders[T.stringof] = new StaticBuilder!(T)(obj);
         return this;
     }
 
-    Builder fillList (TVal) (TVal[] elems) {
+    /**
+      * Whenever anyone asks for an array of the given type, insert the given
+      * array. There is no other way to provide structs.
+      */
+    Builder list (TVal) (TVal[] elems) {
         _builders[typeof(elems).stringof] = new GlobalListBuilder!(TVal)(elems);
         return this;
     }
 
+    /**
+      * Whenever someone asks for an associative array of the given type,
+      * insert the given associative array.
+      */
+    Builder map (TVal, TKey) (TVal[TKey] elems) {
+        _builders[typeof(elems).stringof] 
+            = new GlobalDictionaryBuilder!(TKey, TVal)(elems);
+        return this;
+    }
+
+    public string _build_for () {
+        if (_build_target_stack.length >= 2) {
+            return _build_target_stack[$-2];
+        }
+        return null;
+    }
 
     private {
         ISingleBuilder[string] _builders;
         Object[string] _built;
-        AbstractBuilder!(T) getBuilder(T)() {
+        string[] _build_target_stack;
+
+        AbstractBuilder!(T) get_or_add(T)() {
+            string mangle = T.stringof;
+            if (mangle in _builders) {
+                return cast(AbstractBuilder!(T))_builders[mangle];
+            }
+
+            auto b = make_builder!(T)();
+            _builders[mangle] = b;
+            return b;
+        }
+
+        AbstractBuilder!(T) wrap(T)(string context, AbstractBuilder!(T) b) {
+            string mangle = T.stringof;
+            if (mangle in _builders) {
+                auto existing = cast(MultiBuilder!(T)) _builders[mangle];
+                existing.add(context, b);
+                return existing;
+            }
+            MultiBuilder!(T) mb = new MultiBuilder!(T)();
+            mb.add(context, b);
+            _builders[mangle] = b;
+            return b;
+        }
+
+        AbstractBuilder!(T) make_builder(T)() {
+            return wrap!(T)(null, make_real_builder!(T)());
+        }
+
+        AbstractBuilder!(T) make_real_builder(T)() {
             static if (is (T : T[]) || is (T V : V[K])) {
                 static assert (false, "Cannot build an array or associative array; you have to provide it."); 
             } else static if (is (T == struct)) {
@@ -97,6 +159,9 @@ class Builder {
             } else static if (is (T == class)) {
                 return new ObjectBuilder!(T);
             } else {
+                // If this is a static assert, it always gets tripped, since
+                // a bound interface can't be built directly. Everything's
+                // resolved at runtime.
                 throw new BindingException 
                     ("Cannot build " ~ T.stringof ~ 
                      ": no bindings, not provided, and cannot create an " ~
