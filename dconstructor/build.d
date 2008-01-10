@@ -76,8 +76,7 @@ class Builder {
                 "binding failure: cannot convert type " ~ TImpl.stringof
                 ~ " to type " ~ TVisible.stringof);
         // again, only possible b/c no inheritance for structs
-        _builders[TVisible.stringof] = 
-            new DelegatingBuilder!(TVisible, TImpl)();
+        wrap!(TVisible)(new DelegatingBuilder!(TVisible, TImpl)());
         return this;
     }
 
@@ -88,7 +87,7 @@ class Builder {
       * set any of the fields (since by default static opCall is not called).
       */
     Builder provide (T) (T obj) {
-        _builders[T.stringof] = new StaticBuilder!(T)(obj);
+        wrap!(T)(new StaticBuilder!(T)(obj));
         return this;
     }
 
@@ -97,7 +96,7 @@ class Builder {
       * array. There is no other way to provide structs.
       */
     Builder list (TVal) (TVal[] elems) {
-        _builders[typeof(elems).stringof] = new GlobalListBuilder!(TVal)(elems);
+        wrap!(T)(new GlobalListBuilder!(TVal)(elems));
         return this;
     }
 
@@ -106,8 +105,7 @@ class Builder {
       * insert the given associative array.
       */
     Builder map (TVal, TKey) (TVal[TKey] elems) {
-        _builders[typeof(elems).stringof] 
-            = new GlobalDictionaryBuilder!(TKey, TVal)(elems);
+        wrap!(T)(new GlobalDictionaryBuilder!(TKey, TVal)(elems));
         return this;
     }
 
@@ -122,6 +120,7 @@ class Builder {
         ISingleBuilder[string] _builders;
         Object[string] _built;
         string[] _build_target_stack;
+        string _context;
 
         AbstractBuilder!(T) get_or_add(T)() {
             string mangle = T.stringof;
@@ -134,7 +133,13 @@ class Builder {
             return b;
         }
 
-        AbstractBuilder!(T) wrap(T)(string context, AbstractBuilder!(T) b) {
+        AbstractBuilder!(T) wrap(T)(AbstractBuilder!(T) b) {
+            auto ret = wrap_s(_context, b);
+            _context = null;
+            return ret;
+        }
+
+        AbstractBuilder!(T) wrap_s(T)(string context, AbstractBuilder!(T) b) {
             string mangle = T.stringof;
             if (mangle in _builders) {
                 auto existing = cast(MultiBuilder!(T)) _builders[mangle];
@@ -148,7 +153,7 @@ class Builder {
         }
 
         AbstractBuilder!(T) make_builder(T)() {
-            return wrap!(T)(null, make_real_builder!(T)());
+            return wrap_s!(T)(null, make_real_builder!(T)());
         }
 
         AbstractBuilder!(T) make_real_builder(T)() {
