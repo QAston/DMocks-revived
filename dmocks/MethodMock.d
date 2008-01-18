@@ -116,7 +116,7 @@ string ReturningMethod (string type, string name, T, U...)() {
             }
 
             version(MocksDebug) writefln("getting a value to return...");
-            auto retval = call.ReturnValue().coerce!(` ~ T.stringof ~ `); 
+            auto retval = *call.ReturnValue().peek!(` ~ T.stringof ~ `); 
             version(MocksDebug) writefln("returning...");
             return retval;
         }
