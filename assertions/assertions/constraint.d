@@ -2,6 +2,7 @@ module assertions.constraint;
 
 import assertions.exception;
 import tango.core.Variant;
+import tango.core.Traits;
 import tango.util.collection.model.View;
 import tango.text.convert.Layout;
 import tango.group.convert;
@@ -10,6 +11,9 @@ Layout!(char) format;
 static this () { format = new Layout!(char); }
 private const char[] standardMessage = "Expected: {0} {1} but was: {2}";
 private const char[] untypedMessage = "Expected: {0} but was: {1}";
+private const char[] strEmpty = "<empty>";
+private const char[] strNull = "<null>";
+
 
 
 int countWhere (T) (Variant collection, bool delegate(T) sieve, bool expected) 
@@ -27,23 +31,29 @@ int countWhere (T) (Variant collection, bool delegate(T) sieve, bool expected)
 		}
 		return count;
 	}
-	else if (true)//(collection.isImplicitly!(View!(T)))
-	{
-		auto view = collection.get!(View!(T));
-		int count = 0;
-		foreach (a; view)
+	static if (!isStaticArrayType!(T)) {
+		if (collection.isImplicitly!(View!(T)))
 		{
-			if (sieve(a) == expected)
+			auto view = collection.get!(View!(T));
+			int count = 0;
+			foreach (a; view)
 			{
-				count++;
+				if (sieve(a) == expected)
+				{
+					count++;
+				}
 			}
+			return count;
 		}
-		return count;
 	}
-	else
+	else 
 	{
-		fail("Cannot apply a collection constraint on a type that is not a collection.");
+		throw new UnsupportedOperationException("Cannot search for a static array inside a Tango collection." ~
+			"You're probably looking for a string literal. In that case, please use \"literal\"[] rather than " ~
+			"\"literal\".");
 	}
+	fail("Cannot apply a collection constraint on a type that is not a collection.");
+	
 }
 
 struct Range
@@ -75,7 +85,7 @@ struct Range
 		{
 			if (inverse) 
 			{
-				return format("more or fewer than {0}");
+				return format("more or fewer than {0}", min);
 			}
 			else 
 			{
@@ -137,7 +147,23 @@ char[] toString(Variant v)
    }
    else if (v.isImplicitly!(Object))
    {
-      return v.get!(Object).toString;
+	   auto obj = v.get!(Object);
+	   return (obj is null) ? strNull : obj.toString;
+   }
+   else if (v.isImplicitly!(char[])) 
+   {
+	   auto obj = v.get!(char[]);
+	   return (obj.length) ? `"` ~ obj ~ `"` : strEmpty;
+   }
+   else if (v.isImplicitly!(wchar[])) 
+   {
+	   auto obj = v.get!(wchar[]);
+	   return (obj.length) ? `"` ~ cast(char[])obj ~ `"` : strEmpty;
+   }
+   else if (v.isImplicitly!(dchar[])) 
+   {
+	   auto obj = v.get!(dchar[]);
+	   return (obj.length) ? `"` ~ cast(char[])obj ~ `"` : strEmpty;
    }
    else
    {

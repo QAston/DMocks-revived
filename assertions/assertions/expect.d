@@ -3,6 +3,7 @@ module assertions.expect;
 import assertions.exception;
 import assertions.constraint;
 import tango.text.convert.Layout;
+import tango.core.Traits;
 import tango.core.Variant;
 import tango.io.Stdout;
 import tango.stdc.math;
@@ -22,6 +23,16 @@ template ExpectReturn(T) {
 		alias expect ExpectReturn;
 	}
 }
+
+/+
+Variant toVar(T)(T obj) {
+	static if (isStaticArrayType!(T)) {
+		return Variant(obj[]);
+	} else {
+		return Variant(obj);	
+	}
+}
++/
 
 /**
  * expect: a more verbose interface for assert.
@@ -95,12 +106,13 @@ struct expect
 	 */
 	void equals (T) (T expected)
 	{
+		Variant var = Variant(expected);
 		if (count.valid()) 
 		{
 			hasCountWhere(actual, 
 				(T value) { return (expected == value); }, 
 				count, 
-				format("equal to {0}", expected), 
+				format("equal to {0}", toString(var)), 
 				truth);
 		}
 		else if ((actual == expected) != truth)
@@ -109,7 +121,7 @@ struct expect
 				format(
 					standardMessage, 
 					(truth) ? "equal to" : "not equal to", 
-					expected, 
+					toString(var), 
 					toString(actual)));
 		}
 	}
@@ -121,7 +133,7 @@ struct expect
 	 */
 	void sameAs (T) (T expected)
 	{
-		Variant var = expected;
+		Variant var = Variant(expected);
 		if (count.valid()) 
 		{
 			hasCountWhere(actual, 
@@ -249,10 +261,12 @@ struct expect
 	}
 }
 
-
+// uncomment the following line to run tests
+//version = AssertionsTest;
 version (AssertionsTest)
 {
-	void main () 
+	void main () {}
+	unittest
 	{
 		Variant v = 5;
 		assert ("5" == toString(v));
@@ -316,5 +330,62 @@ version (AssertionsTest)
 		expect(real.nan).isNaN;
 		expect(2).not.equals(0);
 		expect(real.nan).not.equals(real.nan);
+		
+
+		// These all pass.
+		auto obj = new Object;
+		expect(obj).sameAs(obj);
+		expect(obj).not.sameAs(new Object);
+		expect(obj).not.isNull;
+
+		int i = 0;
+		long j = 0;
+		expect(i).equals(j);
+		expect(real.nan).isNaN;
+
+		auto list = [1, 1, 2, 3];
+		expect(list).hasNone.equals(4);
+		expect(list).has(2).equals(1);
+		expect(list).has(0, 3).equals(1); // 2 is in the range 0..3
+		expect(list).has(0, 2).equals(1); // ranges are inclusive
+		expect(list).has(2).not.equals(1); // success -- [2, 3] are not equal to 1
+		expect(list).hasSome.equals(3); // success -- at least one
+		expect(list).not.has(1).equals(1); // success -- it has two, not one
+
+		// These fail.
+		try 
+		{
+			expect(list).not.has(2).equals(1); // It does have 2 elements equal to 1
+			failed = true;
+		}
+		catch (AssertionError e) 
+		{
+			Stdout(e.msg).newline;
+		}
+		expect(!failed);
+		
+		try 
+		{
+			expect(list).has(1).equals(1); // Fails: not in exact range specified
+			failed = true;
+		}
+		catch (AssertionError e) 
+		{
+			Stdout(e.msg).newline;
+		}
+		expect(!failed);
+		
+		try 
+		{
+			expect("hello"[]).equals("boowah"[]);
+			failed = true;
+		}
+		catch (AssertionError e) 
+		{
+			Stdout(e.msg).newline;
+		}
+		expect("hello").equals("hello");
+		//expect("hello").sameAs("hello");
+		expect(!failed);
 	}
 }
