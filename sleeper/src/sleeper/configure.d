@@ -10,7 +10,7 @@
 module sleeper.configure;
 import sleeper.type, sleeper.rttimanager;
 
-private RttiManager _mgr = RttiManager.get();
+private RttiManager _mgr = RttiManager.getmgr();
 
 /**
   * For internal use only. While you can use this, it's more cumbersome and

@@ -7,6 +7,8 @@ version (Tango) {
     }
 } else {
     public import std.traits;
+    import std.typetuple;
+    import std.stdio;
     template ParameterTupleOf(T) {
         alias ParameterTypeTuple!(T) ParameterTupleOf;
     }
@@ -45,4 +47,29 @@ template assocArrayKey (AA) {
 
 unittest {
     assert (is (assocArrayKey!(int[long]) == long));
+}
+
+string Tostring(int i) {
+    string ret = ``;
+    do {
+        ret = `` ~ cast(char)('0' + (i % 10)) ~ ret;
+        i /= 10;
+    } while (i);
+    return ret;
+}
+
+template ToString(int i) {
+    const string ToString = Tostring(i);
+}
+
+unittest {
+    assert (ToChar!(5) == '5');
+    assert (ToChar!(0) == '0');
+    assert (ToChar!(9) == '9');
+}
+
+unittest {
+    string str = ToString!(17795);
+    assert (str == "17795", str);
+    assert (ToString!(0) == "0");
 }

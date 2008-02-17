@@ -31,6 +31,7 @@ class DbClass {
         foreach (i, field; fields) {
             field.set(obj, row[i]);
         }
+        return obj;
     }
 }
 
@@ -50,8 +51,8 @@ interface ISetter {
 }
 
 class Setter (TOn, TSet) : ISetter {
-    private delegate (TOn, TSet) _setter;
-    this (delegate (TOn, TSet) setter) { _setter = setter; }
+    private void delegate (TOn, TSet) _setter;
+    this (void delegate (TOn, TSet) setter) { _setter = setter; }
     void set (Object obj, string dbvalue) {
         auto value = to!(TSet)(dbvalue);
         auto on = cast(TOn)obj;

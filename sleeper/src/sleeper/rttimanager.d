@@ -10,7 +10,7 @@ class RttiManager {
     // the Singleton interface from that. Actually, I might do that at some
     // point.
     private static RttiManager _default;
-    public static RttiManager get () {
+    public static RttiManager getmgr () {
         if (_default is null) {
             _default = new RttiManager();
         }
@@ -20,7 +20,7 @@ class RttiManager {
     private DbClass[string] _classes;
     private DbClass[string] _byTable;
 
-    public DbClass get(T)() {
+    public DbClass get (T)() {
         if (T.stringof in _classes) {
             return _classes[T.stringof];
         }
