@@ -89,7 +89,7 @@ public class MockRepository {
     }
 
     private void ThrowForwardOrderException(ICall previous, ICall actual) {
-        string msg =
+    	string msg =
                 "Ordered calls received in wrong order: \n" ~
                 "After: " ~ dmocks.Util.toString(previous) ~ "\n" ~
                 "Expected: " ~ previous.NextCall().toString ~ "\n" ~
@@ -114,7 +114,7 @@ public {
     }
     bool Ordered () { return _ordered; }
 
-    void Record(U...)(IMocked mocked, string name, U args, bool returns) {
+    void Record(U...)(IMocked mocked, char[] name, U args, bool returns) {
         CheckLastCallSetup();
         ICall call;
         // I hate having to check for an empty tuple.
@@ -138,7 +138,7 @@ public {
         _lastCall = call;
     }
 
-    ICall Match(U...)(IMocked mocked, string name, U args) {
+    ICall Match(U...)(IMocked mocked, char[] name, U args) {
         version(MocksDebug) writefln("about to match");
         auto match = new Call!(U)(mocked, name, new Arguments!(U)(args));
         version(MocksDebug) writefln("created call");
@@ -199,7 +199,7 @@ public {
             scope(failure) writefln("failed");
             scope(success) writefln("success");
             FakeMocked m = new FakeMocked();
-            string name = "Tom Jones";
+            char[] name = "Tom Jones";
             int args = 3;
             
             MockRepository r = new MockRepository();
@@ -216,7 +216,7 @@ public {
             scope(failure) writefln("failed");
             scope(success) writefln("success");
             FakeMocked m = new FakeMocked();
-            string name = "Tom Jones";
+            char[] name = "Tom Jones";
             int args = 3;
             
             MockRepository r = new MockRepository();
@@ -234,7 +234,7 @@ public {
             scope(failure) writefln("failed");
             scope(success) writefln("success");
             FakeMocked m = new FakeMocked();
-            string name = "Tom Jones";
+            char[] name = "Tom Jones";
             int args = 3;
             
             MockRepository r = new MockRepository();
@@ -292,7 +292,7 @@ public class Call (U...) : ICall {
         Variant _returnValue;
         Arguments!(U) _arguments;
         IMocked _mocked;
-        string _name = "unknown";
+        char[] _name = "unknown";
         Interval _repeat;
         int _callCount;
         Variant _action;
@@ -318,14 +318,14 @@ public class Call (U...) : ICall {
     }
 
     override string toString () {
-        version(MocksDebug) writefln("trying get arg string");
-        string args = (_arguments == null) ? "(<unknown>)" : _arguments.toString;
-        version(MocksDebug) writefln("trying get callcount string");
-        string callCount = dmocks.Util.toString(_callCount);
-        version(MocksDebug) writefln("trying get repeat string");
-        string expected = _repeat.toString;
+        version(MocksDebug) writefln("trying get arg char[]");
+        char[] args = (_arguments == null) ? "(<unknown>)" : _arguments.toString;
+        version(MocksDebug) writefln("trying get callcount char[]");
+        char[] callCount = dmocks.Util.toString(_callCount);
+        version(MocksDebug) writefln("trying get repeat char[]");
+        char[] expected = _repeat.toString;
         version(MocksDebug) writefln("putting it together");
-        string ret = _name ~ args ~ " Expected: " ~ expected ~ " Actual: " ~ callCount;
+        char[] ret = _name ~ args ~ " Expected: " ~ expected ~ " Actual: " ~ callCount;
         version(MocksDebug) writefln("returning");
         return ret;
         /*
@@ -442,7 +442,7 @@ public class Call (U...) : ICall {
     void Ordered (bool value) { _ordered = value; }
     bool Ordered () { return _ordered; }
 
-    this (IMocked mocked, string name, Arguments!(U) arguments) {
+    this (IMocked mocked, char[] name, Arguments!(U) arguments) {
         _mocked = mocked;
         _name = name;
         _arguments = arguments;
@@ -610,7 +610,7 @@ template Arguments (U...) {
                 return cast(typeof(this)) other !is null;
             }
 
-            override string toString () { return "()"; }
+            override char[] toString () { return "()"; }
         }
     } else {
         class Arguments {
@@ -628,8 +628,8 @@ template Arguments (U...) {
                 return true;
             }
 
-            override string toString () { 
-                string value = "(";
+            override char[] toString () { 
+                char[] value = "(";
                 foreach (u; Arguments) {
                     value ~= dmocks.Util.toString(u) ~ ", ";
                 }
@@ -667,7 +667,11 @@ version (MocksTest) {
 public class ExpectationViolationException : Exception {
     private static string _defaultMessage = "An unexpected call has occurred."; 
     this () { super(typeof(this).stringof ~ ": " ~  _defaultMessage); }
-    this (string msg) { super(msg); }
+    
+    this (string msg) { 
+    	super(msg);
+    }
+    
     this (ICall call) {
         //this();
         string msg = typeof(this).stringof ~ ": ";

@@ -3,21 +3,25 @@ module dmocks.Mocks;
 import dmocks.MockObject;
 import dmocks.Factory;
 import dmocks.Repository; 
-import dmocks.Util; 
-import std.gc;
+import dmocks.Util;
 import std.variant;
+import std.stdio;
 
+//version=MocksTest;
 version (MocksDebug) import std.stdio;
 version (MocksTest) import std.stdio;
 
 /++
     A class through which one creates mock objects and manages expected calls. 
  ++/
-public class Mocker {
+public class Mocker 
+{
     private MockRepository _repository;
 
-    public {
-        this () {
+    public 
+    {
+        this () 
+        {
             _repository = new MockRepository();
         }
 
@@ -25,34 +29,34 @@ public class Mocker {
          * Stop setting up expected calls. Any calls after this point will
          * be verified against the expectations set up before calling Replay.
          */
-        void Replay () {
+        void replay () 
+        {
             _repository.Replay();
         }
-        alias Replay replay;
 
         /**
          * Record method calls starting at this point. These calls are not
          * checked against existing expectations; they create new expectations.
          */
-        void Record () {
+        void record () 
+        {
             _repository.BackToRecord();
         }
-        alias Record record;
 
         /**
          * Check to see if there are any expected calls that haven't been
          * matched with a real call. Throws an ExpectationViolationException
          * if there are any outstanding expectations.
          */
-        void Verify () {
+        void verify () 
+        {
             _repository.Verify();
         }
-        alias Verify verify;
 
         /**
          * By default, all expectations are unordered. If I want to require that
-         * one call happen immediately after another, I call Mocker.Ordered, make
-         * those expectations, and call Mocker.Unordered to avoid requiring a
+         * one call happen immediately after another, I call Mocker.ordered, make
+         * those expectations, and call Mocker.unordered to avoid requiring a
          * particular order afterward.
          *
          * Currently, the support for ordered expectations is rather poor. It works
@@ -60,45 +64,21 @@ public class Mocker {
          * with a range, it tends to fail: once you call one method the minimum number
          * of times, you can omit that method in subsequent invocations of the set.
          */
-        void Ordered () {
+        void ordered () 
+        {
             _repository.Ordered(true);
         }
 
-        void Unordered () {
+        void unordered () 
+        {
             _repository.Ordered(false);
         }
 
         /** Get a mock object of the given type. */
-        T Mock (T) () {
+        T mock (T) () 
+        {
             return MockFactory.Mock!(T)(_repository);
-            /*
-            static assert (is(T == class) || is(T == interface), 
-                    "only classes and interfaces can be mocked");
-            // WARNING: THIS IS UGLY AND IMPLEMENTATION-SPECIFIC
-            void*[] mem = cast(void*[])malloc(__traits(classInstanceSize, Mocked!(T)));
-            mem[0] = (Mocked!(T)).classinfo.vtbl.ptr;
-            setTypeInfo(typeid(Mocked!(T)), mem.ptr);
-
-            version(MocksDebug) writefln("set the vtbl ptr");
-
-            auto t = cast(Mocked!(T))(mem.ptr);
-
-            version(MocksDebug) writefln("casted");
-
-            assert (t !is null);
-            t._owner = _repository;
-
-            version(MocksDebug) writefln("set repository");
-
-            T retval = cast(T)t;
-
-            version(MocksDebug) writefln("cast to T");
-            version(MocksDebug) assert (retval !is null);
-            version(MocksDebug) writefln("returning");
-            return retval;
-            */
         }
-        alias Mock mock;
 
         /**
          * Only for non-void methods. Start an expected call; this returns
@@ -109,13 +89,12 @@ public class Mocker {
          * ---
          * Mocker m = new Mocker;
          * Object o = m.Mock!(Object);
-         * m.Expect(o.toString).Return("hello?");
+         * m.expect(o.toString).returns("hello?");
          * ---
          */
-        ExternalCall Expect (T) (T ignored) {
+        ExternalCall expect (T) (T ignored) {
             return LastCall();
         }
-        alias Expect expect;
 
         /**
          * For void and non-void methods. Start an expected call; this returns
@@ -127,25 +106,24 @@ public class Mocker {
          * Mocker m = new Mocker;
          * Object o = m.Mock!(Object);
          * o.toString;
-         * m.LastCall().Return("hello?");
+         * m.LastCall().returns("hello?");
          * ---
          */
-        ExternalCall LastCall () {
+        ExternalCall lastCall () {
             return new ExternalCall(_repository.LastCall());
         }
-        alias LastCall lastCall;
 
         /**
          * Set up a result for a method, but without any backend accounting for it.
          * Things where you want to allow this method to be called, but you aren't
          * currently testing for it.
          */
-        ExternalCall Allowing (T) (T ignored) {
+        ExternalCall allowing (T) (T ignored) {
             return LastCall().RepeatAny;
         }
 
         /** Ditto */
-        ExternalCall Allowing (T = void) () {
+        ExternalCall allowing (T = void) () {
             return LastCall().RepeatAny();
         }
 
@@ -155,7 +133,7 @@ public class Mocker {
          * cases). By default, if no return value, exception, delegate, or
          * passthrough option is set, an exception will be thrown.
          */
-        void AllowDefaults () {
+        void allowDefaults () {
             _repository.AllowDefaults(true);
         }
     }
@@ -169,7 +147,7 @@ public class Mocker {
    Mocker m = new Mocker;
    Object o = m.Mock!(Object);
    o.toString;
-   m.LastCall().Return("Are you still there?").Repeat(1, 12);
+   m.LastCall().returns("Are you still there?").repeat(1, 12);
    ---
 ++/
 public class ExternalCall {
@@ -188,38 +166,35 @@ public class ExternalCall {
     * Params:
     *     value = the value to return
     */
-   ExternalCall Return (T)(T value) {
+   ExternalCall returns (T)(T value) {
        _call.ReturnValue(Variant(value));
        return this;
    }
-   alias Return returnValue;
 
    /**
     * The arguments for this call will be ignored.
     */
-   ExternalCall IgnoreArguments () {
+   ExternalCall ignoreArgs () {
        _call.IgnoreArguments = true;
        return this;
    }
-   alias IgnoreArguments ignoreArguments;
 
    /**
     * This call must be repeated at least min times and can be repeated at
     * most max times.
     */
-   ExternalCall Repeat (int min, int max) {
+   ExternalCall repeat (int min, int max) {
        if (min > max) {
            throw new InvalidOperationException("The specified range is invalid.");
        }
        _call.Repeat(Interval(min, max));
        return this;
    }
-   alias Repeat repeat;
 
    /**
     * This call must be repeated exactly i times.
     */
-   ExternalCall Repeat (int i) {
+   ExternalCall repeat (int i) {
        _call.Repeat(Interval(i, i));
        return this;
    }
@@ -227,10 +202,9 @@ public class ExternalCall {
    /**
     * This call can be repeated any number of times.
     */
-   ExternalCall RepeatAny () {
-       return Repeat(0, int.max);
+   ExternalCall repeatAny () {
+       return repeat(0, int.max);
    }
-   alias RepeatAny repeatAny;
 
    /**
     * When the method is executed (with matching arguments), execute the
@@ -239,27 +213,25 @@ public class ExternalCall {
     * The called method will return whatever the given delegate returns.
     * Examples:
     * ---
-    * m.Expect(myObj.myFunc(0, null, null, 'a')
-    *     .IgnoreArguments()
-    *     .Do((int i, string s, Object o, char c) { return -1; });
+    * m.expect(myObj.myFunc(0, null, null, 'a')
+    *     .ignoreArgs()
+    *     .action((int i, char[] s, Object o, char c) { return -1; });
     * ---
     */
-   ExternalCall Do (T, U...)(T delegate(U) action) {
+   ExternalCall action (T, U...)(T delegate(U) action) {
        Variant a = Variant(action);
        _call.Action(a);
        return this;
    }
-   alias Do action;
 
    /**
     * When the method is called, throw the given exception. If there are any
-    * actions specified (via the Do method), they will not be executed.
+    * actions specified (via the action method), they will not be executed.
     */
-   ExternalCall Throw (Exception e) {
+   ExternalCall throws (Exception e) {
        _call.Throw(e);
        return this;
    }
-   alias Throw throwException;
 
    /**
     * Instead of returning or throwing a given value, pass the call through to
@@ -268,13 +240,14 @@ public class ExternalCall {
     * on these fields. Things such as using Object's toHash and opEquals when your
     * class doesn't override them and you use associative arrays.
     */
-   ExternalCall PassThrough () {
+   ExternalCall passThrough () {
        _call.SetPassThrough();
        return this;
    }
 }
 
 version (MocksTest) {
+	//void writefln(char[] c) { writef(c).newline; }
     class Templated(T) {}
     interface IM {
         void bar ();
@@ -288,21 +261,21 @@ version (MocksTest) {
         writef("nontemplated mock unit test...");
         scope(failure) writefln("failed");
         scope(success) writefln("success");
-        (new Mocker()).Mock!(Object);
+        (new Mocker()).mock!(Object);
     }
 
     unittest {
         writef("templated mock unit test...");
         scope(failure) writefln("failed");
         scope(success) writefln("success");
-        (new Mocker()).Mock!(Templated!(int));
+        (new Mocker()).mock!(Templated!(int));
     }
 
     unittest {
         writef("templated mock unit test...");
         scope(failure) writefln("failed");
         scope(success) writefln("success");
-        (new Mocker()).Mock!(IM);
+        (new Mocker()).mock!(IM);
     }
 
     unittest {
@@ -310,9 +283,9 @@ version (MocksTest) {
         scope(failure) writefln("failed");
         scope(success) writefln("success");
         auto r = new Mocker();
-        auto o = r.Mock!(Object);
+        auto o = r.mock!(Object);
         o.toString();
-        assert (r.LastCall()._call !is null);
+        assert (r.lastCall()._call !is null);
     }
 
     unittest {
@@ -320,28 +293,18 @@ version (MocksTest) {
         scope(failure) writefln("failed");
         scope(success) writefln("success");
         auto r = new Mocker();
-        r.Mock!(ConstructorArg);
+        r.mock!(ConstructorArg);
     }
 
     unittest {
-        writef("collect test...");
+        writef("lastCall test...");
         scope(success) writefln("success");
         scope(failure) writefln("failure");
 
         Mocker m = new Mocker();
-        m.Mock!(Object);
-        fullCollect();
-    }
-
-    unittest {
-        writef("LastCall test...");
-        scope(success) writefln("success");
-        scope(failure) writefln("failure");
-
-        Mocker m = new Mocker();
-        Object o = m.Mock!(Object);
+        Object o = m.mock!(Object);
         o.print;
-        auto e = m.LastCall;
+        auto e = m.lastCall;
 
         assert (e._call !is null);
     }
@@ -352,12 +315,12 @@ version (MocksTest) {
         scope(failure) writefln("failure");
 
         Mocker m = new Mocker();
-        Object o = m.Mock!(Object);
+        Object o = m.mock!(Object);
         o.toString;
-        auto e = m.LastCall;
+        auto e = m.lastCall;
 
         assert (e._call !is null);
-        e.Return("frobnitz");
+        e.returns("frobnitz");
     }
 
     unittest {
@@ -366,9 +329,9 @@ version (MocksTest) {
         scope(failure) writefln("failure");
 
         Mocker m = new Mocker();
-        Object o = m.Mock!(Object);
-        m.Expect(o.toString).Repeat(0).Return("mrow?");
-        m.Replay();
+        Object o = m.mock!(Object);
+        m.expect(o.toString).repeat(0).returns("mrow?");
+        m.replay();
         try {
             o.toString;
         } catch (Exception e) {}
@@ -380,10 +343,10 @@ version (MocksTest) {
         scope(failure) writefln("failure");
 
         Mocker m = new Mocker();
-        Object o = m.Mock!(Object);
-        m.Expect(o.toString).Repeat(2).Return("foom?");
+        Object o = m.mock!(Object);
+        m.expect(o.toString).repeat(2).returns("foom?");
 
-        m.Replay();
+        m.replay();
 
         o.toString;
         o.toString;
@@ -399,12 +362,12 @@ version (MocksTest) {
         scope(success) writefln("success");
 
         auto r = new Mocker();
-        auto o = r.Mock!(Object);
+        auto o = r.mock!(Object);
         o.toString;
-        r.LastCall().Repeat(2, 2).Return("mew.");
-        r.Replay();
+        r.lastCall().repeat(2, 2).returns("mew.");
+        r.replay();
         try {
-            r.Verify();
+            r.verify();
             assert (false, "expected exception not thrown");
         } catch (ExpectationViolationException) {}
     }
@@ -416,11 +379,11 @@ version (MocksTest) {
 
         bool calledPayload = false;
         Mocker r = new Mocker();
-        auto o = r.Mock!(Object);
+        auto o = r.mock!(Object);
 
         o.print;
-        r.LastCall().Do({ calledPayload = true; });
-        r.Replay();
+        r.lastCall().Do({ calledPayload = true; });
+        r.replay();
 
         o.print;
         assert (calledPayload);
@@ -432,12 +395,12 @@ version (MocksTest) {
         scope(success) writefln("success");
 
         Mocker r = new Mocker();
-        auto o = r.Mock!(Object);
+        auto o = r.mock!(Object);
 
-        string msg = "divide by cucumber error";
+        char[] msg = "divide by cucumber error";
         o.print;
-        r.LastCall().Throw(new Exception(msg));
-        r.Replay();
+        r.lastCall().Throw(new Exception(msg));
+        r.replay();
 
         try {
             o.print;
@@ -458,12 +421,12 @@ version (MocksTest) {
         scope(success) writefln("success");
 
         Mocker r = new Mocker();
-        auto o = r.Mock!(Object);
+        auto o = r.mock!(Object);
         o.toString;
-        r.LastCall().PassThrough();
+        r.lastCall().passThrough();
 
-        r.Replay();
-        string str = o.toString;
+        r.replay();
+        char[] str = o.toString;
         assert (str == "dmocks.MockObject.Mocked!(Object).Mocked", str);
     }
 
@@ -473,11 +436,11 @@ version (MocksTest) {
         scope(success) writefln("success");
 
         Mocker r = new Mocker();
-        auto o = r.Mock!(Object);
-        r.Expect(o.toHash()).PassThrough().RepeatAny;
-        r.Expect(o.opEquals(null)).IgnoreArguments().PassThrough().RepeatAny;
+        auto o = r.mock!(Object);
+        r.expect(o.toHash()).passThrough().RepeatAny;
+        r.expect(o.opEquals(null)).ignoreArgs().passThrough().RepeatAny;
 
-        r.Replay();
+        r.replay();
         int[Object] i;
         i[o] = 5;
         int j = i[o];
@@ -489,15 +452,15 @@ version (MocksTest) {
         scope(success) writefln("success");
 
         Mocker r = new Mocker();
-        auto o = r.Mock!(Object);
-        r.Ordered;
-        r.Expect(o.toHash).Return(5);
-        r.Expect(o.toString).Return("mow!");
+        auto o = r.mock!(Object);
+        r.ordered;
+        r.expect(o.toHash).returns(5);
+        r.expect(o.toString).returns("mow!");
 
-        r.Replay();
+        r.replay();
         o.toHash;
         o.toString;
-        r.Verify;
+        r.verify;
     }
 
     unittest {
@@ -506,12 +469,12 @@ version (MocksTest) {
         scope(success) writefln("success");
 
         Mocker r = new Mocker();
-        auto o = r.Mock!(Object);
-        r.Ordered;
-        r.Expect(o.toHash).Return(5);
-        r.Expect(o.toString).Return("mow!");
+        auto o = r.mock!(Object);
+        r.ordered;
+        r.expect(o.toHash).returns(5);
+        r.expect(o.toString).returns("mow!");
 
-        r.Replay();
+        r.replay();
         try {
             o.toString;
             o.toHash;
@@ -525,14 +488,14 @@ version (MocksTest) {
         scope(success) writefln("success");
 
         Mocker r = new Mocker();
-        auto o = r.Mock!(Object);
-        r.Ordered;
-        r.Expect(o.toHash).Return(5);
-        r.Expect(o.toString).Return("mow!");
-        r.Unordered;
+        auto o = r.mock!(Object);
+        r.ordered;
+        r.expect(o.toHash).returns(5);
+        r.expect(o.toString).returns("mow!");
+        r.unordered;
         o.print;
 
-        r.Replay();
+        r.replay();
         o.toHash;
         o.print;
         o.toString;
@@ -544,14 +507,14 @@ version (MocksTest) {
         scope(success) writefln("success");
 
         Mocker r = new Mocker();
-        auto o = r.Mock!(Object);
-        r.Allowing(o.toString).Return("foom?");
+        auto o = r.mock!(Object);
+        r.allowing(o.toString).returns("foom?");
 
-        r.Replay();
+        r.replay();
         o.toString;
         o.toString;
         o.toString;
-        r.Verify;
+        r.verify;
     }
 
     unittest {
@@ -561,10 +524,10 @@ version (MocksTest) {
 
         try {
             Mocker r = new Mocker();
-            auto o = r.Mock!(Object);
-            r.Allowing(o.toString);
+            auto o = r.mock!(Object);
+            r.allowing(o.toString);
 
-            r.Replay();
+            r.replay();
             assert (false, "expected a mocks setup exception");
         } catch (MocksSetupException e) {
         }
@@ -576,20 +539,20 @@ version (MocksTest) {
         scope(success) writefln("success");
 
         Mocker r = new Mocker();
-        auto o = r.Mock!(Object);
-        r.AllowDefaults;
-        r.Allowing(o.toString);
+        auto o = r.mock!(Object);
+        r.allowDefaults;
+        r.allowing(o.toString);
 
-        r.Replay();
-        assert (o.toString == string.init);
+        r.replay();
+        assert (o.toString == (char[]).init);
     }
 
     interface IFace {
-        void foo (string s);
+        void foo (char[] s);
     }
 
     class Smthng : IFace {
-        void foo (string s) { }
+        void foo (char[] s) { }
     }
 
     unittest {
@@ -608,13 +571,13 @@ version (MocksTest) {
         scope(failure) writefln("failed");
         scope(success) writefln("success");
         auto r = new Mocker;
-        IFace o = r.Mock!(IFace);
+        IFace o = r.mock!(IFace);
         version(MocksDebug) writefln("about to call once...");
         o.foo("hallo");
-        r.Replay;
+        r.replay;
         version(MocksDebug) writefln("about to call twice...");
         o.foo("hallo");
-        r.Verify;
+        r.verify;
     }
 
     unittest {
@@ -622,13 +585,13 @@ version (MocksTest) {
         scope(failure) writefln("failed");
         scope(success) writefln("success");
         auto r = new Mocker;
-        IFace o = r.Mock!(Smthng);
+        IFace o = r.mock!(Smthng);
         version(MocksDebug) writefln("about to call once...");
         o.foo("hallo");
-        r.Replay;
+        r.replay;
         version(MocksDebug) writefln("about to call twice...");
         o.foo("hallo");
-        r.Verify;
+        r.verify;
     }
 
     void main () {
