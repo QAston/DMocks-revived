@@ -636,6 +636,20 @@ version (MocksTest) {
         o.set(im);
         r.verify;
     }
+    
+    class HasMember
+    {
+    	int member;
+    }
+    
+    unittest
+    {
+    	writef("return user-defined type test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
+        auto r = new Mocker;
+        auto o = r.mock!(HasMember);    	
+    }
 
     void main () {
         writefln("All tests pass.");
