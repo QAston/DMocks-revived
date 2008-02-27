@@ -46,8 +46,7 @@ This function has a return value.
 string ReturningMethod (string type, string name, int index, bool returns)() 
 {
 	string indexstr = ToString!(index);
-	//string self = `__traits(getVirtualFunctions, T, "` ~ name ~ `")[` ~ ToString!(index) ~ `]`;
-	string self = `T.` ~ name;
+	string self = `typeof(__traits(getVirtualFunctions, T, "` ~ name ~ `")[` ~ ToString!(index) ~ `])`;
 	string ret = returns ? `ReturnType!(` ~ self ~ `)` : `void`;
 	string paramTypes = `ParameterTypeTuple!(` ~ self ~ `)`;
 	string qualified = type ~ `.` ~ name;
@@ -82,39 +81,6 @@ string ReturningMethod (string type, string name, int index, bool returns)()
 `;
 } 
 
-/++
-Returns a string containing the overload for a single function.
-This function does not have a return value. 
-++/
-string VoidMethod (string type, string name, U...)() 
-{
-	string qualified = type ~ `.` ~ name;
-	string args = String!(U)();
-	string argArgs = Arguments!(U);
-	string nameArgs = `"` ~ qualified ~ (U.length == 0 ? `"` : `", ` ~ Arguments!(U)());
-	string retArgs = `void` ~ (U.length == 0 ? `` : `, ` ~ args);
-	return "override void " ~ name ~ "(" ~ TypedArguments!(U)() ~ ")"  ~ 
-	`{
-	version(MocksDebug)version(MocksDebug) writefln("checking _owner...");
-	if (_owner is null) 
-	{
-		throw new Exception("owner cannot be null! Contact the stupid mocks developer.");
-	}
-	auto rope = _owner.Call!(` ~ retArgs ~ `)(this, ` ~ nameArgs ~ `);
-	if (rope.pass)
-	{
-		static if (is (typeof (super.` ~ name ~ `)))
-		{
-			return super.` ~ name ~ `(` ~ argArgs ~ `);
-		}
-		else
-		{
-			throw new InvalidOperationException("I was supposed to pass this call through to an abstract class or interface -- I can't do that!");
-		}
-	}
-}
-`;
-} 
 
 /++
 Returns a string containing an expanded version of the type tuple

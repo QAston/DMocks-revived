@@ -651,6 +651,27 @@ version (MocksTest) {
         auto o = r.mock!(HasMember);    	
     }
 
+    class Overloads
+    {
+    	void foo() {}
+    	void foo(int i) {}
+    }
+    
+    unittest
+    {
+    	writef("overloaded method test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
+        auto r = new Mocker;
+        auto o = r.mock!(Overloads);  
+        o.foo();
+        o.foo(1);
+        r.replay;
+        o.foo(1);
+        o.foo;
+        r.verify;
+    }
+    
     void main () {
         writefln("All tests pass.");
     }
