@@ -4,6 +4,8 @@ module dmocks.Util;
 static import std.conv;
 import std.utf;
 
+version(MocksDebug) import std.stdio;
+version(MocksTest) import std.stdio;
 
 string toString (T) (T value) 
 {
@@ -54,6 +56,18 @@ string ArrayToString (T) (T[] value)
     }
 }
 
+template IsConcreteClass(T)
+{
+	static if ((is (T == class)) && (!__traits(isAbstractClass, T)))
+	{
+		const bool IsConcreteClass = true;
+	}
+	else 
+	{
+		const bool IsConcreteClass = false;
+	}
+}
+
 struct Interval 
 {
     bool Valid () { return Min <= Max; }
@@ -78,5 +92,27 @@ class InvalidOperationException : Exception
 {
     this () { super(typeof(this).stringof ~ "The requested operation is not valid."); }
     this (string msg) { super(typeof(this).stringof ~ msg); }
+}
+
+
+
+public class ExpectationViolationException : Exception 
+{
+    private static string _defaultMessage = "An unexpected call has occurred."; 
+    this () 
+    { 
+    	super(typeof(this).stringof ~ ": " ~  _defaultMessage); 
+    }
+    
+    this (string msg) 
+    { 
+    	super(msg);
+    }
+}
+
+public class MocksSetupException : Exception {
+    this (string msg) {
+        super (typeof(this).stringof ~ ": " ~ msg);
+    }
 }
 

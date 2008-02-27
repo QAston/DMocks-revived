@@ -2,25 +2,24 @@ module dmocks.MockObject;
 
 import dmocks.Util;
 import dmocks.Repository;
+import dmocks.Caller;
 import dmocks.MethodMock;
 import dmocks.Model;
+import std.stdio;
+import std.traits;
 
-
-
-template Mocked (T) {
-    class Mocked : T, IMocked {
-        version (MocksDebug) {
-            pragma (msg, T.stringof);
-            pragma (msg, Body!(T)());
-        }
-        mixin (Body!(T)());
+class Mocked (T) : T, IMocked {
+    version (MocksDebug) {
+        pragma (msg, T.stringof);
+        pragma (msg, Body!(T)());
     }
+    mixin (Body!(T)());
 }
 
 string Body (T) () {
     return 
    ` 
-        public MockRepository _owner;
+        public Caller _owner;
         `
             ~ Constructor!(T)()
             ~  BodyPart!(T, 0)(); 

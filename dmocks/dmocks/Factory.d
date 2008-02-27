@@ -3,6 +3,7 @@ module dmocks.Factory;
 import dmocks.MockObject;
 import dmocks.Repository; 
 import dmocks.Util;
+import dmocks.Caller;
 
 public class MockFactory 
 {
@@ -14,8 +15,9 @@ public class MockFactory
             static assert (is(T == class) || is(T == interface), 
                     "only classes and interfaces can be mocked");
             
-            auto ret = new Mocked!(T);
-            ret._owner = rep;
+            
+            Mocked!(T) ret = new Mocked!(T);
+            ret._owner = new Caller(rep);
             return ret;
         }
     }

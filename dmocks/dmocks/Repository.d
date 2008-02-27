@@ -2,12 +2,15 @@ module dmocks.Repository;
 
 import dmocks.Util;
 import dmocks.Model;
+import dmocks.Call;
+import dmocks.Arguments;
 import std.variant;
 import std.stdio;
 
 version(MocksDebug) version = OrderDebug;
 
-public class MockRepository {
+public class MockRepository 
+{
     private bool _allowDefaults = false;
     private ICall[] _calls = [];
     private bool _recording = true;
@@ -97,31 +100,42 @@ public class MockRepository {
         throw new ExpectationViolationException(msg);
     }
 
-public {
+public 
+{
     void AllowDefaults (bool value) { _allowDefaults = value; }
+    
     bool Recording () { return _recording; }
-    void Replay () { 
+    
+    void Replay () 
+    { 
         CheckLastCallSetup();
         _recording = false; 
         _lastCall = null;
         _lastOrdered = null;
     }
+    
+    
     void BackToRecord () { _recording = true; }
+    
     ICall LastCall () { return _lastCall; }
-    void Ordered (bool value) { 
+    
+    void Ordered (bool value) 
+    { 
         version(MocksDebug) writefln("SETTING ORDERED: %s", value);
         _ordered = value; 
     }
+    
     bool Ordered () { return _ordered; }
 
-    void Record(U...)(IMocked mocked, char[] name, U args, bool returns) {
+    void Record(U...)(IMocked mocked, string name, U args, bool returns) 
+    {
         CheckLastCallSetup();
         ICall call;
         // I hate having to check for an empty tuple.
         static if (U.length) {
-            call = new Call!(U)(mocked, name, new Arguments!(U)(args));
+            call = new Call(mocked, name, new Arguments!(U)(args));
         } else {
-            call = new Call!(U)(mocked, name, new Arguments!(U)());
+            call = new Call(mocked, name, new Arguments!(U)());
         }
         call.Void(!returns);
 
@@ -138,9 +152,9 @@ public {
         _lastCall = call;
     }
 
-    ICall Match(U...)(IMocked mocked, char[] name, U args) {
+    ICall Match(U...)(IMocked mocked, string name, U args) {
         version(MocksDebug) writefln("about to match");
-        auto match = new Call!(U)(mocked, name, new Arguments!(U)(args));
+        auto match = new Call(mocked, name, new Arguments!(U)(args));
         version(MocksDebug) writefln("created call");
 
         foreach (icall; _calls) {
@@ -166,7 +180,7 @@ public {
             if (!call.Satisfied) {
                 // TODO: eventually we'll aggregate these, but for now,
                 // just quit on the first one.
-                throw new ExpectationViolationException(call);
+                throw new ExpectationViolationException(call.toString());
             }
         }
     }
@@ -199,7 +213,7 @@ public {
             scope(failure) writefln("failed");
             scope(success) writefln("success");
             FakeMocked m = new FakeMocked();
-            char[] name = "Tom Jones";
+            string name = "Tom Jones";
             int args = 3;
             
             MockRepository r = new MockRepository();
@@ -216,7 +230,7 @@ public {
             scope(failure) writefln("failed");
             scope(success) writefln("success");
             FakeMocked m = new FakeMocked();
-            char[] name = "Tom Jones";
+            string name = "Tom Jones";
             int args = 3;
             
             MockRepository r = new MockRepository();
@@ -234,7 +248,7 @@ public {
             scope(failure) writefln("failed");
             scope(success) writefln("success");
             FakeMocked m = new FakeMocked();
-            char[] name = "Tom Jones";
+            string name = "Tom Jones";
             int args = 3;
             
             MockRepository r = new MockRepository();
@@ -248,396 +262,6 @@ public {
         }
     }
 }
-}
-
-/++
-    An abstract representation of a method call.
- ++/
-public interface ICall {
-    // Interfaces don't include the stuff in Object by default.
-    // If we want == with an interface, we include it explicitly.
-    // Rather ugly.
-    int opEquals (Object other);
-    string toString ();
-    void IgnoreArguments (bool value);
-    Variant ReturnValue ();
-    void ReturnValue (Variant value);
-    void Repeat (Interval value);
-    Interval Repeat ();
-    void Called ();
-    bool Void ();
-    void Void (bool value);
-    bool HasAction ();
-    bool Satisfied ();
-    Variant Action ();
-    void Action (Variant value);
-    // TODO Error doesn't inherit from Exception, I think.
-    // This will have to get an override to deal with errors as well.
-    void Throw (Exception e);
-    void SetPassThrough ();
-    ICall LastCall ();
-    void LastCall (ICall call);
-    ICall NextCall ();
-    void NextCall (ICall call);
-    void Ordered (bool value);
-    bool Ordered ();
-}
-
-public class Call (U...) : ICall {
-    private {
-        bool _ignoreArguments;
-        bool _void;
-        bool _passThrough;
-        bool _ordered;
-        Variant _returnValue;
-        Arguments!(U) _arguments;
-        IMocked _mocked;
-        char[] _name = "unknown";
-        Interval _repeat;
-        int _callCount;
-        Variant _action;
-        Exception _toThrow;
-        ICall _lastCall = null;
-        ICall _nextCall = null;
-    }
-
-    bool HasAction () {
-        return _void 
-            || _passThrough
-            || _returnValue.hasValue 
-            || _toThrow !is null 
-            || _action.hasValue;
-    }
-
-    void Throw (Exception e) {
-        _toThrow = e;
-    }
-
-    Exception ToThrow () {
-        return _toThrow;
-    }
-
-    override string toString () {
-        version(MocksDebug) writefln("trying get arg char[]");
-        char[] args = (_arguments == null) ? "(<unknown>)" : _arguments.toString;
-        version(MocksDebug) writefln("trying get callcount char[]");
-        char[] callCount = dmocks.Util.toString(_callCount);
-        version(MocksDebug) writefln("trying get repeat char[]");
-        char[] expected = _repeat.toString;
-        version(MocksDebug) writefln("putting it together");
-        char[] ret = _name ~ args ~ " Expected: " ~ expected ~ " Actual: " ~ callCount;
-        version(MocksDebug) writefln("returning");
-        return ret;
-        /*
-        return _mocked.GetUnmockedTypeNameString() ~ `.` ~ _name ~ args ~
-                " Expected: " ~ dmocks.Util.toString(_callCount) ~
-                " Actual " ~ _repeat.toString;*/
-    }
-
-    bool Satisfied () {
-        return _callCount <= _repeat.Max && _callCount >= _repeat.Min;
-    }
-
-    void Repeat (Interval value) {
-        if (value.Valid() && value.Max >= 0) {
-            _repeat = value;
-        } else {
-            throw new InvalidOperationException("Repeat interval must be a valid interval allowing a nonnegative number of repetitions.");
-        }
-    }
-
-    Interval Repeat () { return _repeat; }
-
-    override int opEquals (Object other) {
-        auto call = cast(typeof(this)) other;
-        if (call is null) {
-            version(MocksDebug) writefln("Call.opEquals: wrong type");
-            return false;
-        }
-
-        if (call._mocked !is _mocked) {
-            version(MocksDebug) writefln("Call.opEquals: wrong mock");
-            return false;
-        }
-        
-        if (call._name != _name) {
-            version(MocksDebug) writefln("Call.opEquals: wrong method; expected %s; was %s", _name, call._name);
-            return false;
-        }
-
-        if ((!_ignoreArguments) && (_arguments != call._arguments)) {
-            version(MocksDebug) writefln("Call.opEquals: wrong arguments");
-            return false;
-        }
-        return true;
-    }
-
-    void IgnoreArguments (bool value) { _ignoreArguments = value; }
-    bool IgnoreArguments () { return _ignoreArguments; }
-
-    void Void (bool value) { _void = value; }
-    bool Void () { return _void; }
-
-    Variant ReturnValue () { 
-        if (_void) {
-            throw new InvalidOperationException("voids have no return value");
-        }
-        return _returnValue; 
-    }
-
-    void ReturnValue (Variant value) { 
-        if (_void) {
-            throw new InvalidOperationException("voids have no return value");
-        }
-        _returnValue = value; 
-    }
-
-    void Called () {
-        version(MocksDebug) writefln("call called");
-        _callCount++;
-        version(MocksDebug) writefln("checking against repeat");
-        if (_callCount > _repeat.Max) {
-            version(MocksDebug) writefln("repeat violated");
-            throw new ExpectationViolationException(this);
-        }
-        version(MocksDebug) writefln("repeat verified");
-    }
-
-    // TODO: only accept delegates with arguments of same type as this
-    // call.
-    void Action (Variant action) {
-        _action = action;
-    }
-
-    Variant Action () {
-        return _action;
-    }
-
-    void SetPassThrough () {
-        _passThrough = true;
-    }
-
-    bool PassThrough () {
-        return _passThrough;
-    }
-
-    ICall LastCall () {
-        return _lastCall;
-    }
-
-    void LastCall (ICall call) {
-        version(MocksDebug) writefln("SETTING LASTCALL: ", dmocks.Util.toString(call)); 
-        _lastCall = call;
-    }
-
-    ICall NextCall () {
-        return _nextCall;
-    }
-
-    void NextCall (ICall call) {
-        version(MocksDebug) writefln("SETTING NEXTCALL: ", dmocks.Util.toString(call)); 
-        _nextCall = call;
-    }
-
-    void Ordered (bool value) { _ordered = value; }
-    bool Ordered () { return _ordered; }
-
-    this (IMocked mocked, char[] name, Arguments!(U) arguments) {
-        _mocked = mocked;
-        _name = name;
-        _arguments = arguments;
-        _repeat = Interval(1, 1);
-    }
-}
-
-
-version (MocksTest) {
-    unittest {
-        // Matching.
-        writef("Call.opEquals unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        auto o = new FakeMocked();
-        auto name = "Thwackum";
-        auto args = new Arguments!(int)(5);
-        auto args2 = new Arguments!(int)(1111);
-        auto a = new Call!(int)(o, name, args);
-        auto b = new Call!(int)(o, name, args);
-        auto c = new Call!(int)(o, name, args2);
-        auto d = new Call!()(o, name, new Arguments!()());
-        assert (a == b);
-        assert (a != c);
-        assert (d != c);
-    }
-
-    unittest {
-        writef("Call.HasAction test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-
-        auto o = new FakeMocked();
-        auto name = "Thwackum";
-        auto args = new Arguments!(int)(5);
-        auto b = new Call!(int)(o, name, args);
-    }
-
-    unittest {
-        // Ignore arguments.
-        writef("ignore arguments unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        auto o = new FakeMocked();
-        auto name = "Thwackum";
-        auto args = new Arguments!(int)(5);
-        auto args2 = new Arguments!(int)(1111);
-        auto a = new Call!(int)(o, name, args);
-        auto b = new Call!(int)(o, name, args2);
-        a.IgnoreArguments = true;
-        assert (a == b);
-        assert (b != a);
-    }
-
-    unittest {
-        writef("set repeat interval unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        auto o = new FakeMocked();
-        auto name = "Thwackum";
-        auto args = new Arguments!(int)(5);
-        auto args2 = new Arguments!(int)(1111);
-        auto a = new Call!(int)(o, name, args);
-        //auto b = new Call!(int)(o, name, args2);
-        a.Repeat(Interval(0, 1));
-        assert (a._repeat.Min == 0);
-        assert (a._repeat.Max == 1);
-    }
-
-    unittest {
-        writef("set repeat interval to invalid values unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        auto a = new Call!(int)(new FakeMocked(), "frumious", new Arguments!(int)(5));
-        //auto b = new Call!(int)(o, name, args2);
-        try {
-            a.Repeat(Interval(5, 1));
-            assert (false, "invalid interval not caught");
-        } catch {}
-        try {
-            a.Repeat(Interval(-10, -1));
-            assert (false, "invalid interval not caught");
-        } catch {}
-    }
-
-    unittest {
-        writef("complain about too many calls unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        auto a = new Call!(int)(new FakeMocked(), "frumious", new Arguments!(int)(5));
-        a.Repeat(Interval(0, 1));
-        a.Called();
-        try {
-            a.Called();
-            assert (false, "exception not thrown");
-        } catch (ExpectationViolationException e) {}
-    }
-
-    unittest {
-        writef("satisfied unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        auto a = new Call!(int)(new FakeMocked(), "frumious", new Arguments!(int)(5));
-        a.Repeat(Interval(2, 3));
-        a.Called();
-        assert (!a.Satisfied());
-        a.Called();
-        assert (a.Satisfied());
-        a.Called();
-        assert (a.Satisfied());
-        try {
-            a.Called();
-            assert (false, "exception not thrown");
-        } catch (ExpectationViolationException e) {}
-    }
-
-    unittest {
-        writef("default interval unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        auto a = new Call!(int)(new FakeMocked(), "frumious", new Arguments!(int)(5));
-        assert (a._repeat.Min == 1);
-        assert (a._repeat.Max == 1);
-    }
-
-    unittest {
-        writef("Call.toString test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        auto a = new Call!(int)(new FakeMocked(), "frumious", new Arguments!(int)(5));
-        a.Repeat(Interval(2, 3));
-        a.toString();
-    }
-
-    unittest {
-        writef("Call.toString no arguments test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        auto a = new Call!()(new FakeMocked(), "frumious", new Arguments!());
-        a.Repeat(Interval(2, 3));
-        a.toString();
-    }
-
-    unittest {
-        writef("Call set exceptions test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        auto a = new Call!()(new FakeMocked(), "frumious", new Arguments!());
-        Exception e = new Exception("DIVIDE BY CUCUMBER ERROR");
-        a.Throw(e);
-        assert (a.ToThrow() is e);
-    }
-}
-
-
-/++
-    There used to be a LOT of code duplication because D doesn't like
-    a variable whose type is an empty type tuple. This is all that remains.
- ++/
-template Arguments (U...) {
-    static if (U.length == 0) {
-        public class Arguments {
-            this () {}
-            override int opEquals (Object other) {
-                return cast(typeof(this)) other !is null;
-            }
-
-            override char[] toString () { return "()"; }
-        }
-    } else {
-        class Arguments {
-            this (U args) { Arguments = args; }
-            public U Arguments;
-            override int opEquals (Object other) {
-                auto args = cast(typeof(this)) other;
-                if (args is null) return false;
-                foreach (i, arg; Arguments) {
-                    if (args.Arguments[i] !is arg) {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-
-            override char[] toString () { 
-                char[] value = "(";
-                foreach (u; Arguments) {
-                    value ~= dmocks.Util.toString(u) ~ ", ";
-                }
-
-                return value[0..$-2] ~ ")";
-            }
-        }
-    }
 }
 
 version (MocksTest) {
@@ -663,41 +287,3 @@ version (MocksTest) {
         a.toString();
     }
 }
-
-public class ExpectationViolationException : Exception {
-    private static string _defaultMessage = "An unexpected call has occurred."; 
-    this () { super(typeof(this).stringof ~ ": " ~  _defaultMessage); }
-    
-    this (string msg) { 
-    	super(msg);
-    }
-    
-    this (ICall call) {
-        //this();
-        string msg = typeof(this).stringof ~ ": ";
-        if (call !is null) {
-            super (msg ~ call.toString());
-        } else {
-            super (msg ~ _defaultMessage);
-        }
-    }
-
-    version (MocksTest) {
-        unittest {
-            writef("ExpectationViolation constructor test...");
-            scope(failure) writefln("failed");
-            scope(success) writefln("success");
-            
-            FakeMocked o = new FakeMocked();
-            auto call = new Call!()(o, "toString", new Arguments!());
-            new ExpectationViolationException(call); 
-        }
-    }
-}
-
-public class MocksSetupException : Exception {
-    this (string msg) {
-        super (typeof(this).stringof ~ ": " ~ msg);
-    }
-}
-
