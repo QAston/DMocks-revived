@@ -8,7 +8,6 @@ import dmocks.Call;
 import std.variant;
 import std.stdio;
 
-version=MocksTest;
 version (MocksDebug) import std.stdio;
 version (MocksTest) import std.stdio;
 
@@ -560,17 +559,17 @@ version (MocksTest) {
     class Smthng : IFace {
         void foo (string s) { }
     }
-
-    unittest {
-        writefln("going through the guts of Smthng.");
-        auto foo = new Smthng();
-        auto guts = *(cast(int**)&foo);
-        auto len = __traits(classInstanceSize, Smthng) / size_t.sizeof; 
-        auto end = guts + len;
-        for (; guts < end; guts++) {
-            writefln("\t%x", *guts);
-        } 
-    }
+//
+//    unittest {
+//        writefln("going through the guts of Smthng.");
+//        auto foo = new Smthng();
+//        auto guts = *(cast(int**)&foo);
+//        auto len = __traits(classInstanceSize, Smthng) / size_t.sizeof; 
+//        auto end = guts + len;
+//        for (; guts < end; guts++) {
+//            writefln("\t%x", *guts);
+//        } 
+//    }
 
     unittest {
         writef("mock interface test...");
@@ -578,6 +577,20 @@ version (MocksTest) {
         scope(success) writefln("success");
         auto r = new Mocker;
         IFace o = r.mock!(IFace);
+        version(MocksDebug) writefln("about to call once...");
+        o.foo("hallo");
+        r.replay;
+        version(MocksDebug) writefln("about to call twice...");
+        o.foo("hallo");
+        r.verify;
+    }
+    
+    unittest {
+        writef("cast mock to interface test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
+        auto r = new Mocker;
+        IFace o = r.mock!(Smthng);
         version(MocksDebug) writefln("about to call once...");
         o.foo("hallo");
         r.replay;
