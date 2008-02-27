@@ -8,11 +8,15 @@ import dmocks.Model;
 import std.stdio;
 import std.traits;
 
-class Mocked (T) : T, IMocked {
-    version (MocksDebug) {
+
+class Mocked (T) : T, IMocked 
+{
+    version (MocksDebug) 
+    {
         pragma (msg, T.stringof);
         pragma (msg, Body!(T)());
     }
+    
     mixin (Body!(T)());
 }
 

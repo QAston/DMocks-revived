@@ -14,21 +14,10 @@ import std.metastrings;
  ++/
 string Methods (T, string name) () {
     string methodBodies = "";
-    foreach (method; __traits(getVirtualFunctions, T, name)) 
+    foreach (i, method; __traits(getVirtualFunctions, T, name)) 
     {
         alias typeof(method) func;
-        static if (is(ReturnType!(func) == void)) 
-        {
-            methodBodies ~= VoidMethod!(T.stringof, name, ParameterTypeTuple!(func));
-        } 
-        else 
-        {
-            methodBodies ~= ReturningMethod!(
-                                T.stringof,
-                                name,
-                                ReturnType!(func),
-                                ParameterTypeTuple!(func));
-        }
+        methodBodies ~= ReturningMethod!(T.stringof, name, i, !is (ReturnType!(func) == void));
     }
     return methodBodies;
 }
@@ -50,26 +39,28 @@ string Constructor (T) ()
     Returns a string containing the overload for a single function.
     This function has a return value.
  ++/
-string ReturningMethod (string type, string name, T, U...)() 
+string ReturningMethod (string type, string name, int index, bool returns)() 
 {
+	string indexstr = ToString!(index);
+	//string self = `__traits(getVirtualFunctions, T, "` ~ name ~ `")[` ~ ToString!(index) ~ `]`;
+	string self = `T.` ~ name;
+	string ret = returns ? `ReturnType!(` ~ self ~ `)` : `void`;
+	string paramTypes = `ParameterTypeTuple!(` ~ self ~ `)`;
     string qualified = type ~ `.` ~ name;
-    string args = String!(U)();
-    string argArgs = Arguments!(U);
-    string nameArgs = `"` ~ qualified ~ (U.length == 0 ? `"` : `", ` ~ argArgs);
-    string retArgs = T.stringof ~ (U.length == 0 ? `` : `, ` ~ args);
-    return `override ` ~ T.stringof ~ " " ~ name ~ "(" ~ TypedArguments!(U)() ~ ")" ~
+    return `override ` ~ ret ~ ` ` ~ name ~ `
+    		(` ~ paramTypes ~ ` params)` ~
         `{
             version(MocksDebug)version(MocksDebug) writefln("checking _owner...");
             if (_owner is null) 
             {
                 throw new Exception("owner cannot be null! Contact the stupid mocks developer.");
             }
-            auto rope = _owner.Call!(` ~ retArgs ~ `)(this, ` ~ nameArgs ~ `);
+            auto rope = _owner.Call!(` ~ ret ~ `, ` ~ paramTypes ~ `)(this, "` ~ qualified ~ `", params);
             if (rope.pass)
             {
             	static if (is (typeof (super.` ~ name ~ `)))
             	{
-            		return super.` ~ name ~ `(` ~ argArgs ~ `);
+            		return super.` ~ name ~ `(params);
             	}
             	else
             	{
@@ -78,7 +69,10 @@ string ReturningMethod (string type, string name, T, U...)()
             }
             else
             {
-            	return rope.value;
+            	static if (!is (` ~ ret ~ ` == void))
+            	{
+            		return rope.value;
+            	}
             }
         }
         `;

@@ -612,6 +612,30 @@ version (MocksTest) {
         o.foo("hallo");
         r.verify;
     }
+    
+    interface IRM 
+    {
+    	IM get();
+    	void set (IM im);
+    }
+    
+    unittest
+    {
+    	writef("return user-defined type test...");
+        scope(failure) writefln("failed");
+        scope(success) writefln("success");
+        auto r = new Mocker;
+        auto o = r.mock!(IRM);
+        auto im = r.mock!(IM);
+        version(MocksDebug) writefln("about to call once...");
+        r.expect(o.get).returns(im);
+        o.set(im);
+        r.replay;
+        version(MocksDebug) writefln("about to call twice...");
+        assert (o.get is im, "returned the wrong value");
+        o.set(im);
+        r.verify;
+    }
 
     void main () {
         writefln("All tests pass.");

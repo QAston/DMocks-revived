@@ -19,12 +19,24 @@ string toString (T) (T value)
     }
     else static if (is (typeof (value is null))) 
     {
-        return ((value is null) ? "<null>" : value.toString());
+        return ((value is null) ? "<null>" : strof(value));
     } 
     else 
     {
-        return value.toString;
+        return strof(value);
     }
+}
+
+string strof(T)(T value)
+{
+	static if (is (typeof (value.toString)))
+	{
+		return value.toString;
+	}
+	else
+	{
+		return T.stringof;
+	}
 }
 
 unittest 
