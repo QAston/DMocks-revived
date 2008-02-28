@@ -1,5 +1,5 @@
-
 module dconstructor.singleton;
 
-public interface Singleton {}
-
+public interface Singleton
+{
+}
