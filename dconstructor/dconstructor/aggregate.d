@@ -25,6 +25,16 @@ class GlobalListBuilder (TList) : AbstractBuilder!(TList[])
 	}
 }
 
+TValue[TKey] dup (TValue, TKey)(TValue[TKey] aa)
+{
+	TValue[TKey] d;
+	foreach (a, b; aa) 
+	{
+		d[a] = b;
+	}
+	return d;
+}
+
 /**
  * Provides a static, global associative array with the given keys and values.
  * Anything taking a dictionary of that type will be given this dictionary.
@@ -33,13 +43,13 @@ class GlobalDictionaryBuilder (TKey, TValue) : AbstractBuilder!(TValue [TKey])
 {
 	private TValue [TKey] _dict;
 
-	this (TKey [TValue] dict)
+	this (TValue [TKey] dict)
 	{
-		_dict = dict.dup;
+		_dict = dup(dict);
 	}
 
-	TKey [TValue] build (Builder parent)
+	TValue [TKey] build (Builder parent)
 	{
-		return _dict.dup;
+		return dup(_dict);
 	}
 }

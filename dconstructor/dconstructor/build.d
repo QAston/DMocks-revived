@@ -106,7 +106,7 @@ class Builder
 	 */
 	Builder list (TVal) (TVal[] elems)
 	{
-		wrap!(T)(new GlobalListBuilder!(TVal)(elems));
+		wrap!(TVal[])(new GlobalListBuilder!(TVal)(elems));
 		return this;
 	}
 
@@ -116,7 +116,7 @@ class Builder
 	 */
 	Builder map (TVal, TKey) (TVal [TKey] elems)
 	{
-		wrap!(T)(new GlobalDictionaryBuilder!(TKey, TVal)(elems));
+		wrap!(TVal[TKey])(new GlobalDictionaryBuilder!(TKey, TVal)(elems));
 		return this;
 	}
 
@@ -351,15 +351,34 @@ version (BuildTest)
 		}
 	}
 
-//	unittest {
-//		IFrumious one = builder.get!(Frumious);
-//		IFrumious two = builder.get!(Bandersnatch);
-//		builder.fillList([one, two]);
-//
-//		auto snark = builder.get!(Snark);
-//		assert (snark.frumiousity[0] is one);
-//		assert (snark.frumiousity[1] is two);
-//	}
+	unittest {
+		IFrumious one = builder.get!(Frumious);
+		IFrumious two = builder.get!(Bandersnatch);
+		builder.list([one, two]);
+
+		auto snark = builder.get!(Snark);
+		assert (snark.frumiousity[0] is one);
+		assert (snark.frumiousity[1] is two);
+	}
+	
+	class Boojum
+	{
+		public IFrumious[char] frumiosity;
+		this (IFrumious[char] frums)
+		{
+			frumiosity = frums;
+		}
+	}
+
+	unittest {
+		IFrumious one = builder.get!(Frumious);
+		IFrumious two = builder.get!(Bandersnatch);
+		builder.map(['a': one, 'c': two]);
+
+		auto boojum = builder.get!(Boojum);
+		assert (boojum.frumiosity['a'] is one);
+		assert (boojum.frumiosity['c'] is two);
+	}
 
 	void main ()
 	{

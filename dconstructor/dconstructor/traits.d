@@ -79,12 +79,6 @@ template ToString (int i)
 {
 	const string ToString = Tostring(i);
 }
-//
-//unittest {
-//	assert (ToChar!(5) == '5');
-//	assert (ToChar!(0) == '0');
-//	assert (ToChar!(9) == '9');
-//}
 
 unittest {
 	string str = ToString!(17795);
