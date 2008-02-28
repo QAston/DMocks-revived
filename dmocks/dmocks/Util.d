@@ -7,6 +7,12 @@ import std.utf;
 version(MocksDebug) import std.stdio;
 version(MocksTest) import std.stdio;
 
+string test(string name)() {
+	return `writef("` ~ name ~ ` test");
+			scope(failure) writefln("failed");
+			scope(success) writefln("success");`;
+}
+
 string toString (T) (T value) 
 {
     static if (is (T : T[])) 

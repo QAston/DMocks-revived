@@ -150,10 +150,12 @@ public class Mocker
    m.LastCall().returns("Are you still there?").repeat(1, 12);
    ---
 ++/
-public class ExternalCall {
+public class ExternalCall 
+{
    private ICall _call;
 
-   this (ICall call) {
+   this (ICall call) 
+   {
        _call = call;
    }
 
@@ -166,15 +168,17 @@ public class ExternalCall {
     * Params:
     *     value = the value to return
     */
-   ExternalCall returns (T)(T value) {
-       _call.ReturnValue(Variant(value));
+   ExternalCall returns (T)(T value) 
+   {
+       _call.Action.returnValue(Variant(value));
        return this;
    }
 
    /**
     * The arguments for this call will be ignored.
     */
-   ExternalCall ignoreArgs () {
+   ExternalCall ignoreArgs () 
+   {
        _call.IgnoreArguments = true;
        return this;
    }
@@ -183,8 +187,10 @@ public class ExternalCall {
     * This call must be repeated at least min times and can be repeated at
     * most max times.
     */
-   ExternalCall repeat (int min, int max) {
-       if (min > max) {
+   ExternalCall repeat (int min, int max) 
+   {
+       if (min > max) 
+       {
            throw new InvalidOperationException("The specified range is invalid.");
        }
        _call.Repeat(Interval(min, max));
@@ -194,7 +200,8 @@ public class ExternalCall {
    /**
     * This call must be repeated exactly i times.
     */
-   ExternalCall repeat (int i) {
+   ExternalCall repeat (int i) 
+   {
        _call.Repeat(Interval(i, i));
        return this;
    }
@@ -202,7 +209,8 @@ public class ExternalCall {
    /**
     * This call can be repeated any number of times.
     */
-   ExternalCall repeatAny () {
+   ExternalCall repeatAny () 
+   {
        return repeat(0, int.max);
    }
 
@@ -218,9 +226,10 @@ public class ExternalCall {
     *     .action((int i, char[] s, Object o, char c) { return -1; });
     * ---
     */
-   ExternalCall action (T, U...)(T delegate(U) action) {
+   ExternalCall action (T, U...)(T delegate(U) action) 
+   {
        Variant a = Variant(action);
-       _call.Action(a);
+       _call.Action.action = a;
        return this;
    }
 
@@ -228,8 +237,9 @@ public class ExternalCall {
     * When the method is called, throw the given exception. If there are any
     * actions specified (via the action method), they will not be executed.
     */
-   ExternalCall throws (Exception e) {
-       _call.Throw(e);
+   ExternalCall throws (Exception e) 
+   {
+       _call.Action.toThrow = e;
        return this;
    }
 
@@ -240,18 +250,14 @@ public class ExternalCall {
     * on these fields. Things such as using Object's toHash and opEquals when your
     * class doesn't override them and you use associative arrays.
     */
-   ExternalCall passThrough () {
-       _call.SetPassThrough();
+   ExternalCall passThrough () 
+   {
+       _call.Action.passThrough = true;
        return this;
    }
 }
 
 version (MocksTest) {
-	string test(string name)() {
-		return `writef("` ~ name ~ `");
-				scope(failure) writefln("failed");
-				scope(success) writefln("success");`;
-	}
 	
     class Templated(T) {}
     interface IM {
