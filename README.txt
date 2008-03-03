@@ -1,6 +1,6 @@
 dmocks : a mock object framework for the D Programming Language
 
-Version 0.2.
+Version 1.
 
 
 Rationale.
@@ -29,16 +29,16 @@ class Foo {
 
     unittest {
         Mocker m = new Mocker();
-        Bar bar = m.Mock!(Bar);
+        Bar bar = m.mock!(Bar);
         ubyte[] data = [];
-        m.Expect(bar.doSomeCalculations(data)).Return(12);
+        m.expect(bar.doSomeCalculations(data)).returns(12);
 
-        m.Replay();
+        m.replay();
 
         Foo f = new Foo(bar);
         f.calculateThings(data);
 
-        m.Verify();
+        m.verify();
     }
 }
 
@@ -55,15 +55,20 @@ class Foo {
 
     // This call can be repeated anywhere from five to nine times.
     // It must take the same arguments and will return the same value.
-    m.Expect(obj.method(args)).Return(value).Repeat(5, 9);
+    m.expect(obj.method(args)).returns(value).repeat(5, 9);
 
-    dmocks supports unordered expectations. It does not support ordered expectations, however.
+    dmocks supports unordered and ordered expectations.
 
     dmocks supports expectations on void methods, of course; unfortunately, the syntax is different (I'm looking for ways around this):
 
     mocked.method(args);
-    LastCall.Repeat(3, 4);
+    mocker.lastCall.repeat(3, 4);
 
     You can use that syntax with methods that have return values, too.
 
-    Currently, dmocks intercepts method calls on methods in Object that are not overridden, such as opEquals and opHash. This can make Bad Things happen with associative arrays. One future point is to allow the methods that are inherited from Object and not overridden to pass through. Another point is to allow methods to pass through to the original in such cases. This can cause problems for methods that use members, though, so it will not be a recommended thing if it is implemented.
+    Currently, dmocks intercepts method calls on methods in Object that are not overridden, such as opEquals and opHash. This can make Bad Things happen with associative arrays. One future point is to allow the methods that are inherited from Object and not overridden to pass through. In the meantime, though, you can do the following:
+
+	// Allow storage in associative arrays
+	// This is only necessary when mocking a concrete class, not with interfaces
+	mocker.expect(mocked.toHash).passThrough.repeatAny;
+	mocker.expect(mocked.opEquals).ignoreArgs.passThrough.repeatAny;

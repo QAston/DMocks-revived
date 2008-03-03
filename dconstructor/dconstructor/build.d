@@ -44,6 +44,7 @@ class Builder
 	 */
 	T get (T) ()
 	{
+		checkCircular();
 		static if (is (T : Singleton))
 		{
 			string mangle = T.stringof;
@@ -136,6 +137,31 @@ class Builder
 		Object [string] _built;
 		string[] _build_target_stack;
 		string _context;
+
+		void checkCircular ()
+		{
+			auto newest = _build_target_stack[$ - 1]; 
+			foreach (i, elem; _build_target_stack[0..$-2])
+			{
+				if (newest == elem)
+				{
+					circular(_build_target_stack[i..$ - 1], newest);
+				}
+			}
+		}
+
+		void circular (string[] building, string newest)
+		{
+			string msg = "Encountered circular dependencies while building ";
+			msg ~= _build_target_stack[0];
+			msg ~= ". The build stack was:\n";
+			foreach (build; building)
+			{
+				msg ~= "\t" ~ building ~ ", which requires:\n";
+			}
+			msg ~= "\t" ~ newest;
+			throw new CircularDependencyException(msg);
+		}
 
 		AbstractBuilder!(T) get_or_add (T) ()
 		{

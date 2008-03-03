@@ -1,3 +1,8 @@
+I should get information on what went wrong with setting up mocks as early as possible.
+	Return type? Store the typeid and compare.
+	Didn't set an action? Complain the next time you touch the repository.
+	etc.
+
 Maybe:
     - Partial mocks. If there's no expectation, fall back on the base class. This will work decently with the passthrough stuff, except -- CONSTRUCTOR NOT CALLED
     - Mock free functions?
