@@ -1,3 +1,5 @@
+The following license applies to all code in the Dmocks / Felt repository at DSource, unless otherwise stated.
+
 Copyright (c) 2007-2008, Christopher Wright
 All rights reserved.
 
