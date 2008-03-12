@@ -50,6 +50,7 @@ Variant toVar(T)(T obj) {
  */
 struct expect
 {
+	char[] message;
 	Variant actual;
 	Range count;
 	bool isnull = false;
@@ -58,28 +59,41 @@ struct expect
 	/**
 	 * Start an expectation with the given value.
 	 * `actual` is the real value for which any further constraints must apply.
-	 * If actual is a boolean, it is evaluated immediately; the implicit constraint is
-	 * that it is true.
+	 * In order to test a boolean value, use expect(value).equals(true); or
+	 * expect(value).equals(false);
 	 */
 	static ExpectReturn!(T) opCall (T) (T value)
 	{
-		static if (is (T == bool)) 
+		expect e;
+		return e.that(value);
+	}
+	
+	/**
+	 * Start an expectation with the given message. This message will be printed on failure.
+	 * Usage:
+	 * ---
+	 * expect.because("setup count").that(testFixture.setupcount).equals(4);
+	 * ---
+	 */
+	static expect because (char[] message)
+	{
+		expect e;
+		e.message = message;
+		return e;
+	}
+	
+	/**
+	 * Set the value that further constraints will be evaluated on.
+	 * In general usage, it is easier to use the static opCall method.
+	 */
+	expect that(T) (T value)
+	{
+		actual = Variant(value);
+		static if (isReferenceType!(T))
 		{
-			if (!value)
-			{
-				fail(format(untypedMessage, true, false));
-			}
+			isnull = value is null;
 		}
-		else 
-		{
-			expect e;
-			e.actual = Variant(value);
-			static if (isReferenceType!(T))
-			{
-				e.isnull = value is null;
-			}
-			return e;
-		}
+		return *this;
 	}
 
 	/**

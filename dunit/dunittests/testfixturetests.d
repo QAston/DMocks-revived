@@ -41,8 +41,8 @@ void main ()
 {
 	auto tests = new TestTest();
 	tests.runtests = "hallo there";
-	expect(tests.setupcount).equals(2);
-	expect(tests.teardowncount).equals(1);
-	expect(tests.test_one_count).equals(1);
-	expect(tests.test_two_count).equals(1);
+	expect.because("setup count").that(tests.setupcount).equals(2);
+	expect.because("teardown count").that(tests.teardowncount).equals(1);
+	expect.because("test one count").that(tests.test_one_count).equals(1);
+	expect.because("test two count").that(tests.test_two_count).equals(1);
 }
