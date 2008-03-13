@@ -156,6 +156,7 @@ public class ExternalCall
 
    this (ICall call) 
    {
+	   assert (call !is null, "can't create an ExternalCall if ICall is null");
        _call = call;
    }
 

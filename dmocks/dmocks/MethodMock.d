@@ -13,14 +13,19 @@ Returns a string containing the overrides for this method
 and all its overloads.
 ++/
 string Methods (T, string name) () {
+	version(MocksDebug) pragma(msg, name);
 	string methodBodies = "";
 	// This is gross! Waiting on DMD1723 to fix.
-	static if (__traits(compiles, (__traits(getVirtualFunctions, T, name))))
+	//static if (__traits(compiles, (__traits(getVirtualFunctions, T, name))))
+	static if (is (typeof(__traits(getVirtualFunctions, T, name))))
 	{
 		foreach (i, method; __traits(getVirtualFunctions, T, name)) 
 		{
-			alias typeof(method) func;
-			methodBodies ~= ReturningMethod!(T.stringof, name, i, !is (ReturnType!(func) == void));
+			static if (!__traits(isFinalFunction, func))
+			{
+				alias typeof(method) func;
+				methodBodies ~= ReturningMethod!(T.stringof, name, i, !is (ReturnType!(func) == void));
+			}
 		}
 	}
 	return methodBodies;

@@ -86,7 +86,7 @@ private
 		version (MocksDebug)
 			writefln("trying get arg string");
 		string
-				args = (_arguments == null) ? "(<unknown>)" : _arguments.toString;
+				args = (_arguments is null) ? "(<unknown>)" : _arguments.toString;
 		version (MocksDebug)
 			writefln("trying get callcount string");
 		string callCount = dmocks.Util.toString(_callCount);
