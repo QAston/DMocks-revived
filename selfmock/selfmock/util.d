@@ -12,10 +12,12 @@ char[] toString (T) (T value)
     {
         return ArrayToString(value);
     } 
+    /*
     else static if (__traits(isScalar, T)) 
     {
         return Float.toString(cast(real)value);
     }
+    */
     else static if (is (typeof (value is null))) 
     {
         return ((value is null) ? "<null>" : strof(value));
@@ -87,7 +89,7 @@ struct Interval
 
     char[] toString () 
     {
-        return std.conv.toString(min) ~ ".." ~ std.conv.toString(max);
+        return Integer.toString(min) ~ ".." ~ Integer.toString(max);
     }
 
     static Interval opCall (int min, int max) 

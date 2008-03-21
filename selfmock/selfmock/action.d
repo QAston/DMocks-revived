@@ -1,4 +1,4 @@
-module dmocks.Action;
+module selfmock.action;
 
 import tango.core.Variant;
 import selfmock.util;
@@ -120,7 +120,7 @@ public
 {
 	bool hasAction ()
 	{
-		return (_passThrough) || (_returnValue.hasValue) || (_action.hasValue) || (_toThrow !is null);
+		return (_passThrough) || (!_returnValue.isEmpty) || (!_action.isEmpty) || (_toThrow !is null);
 	}
 
 	bool passThrough ()

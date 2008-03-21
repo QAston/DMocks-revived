@@ -1,4 +1,4 @@
-module selfmock.Call;
+module selfmock.call;
 
 import tango.core.Variant;
 import selfmock.mockobject;
@@ -89,7 +89,7 @@ private
 				args = (_arguments is null) ? "(<unknown>)" : _arguments.toString;
 		version (MocksDebug)
 			writefln("trying get callcount char[]");
-		char[] callCount = selfmock.Util.toString(_callCount);
+		char[] callCount = selfmock.util.toString(_callCount);
 		version (MocksDebug)
 			writefln("trying get repeat char[]");
 		char[] expected = _repeat.toString;
@@ -104,12 +104,12 @@ private
 
 	bool satisfied ()
 	{
-		return _callCount <= _repeat.Max && _callCount >= _repeat.Min;
+		return _callCount <= _repeat.max && _callCount >= _repeat.min;
 	}
 
 	void repeat (Interval value)
 	{
-		if (value.Valid() && value.Max >= 0)
+		if (value.valid && value.max >= 0)
 		{
 			_repeat = value;
 		}
@@ -186,7 +186,7 @@ private
 		_callCount++;
 		version (MocksDebug)
 			writefln("checking against repeat");
-		if (_callCount > _repeat.Max)
+		if (_callCount > _repeat.max)
 		{
 			version (MocksDebug)
 				writefln("repeat violated");
@@ -204,7 +204,7 @@ private
 	void lastCall (ICall call)
 	{
 		version (MocksDebug)
-			writefln("SETTING LASTCALL: ", selfmock.Util.toString(call));
+			writefln("SETTING LASTCALL: ", selfmock.util.toString(call));
 		_lastCall = call;
 	}
 
@@ -216,7 +216,7 @@ private
 	void nextCall (ICall call)
 	{
 		version (MocksDebug)
-			writefln("SETTING NEXTCALL: ", selfmock.Util.toString(call));
+			writefln("SETTING NEXTCALL: ", selfmock.util.toString(call));
 		_nextCall = call;
 	}
 
@@ -238,7 +238,7 @@ private
 		_repeat = Interval(1, 1);
 		// dmd apparently complains if you have a module, property, and type
 		// all with the same name.
-		_action = new selfmock.Action.Action();
+		_action = new selfmock.action.Action();
 	}
 }
 

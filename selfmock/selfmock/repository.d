@@ -1,4 +1,4 @@
-module selfmock.Repository;
+module selfmock.repository;
 
 import selfmock.util;
 import selfmock.mockobject;
@@ -34,23 +34,23 @@ public class MockRepository
 	private void checkOrder (ICall current, ICall previous)
 	{
 		version (OrderDebug)
-			writefln("CheckOrder: init");
+			Stdout.formatln("CheckOrder: init");
 		version (OrderDebug)
-			writefln("CheckOrder: current: %s", selfmock.util.toString(current));
+			Stdout.formatln("CheckOrder: current: {}", selfmock.util.toString(current));
 		if (current !is null)
 			version (OrderDebug)
-				writefln("CheckOrder: current.Last: %s", selfmock.util.toString(
-						current.LastCall));
+				Stdout.formatln("CheckOrder: current.Last: {}", selfmock.util.toString(
+						current.lastCall));
 		version (OrderDebug)
-			writefln("CheckOrder: previous: %s", selfmock.util.toString(previous));
+			Stdout.formatln("CheckOrder: previous: {}", selfmock.util.toString(previous));
 		if (current !is null)
 			version (OrderDebug)
-				writefln("CheckOrder: previous.Next: %s", selfmock.util.toString(
-						current.NextCall));
-		if (current is null || (current.LastCall is null && previous !is null && previous.NextCall is null))
+				Stdout.formatln("CheckOrder: previous.Next: {}", selfmock.util.toString(
+						current.nextCall));
+		if (current is null || (current.lastCall is null && previous !is null && previous.nextCall is null))
 		{
 			version (OrderDebug)
-				writefln("CheckOrder: nothing to do, returning");
+				Stdout.formatln("CheckOrder: nothing to do, returning");
 			return; // nothing to do
 		}
 
@@ -67,10 +67,10 @@ public class MockRepository
 		 both ways.
 		 */
 		auto last = previous;
-		while (last !is null && last.NextCall !is null)
+		while (last !is null && last.nextCall !is null)
 		{
 			version (OrderDebug)
-				writefln("CheckOrder: checking forward");
+				Stdout.formatln("CheckOrder: checking forward");
 			if (last.nextCall == cast(Object) current)
 			{
 				break;
@@ -79,7 +79,7 @@ public class MockRepository
 			{
 				// We expected this to be called between _lastCall and icall.
 				version (OrderDebug)
-					writefln("CheckOrder: got one");
+					Stdout.formatln("CheckOrder: got one");
 				throwForwardOrderException(previous, current);
 			}
 
@@ -90,7 +90,7 @@ public class MockRepository
 		while (last !is null && last.lastCall !is null)
 		{
 			version (OrderDebug)
-				writefln("CheckOrder: checking backward");
+				Stdout.formatln("CheckOrder: checking backward");
 			if (last.lastCall == cast(Object) previous)
 			{
 				break;
@@ -99,7 +99,7 @@ public class MockRepository
 			{
 				// We expected this to be called between _lastCall and icall.
 				version (OrderDebug)
-					writefln("CheckOrder: got one");
+					Stdout.formatln("CheckOrder: got one");
 				throwBackwardOrderException(previous, current);
 			}
 
@@ -159,7 +159,7 @@ public
 	void ordered (bool value)
 	{
 		version (MocksDebug)
-			writefln("SETTING ORDERED: %s", value);
+			Stdout.formatln("SETTING ORDERED: {}", value);
 		_ordered = value;
 	}
 
@@ -201,22 +201,22 @@ public
 	ICall match (U...) (IMocked mocked, char[] name, U args)
 	{
 		version (MocksDebug)
-			writefln("about to match");
+			Stdout.formatln("about to match");
 		auto match = new Call(mocked, name, new Arguments!(U)(args));
 		version (MocksDebug)
-			writefln("created call");
+			Stdout.formatln("created call");
 
 		foreach (icall; _calls)
 		{
 			version (MocksDebug)
-				writefln("checking call");
+				Stdout.formatln("checking call");
 			if (icall == match)
 			{
 				version (MocksDebug)
-					writefln("found a match");
+					Stdout.formatln("found a match");
 				icall.called();
 				version (MocksDebug)
-					writefln("called the match");
+					Stdout.formatln("called the match");
 				if (icall.Ordered)
 				{
 					checkOrder(icall, _lastOrdered);
@@ -248,9 +248,9 @@ public
 		unittest {
 			writef("repository record/replay unit test...");
 			scope (failure)
-				writefln("failed");
+				Stdout.formatln("failed");
 			scope (success)
-				writefln("success");
+				Stdout.formatln("success");
 
 			MockRepository r = new MockRepository();
 			assert (r.recording());
@@ -263,9 +263,9 @@ public
 		unittest {
 			writef("match object with no expectations unit test...");
 			scope (failure)
-				writefln("failed");
+				Stdout.formatln("failed");
 			scope (success)
-				writefln("success");
+				Stdout.formatln("success");
 
 			MockRepository r = new MockRepository();
 			r.Match!()(new FakeMocked, "toString");
@@ -274,9 +274,9 @@ public
 		unittest {
 			writef("repository match unit test...");
 			scope (failure)
-				writefln("failed");
+				Stdout.formatln("failed");
 			scope (success)
-				writefln("success");
+				Stdout.formatln("success");
 			FakeMocked m = new FakeMocked();
 			char[] name = "Tom Jones";
 			int args = 3;
@@ -293,9 +293,9 @@ public
 		unittest {
 			writef("repository match ignore arguments unit test...");
 			scope (failure)
-				writefln("failed");
+				Stdout.formatln("failed");
 			scope (success)
-				writefln("success");
+				Stdout.formatln("success");
 			FakeMocked m = new FakeMocked();
 			char[] name = "Tom Jones";
 			int args = 3;
@@ -313,9 +313,9 @@ public
 		unittest {
 			writef("repository match counts unit test...");
 			scope (failure)
-				writefln("failed");
+				Stdout.formatln("failed");
 			scope (success)
-				writefln("success");
+				Stdout.formatln("success");
 			FakeMocked m = new FakeMocked();
 			char[] name = "Tom Jones";
 			int args = 3;
@@ -342,9 +342,9 @@ version (MocksTest)
 	unittest {
 		writef("argument equality unit test...");
 		scope (failure)
-			writefln("failed");
+			Stdout.formatln("failed");
 		scope (success)
-			writefln("success");
+			Stdout.formatln("success");
 		auto a = new Arguments!(int, real)(5, 9.7);
 		auto b = new Arguments!(int, real)(5, 9.7);
 		auto c = new Arguments!(int, real)(9, 1.1);
@@ -358,9 +358,9 @@ version (MocksTest)
 	unittest {
 		writef("argument toString unit test...");
 		scope (failure)
-			writefln("failed");
+			Stdout.formatln("failed");
 		scope (success)
-			writefln("success");
+			Stdout.formatln("success");
 		auto a = new Arguments!(int, real)(5, 9.7);
 		a.toString();
 	}

@@ -4,10 +4,10 @@ import selfmock.traits;
 
 char[] method(alias theMethod)()
 {
-    char[] name = theMethod.char[]of;
+    char[] name = theMethod.stringof;
     char[] sigargs = typedArgs!(ParameterTupleOf!(theMethod));
     char[] args = untypedArgs(ParameterTupleOf!(theMethod).length);
-    char[] returnType = ReturnType!(theMethod).char[]of;
+    char[] returnType = ReturnType!(theMethod).stringof;
     return 
     returnType ~ ` ` ~ name ~ `(` ~ sigargs ~ `)
     {
@@ -21,7 +21,7 @@ char[] typedArgs(T...)()
 {
     if (T.length)
     {
-        char[] current = T.char[]of ~ `arg` ~ ToString!(T.length);
+        char[] current = T.stringof ~ `arg` ~ ToString!(T.length);
         if (T.length > 1)
         {
             current ~= `, ` ~ typedArgs!(T[1..$])();

@@ -1,4 +1,4 @@
-module selfmock.Arguments;
+module selfmock.arguments;
 
 
 interface IArguments
