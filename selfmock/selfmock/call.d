@@ -7,10 +7,10 @@ import selfmock.arguments;
 import selfmock.action;
 
 version (MocksDebug)
-	import std.stdio;
+	import tango.io.Stdout;
 
 version (MocksTest)
-	import std.stdio;
+	import tango.io.Stdout;
 
 /++
  An abstract representation of a method call.
@@ -84,21 +84,21 @@ private
 	override char[] toString ()
 	{
 		version (MocksDebug)
-			writefln("trying get arg char[]");
+			Stdout.formatln("trying get arg char[]");
 		char[]
 				args = (_arguments is null) ? "(<unknown>)" : _arguments.toString;
 		version (MocksDebug)
-			writefln("trying get callcount char[]");
+			Stdout.formatln("trying get callcount char[]");
 		char[] callCount = selfmock.util.toString(_callCount);
 		version (MocksDebug)
-			writefln("trying get repeat char[]");
+			Stdout.formatln("trying get repeat char[]");
 		char[] expected = _repeat.toString;
 		version (MocksDebug)
-			writefln("putting it together");
+			Stdout.formatln("putting it together");
 		char[]
 				ret = _name ~ args ~ " Expected: " ~ expected ~ " Actual: " ~ callCount;
 		version (MocksDebug)
-			writefln("returning");
+			Stdout.formatln("returning");
 		return ret;
 	}
 
@@ -131,21 +131,21 @@ private
 		if (call is null)
 		{
 			version (MocksDebug)
-				writefln("Call.opEquals: wrong type");
+				Stdout.formatln("Call.opEquals: wrong type");
 			return false;
 		}
 
 		if (call._mocked !is _mocked)
 		{
 			version (MocksDebug)
-				writefln("Call.opEquals: wrong mock");
+				Stdout.formatln("Call.opEquals: wrong mock");
 			return false;
 		}
 
 		if (call._name != _name)
 		{
 			version (MocksDebug)
-				writefln("Call.opEquals: wrong method; expected %s; was %s",
+				Stdout.formatln("Call.opEquals: wrong method; expected %s; was %s",
 						_name, call._name);
 			return false;
 		}
@@ -153,7 +153,7 @@ private
 		if ((!_ignoreArguments) && (_arguments != call._arguments))
 		{
 			version (MocksDebug)
-				writefln("Call.opEquals: wrong arguments");
+				Stdout.formatln("Call.opEquals: wrong arguments");
 			return false;
 		}
 		return true;
@@ -182,18 +182,18 @@ private
 	void called ()
 	{
 		version (MocksDebug)
-			writefln("call called");
+			Stdout.formatln("call called");
 		_callCount++;
 		version (MocksDebug)
-			writefln("checking against repeat");
+			Stdout.formatln("checking against repeat");
 		if (_callCount > _repeat.max)
 		{
 			version (MocksDebug)
-				writefln("repeat violated");
+				Stdout.formatln("repeat violated");
 			throw new ExpectationViolationException(toString);
 		}
 		version (MocksDebug)
-			writefln("repeat verified");
+			Stdout.formatln("repeat verified");
 	}
 
 	ICall lastCall ()
@@ -204,7 +204,7 @@ private
 	void lastCall (ICall call)
 	{
 		version (MocksDebug)
-			writefln("SETTING LASTCALL: ", selfmock.util.toString(call));
+			Stdout.formatln("SETTING LASTCALL: ", selfmock.util.toString(call));
 		_lastCall = call;
 	}
 
@@ -216,7 +216,7 @@ private
 	void nextCall (ICall call)
 	{
 		version (MocksDebug)
-			writefln("SETTING NEXTCALL: ", selfmock.util.toString(call));
+			Stdout.formatln("SETTING NEXTCALL: ", selfmock.util.toString(call));
 		_nextCall = call;
 	}
 
@@ -247,12 +247,12 @@ version (MocksTest)
 {
 	unittest {
 		// Matching.
-		writef("Call.opEquals unit test...");
+		Stdout("Call.opEquals unit test...");
 		scope (failure)
-			writefln("failed");
+			Stdout("failed").newline;
 		scope (success)
-			writefln("success");
-		auto o = new FakeMocked();
+			Stdout("success").newline;
+		auto o = new Mocked();
 		auto name = "Thwackum";
 		auto args = new Arguments!(int)(5);
 		auto args2 = new Arguments!(int)(1111);
@@ -266,13 +266,13 @@ version (MocksTest)
 	}
 
 	unittest {
-		writef("Call.HasAction test...");
+		Stdout("Call.HasAction test...");
 		scope (failure)
-			writefln("failed");
+			Stdout.formatln("failed");
 		scope (success)
-			writefln("success");
+			Stdout.formatln("success");
 
-		auto o = new FakeMocked();
+		auto o = new Mocked();
 		auto name = "Thwackum";
 		auto args = new Arguments!(int)(5);
 		auto b = new Call(o, name, args);
@@ -280,50 +280,50 @@ version (MocksTest)
 
 	unittest {
 		// Ignore arguments.
-		writef("ignore arguments unit test...");
+		Stdout("ignore arguments unit test...");
 		scope (failure)
-			writefln("failed");
+			Stdout.formatln("failed");
 		scope (success)
-			writefln("success");
-		auto o = new FakeMocked();
+			Stdout.formatln("success");
+		auto o = new Mocked();
 		auto name = "Thwackum";
 		auto args = new Arguments!(int)(5);
 		auto args2 = new Arguments!(int)(1111);
 		auto a = new Call(o, name, args);
 		auto b = new Call(o, name, args2);
-		a.IgnoreArguments = true;
+		a.ignoreArguments = true;
 		assert (a == b);
 		assert (b != a);
 	}
 
 	unittest {
-		writef("set repeat interval unit test...");
+		Stdout("set repeat interval unit test...");
 		scope (failure)
-			writefln("failed");
+			Stdout.formatln("failed");
 		scope (success)
-			writefln("success");
-		auto o = new FakeMocked();
+			Stdout.formatln("success");
+		auto o = new Mocked();
 		auto name = "Thwackum";
 		auto args = new Arguments!(int)(5);
 		auto args2 = new Arguments!(int)(1111);
 		auto a = new Call(o, name, args);
 		//auto b = new Call(o, name, args2);
-		a.Repeat(Interval(0, 1));
-		assert (a._repeat.Min == 0);
-		assert (a._repeat.Max == 1);
+		a.repeat(Interval(0, 1));
+		assert (a._repeat.min == 0);
+		assert (a._repeat.max == 1);
 	}
 
 	unittest {
-		writef("set repeat interval to invalid values unit test...");
+		Stdout("set repeat interval to invalid values unit test...");
 		scope (failure)
-			writefln("failed");
+			Stdout.formatln("failed");
 		scope (success)
-			writefln("success");
-		auto a = new Call(new FakeMocked(), "frumious", new Arguments!(int)(5));
+			Stdout.formatln("success");
+		auto a = new Call(new Mocked(), "frumious", new Arguments!(int)(5));
 		//auto b = new Call(o, name, args2);
 		try
 		{
-			a.Repeat(Interval(5, 1));
+			a.repeat(Interval(5, 1));
 			assert (false, "invalid interval not caught");
 		}
 		catch
@@ -331,7 +331,7 @@ version (MocksTest)
 		}
 		try
 		{
-			a.Repeat(Interval(-10, -1));
+			a.repeat(Interval(-10, -1));
 			assert (false, "invalid interval not caught");
 		}
 		catch
@@ -340,17 +340,17 @@ version (MocksTest)
 	}
 
 	unittest {
-		writef("complain about too many calls unit test...");
+		Stdout("complain about too many calls unit test...");
 		scope (failure)
-			writefln("failed");
+			Stdout.formatln("failed");
 		scope (success)
-			writefln("success");
-		auto a = new Call(new FakeMocked(), "frumious", new Arguments!(int)(5));
-		a.Repeat(Interval(0, 1));
-		a.Called();
+			Stdout.formatln("success");
+		auto a = new Call(new Mocked(), "frumious", new Arguments!(int)(5));
+		a.repeat(Interval(0, 1));
+		a.called();
 		try
 		{
-			a.Called();
+			a.called();
 			assert (false, "exception not thrown");
 		}
 		catch (ExpectationViolationException e)
@@ -359,22 +359,22 @@ version (MocksTest)
 	}
 
 	unittest {
-		writef("satisfied unit test...");
+		Stdout("satisfied unit test...");
 		scope (failure)
-			writefln("failed");
+			Stdout.formatln("failed");
 		scope (success)
-			writefln("success");
-		auto a = new Call(new FakeMocked(), "frumious", new Arguments!(int)(5));
-		a.Repeat(Interval(2, 3));
-		a.Called();
-		assert (!a.Satisfied());
-		a.Called();
-		assert (a.Satisfied());
-		a.Called();
-		assert (a.Satisfied());
+			Stdout.formatln("success");
+		auto a = new Call(new Mocked(), "frumious", new Arguments!(int)(5));
+		a.repeat(Interval(2, 3));
+		a.called();
+		assert (!a.satisfied());
+		a.called();
+		assert (a.satisfied());
+		a.called();
+		assert (a.satisfied());
 		try
 		{
-			a.Called();
+			a.called();
 			assert (false, "exception not thrown");
 		}
 		catch (ExpectationViolationException e)
@@ -383,35 +383,35 @@ version (MocksTest)
 	}
 
 	unittest {
-		writef("default interval unit test...");
+		Stdout("default interval unit test...");
 		scope (failure)
-			writefln("failed");
+			Stdout.formatln("failed");
 		scope (success)
-			writefln("success");
-		auto a = new Call(new FakeMocked(), "frumious", new Arguments!(int)(5));
-		assert (a._repeat.Min == 1);
-		assert (a._repeat.Max == 1);
+			Stdout.formatln("success");
+		auto a = new Call(new Mocked(), "frumious", new Arguments!(int)(5));
+		assert (a._repeat.min == 1);
+		assert (a._repeat.max == 1);
 	}
 
 	unittest {
-		writef("Call.toString test...");
+		Stdout("Call.toString test...");
 		scope (failure)
-			writefln("failed");
+			Stdout.formatln("failed");
 		scope (success)
-			writefln("success");
-		auto a = new Call(new FakeMocked(), "frumious", new Arguments!(int)(5));
-		a.Repeat(Interval(2, 3));
+			Stdout.formatln("success");
+		auto a = new Call(new Mocked(), "frumious", new Arguments!(int)(5));
+		a.repeat(Interval(2, 3));
 		a.toString();
 	}
 
 	unittest {
-		writef("Call.toString no arguments test...");
+		Stdout("Call.toString no arguments test...");
 		scope (failure)
-			writefln("failed");
+			Stdout.formatln("failed");
 		scope (success)
-			writefln("success");
-		auto a = new Call(new FakeMocked(), "frumious", new Arguments!());
-		a.Repeat(Interval(2, 3));
+			Stdout.formatln("success");
+		auto a = new Call(new Mocked(), "frumious", new Arguments!());
+		a.repeat(Interval(2, 3));
 		a.toString();
 	}
 }

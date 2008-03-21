@@ -168,7 +168,7 @@ public
 		return _ordered;
 	}
 
-	void record (U...) (IMocked mocked, char[] name, U args, bool returns)
+	void record (U...) (Mocked mocked, char[] name, U args, bool returns)
 	{
 		checkLastCallSetup();
 		ICall call;
@@ -181,7 +181,7 @@ public
 		{
 			call = new Call(mocked, name, new Arguments!(U)());
 		}
-		call.Void(!returns);
+		call.isVoid(!returns);
 
 		if (_ordered)
 		{
@@ -198,7 +198,7 @@ public
 		_lastCall = call;
 	}
 
-	ICall match (U...) (IMocked mocked, char[] name, U args)
+	ICall match (U...) (Mocked mocked, char[] name, U args)
 	{
 		version (MocksDebug)
 			Stdout.formatln("about to match");
@@ -217,7 +217,7 @@ public
 				icall.called();
 				version (MocksDebug)
 					Stdout.formatln("called the match");
-				if (icall.Ordered)
+				if (icall.ordered)
 				{
 					checkOrder(icall, _lastOrdered);
 					_lastOrdered = icall;
@@ -246,7 +246,7 @@ public
 	version (MocksTest)
 	{
 		unittest {
-			writef("repository record/replay unit test...");
+			Stdout("repository record/replay unit test...");
 			scope (failure)
 				Stdout.formatln("failed");
 			scope (success)
@@ -261,72 +261,72 @@ public
 		}
 
 		unittest {
-			writef("match object with no expectations unit test...");
+			Stdout("match object with no expectations unit test...");
 			scope (failure)
 				Stdout.formatln("failed");
 			scope (success)
 				Stdout.formatln("success");
 
 			MockRepository r = new MockRepository();
-			r.Match!()(new FakeMocked, "toString");
+			r.match!()(new Mocked(), "toString");
 		}
 
 		unittest {
-			writef("repository match unit test...");
+			Stdout("repository match unit test...");
 			scope (failure)
 				Stdout.formatln("failed");
 			scope (success)
 				Stdout.formatln("success");
-			FakeMocked m = new FakeMocked();
+			Mocked m = new Mocked();
 			char[] name = "Tom Jones";
 			int args = 3;
 
 			MockRepository r = new MockRepository();
-			r.Record!(int)(m, name, args, false);
-			r.Record!(int)(m, name, args, false);
-			ICall call = r.Match!(int)(m, name, args);
+			r.record!(int)(m, name, args, false);
+			r.record!(int)(m, name, args, false);
+			ICall call = r.match!(int)(m, name, args);
 			assert (call !is null);
-			call = r.Match!(int)(m, name, args + 5);
+			call = r.match!(int)(m, name, args + 5);
 			assert (call is null);
 		}
 
 		unittest {
-			writef("repository match ignore arguments unit test...");
+			Stdout("repository match ignore arguments unit test...");
 			scope (failure)
 				Stdout.formatln("failed");
 			scope (success)
 				Stdout.formatln("success");
-			FakeMocked m = new FakeMocked();
+			Mocked m = new Mocked();
 			char[] name = "Tom Jones";
 			int args = 3;
 
 			MockRepository r = new MockRepository();
-			r.Record!(int)(m, name, args, false);
-			r.Record!(int)(m, name, args, false);
-			r._lastCall.IgnoreArguments = true;
-			ICall call = r.Match!(int)(m, name, args);
+			r.record!(int)(m, name, args, false);
+			r.record!(int)(m, name, args, false);
+			r._lastCall.ignoreArguments = true;
+			ICall call = r.match!(int)(m, name, args);
 			assert (call !is null);
-			call = r.Match!(int)(m, name, args + 5);
+			call = r.match!(int)(m, name, args + 5);
 			assert (call !is null);
 		}
 
 		unittest {
-			writef("repository match counts unit test...");
+			Stdout("repository match counts unit test...");
 			scope (failure)
 				Stdout.formatln("failed");
 			scope (success)
 				Stdout.formatln("success");
-			FakeMocked m = new FakeMocked();
+			Mocked m = new Mocked();
 			char[] name = "Tom Jones";
 			int args = 3;
 
 			MockRepository r = new MockRepository();
-			r.Record!(int)(m, name, args, false);
-			ICall call = r.Match!(int)(m, name, args);
+			r.record!(int)(m, name, args, false);
+			ICall call = r.match!(int)(m, name, args);
 			assert (call !is null);
 			try
 			{
-				call = r.Match!(int)(m, name, args);
+				call = r.match!(int)(m, name, args);
 				assert (false, "expected exception not called");
 			}
 			catch (ExpectationViolationException e)
@@ -340,7 +340,7 @@ public
 version (MocksTest)
 {
 	unittest {
-		writef("argument equality unit test...");
+		Stdout("argument equality unit test...");
 		scope (failure)
 			Stdout.formatln("failed");
 		scope (success)
@@ -356,7 +356,7 @@ version (MocksTest)
 	}
 
 	unittest {
-		writef("argument toString unit test...");
+		Stdout("argument toString unit test...");
 		scope (failure)
 			Stdout.formatln("failed");
 		scope (success)

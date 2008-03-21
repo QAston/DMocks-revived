@@ -2,7 +2,7 @@ module selfmock.action;
 
 import tango.core.Variant;
 import selfmock.util;
-version (MocksTest) import std.stdio;
+version (MocksTest) import tango.io.Stdout;
 
 interface IAction
 {
@@ -179,7 +179,7 @@ version (MocksTest)
 		mixin(test!("action returnValue"));
 		Variant v = 5;
 		Action act = new Action;
-		assert (!act.returnValue.hasValue);
+		assert (act.returnValue.isEmpty);
 		act.returnValue = v;
 		assert (act.returnValue() == 5);
 	}
@@ -189,7 +189,7 @@ version (MocksTest)
 		mixin(test!("action action"));
 		Variant v = 5;
 		Action act = new Action;
-		assert (!act.action.hasValue);
+		assert (act.action.isEmpty);
 		act.action = v;
 		assert (act.action() == v);
 	}

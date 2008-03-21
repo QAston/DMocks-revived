@@ -35,7 +35,7 @@ template Arguments (U...)
         {
             this (U args) 
             { 
-            	Arguments = args; 
+            	arguments = args; 
             }
             
             public U arguments;

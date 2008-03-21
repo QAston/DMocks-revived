@@ -7,8 +7,8 @@ import selfmock.call;
 import tango.core.Variant;
 import tango.io.Stdout;
 
-version (MocksDebug) import std.stdio;
-version (MocksTest) import std.stdio;
+version (MocksDebug) import tango.io.Stdout;
+version (MocksTest) import tango.io.Stdout;
 
 /++
     A class through which one creates mock objects and manages expected calls. 
@@ -91,7 +91,8 @@ public class Mocker
          * m.expect(o.toString).returns("hello?");
          * ---
          */
-        ExternalCall expect (T) (T ignored) {
+        ExternalCall expect (T) (T ignored) 
+        {
             return lastCall();
         }
 
@@ -108,7 +109,8 @@ public class Mocker
          * m.LastCall().returns("hello?");
          * ---
          */
-        ExternalCall lastCall () {
+        ExternalCall lastCall () 
+        {
             return new ExternalCall(_repository.lastCall);
         }
 
@@ -117,12 +119,14 @@ public class Mocker
          * Things where you want to allow this method to be called, but you aren't
          * currently testing for it.
          */
-        ExternalCall allowing (T) (T ignored) {
+        ExternalCall allowing (T) (T ignored) 
+        {
             return lastCall.repeatAny;
         }
 
         /** Ditto */
-        ExternalCall allowing (T = void) () {
+        ExternalCall allowing (T = void) () 
+        {
             return lastCall.repeatAny();
         }
 
@@ -132,7 +136,8 @@ public class Mocker
          * cases). By default, if no return value, exception, delegate, or
          * passthrough option is set, an exception will be thrown.
          */
-        void allowDefaults () {
+        void allowDefaults () 
+        {
             _repository.allowDefaults = true;
         }
     }
@@ -257,429 +262,7 @@ public class ExternalCall
    }
 }
 
-version (MocksTest) {
-	
-    class Templated(T) {}
-    interface IM {
-        void bar ();
-    }
-
-    class ConstructorArg {
-        this (int i) {}
-    }
-
-    unittest {
-        writef("nontemplated mock unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        (new Mocker()).mock!(Object);
-    }
-
-    unittest {
-        writef("templated mock unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        (new Mocker()).mock!(Templated!(int));
-    }
-
-    unittest {
-        writef("templated mock unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        (new Mocker()).mock!(IM);
-    }
-
-    unittest {
-        writef("execute mock method unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        auto r = new Mocker();
-        auto o = r.mock!(Object);
-        o.toString();
-        assert (r.lastCall()._call !is null);
-    }
-
-//    unittest {
-//        writef("constructor argument unit test...");
-//        scope(failure) writefln("failed");
-//        scope(success) writefln("success");
-//        auto r = new Mocker();
-//        r.mock!(ConstructorArg);
-//    }
-
-    unittest {
-        writef("lastCall test...");
-        scope(success) writefln("success");
-        scope(failure) writefln("failure");
-
-        Mocker m = new Mocker();
-        Object o = m.mock!(Object);
-        o.print;
-        auto e = m.lastCall;
-
-        assert (e._call !is null);
-    }
-
-    unittest {
-        writef("return a value test...");
-        scope(success) writefln("success");
-        scope(failure) writefln("failure");
-
-        Mocker m = new Mocker();
-        Object o = m.mock!(Object);
-        o.toString;
-        auto e = m.lastCall;
-
-        assert (e._call !is null);
-        e.returns("frobnitz");
-    }
-
-    unittest {
-        writef("expect test...");
-        scope(success) writefln("success");
-        scope(failure) writefln("failure");
-
-        Mocker m = new Mocker();
-        Object o = m.mock!(Object);
-        m.expect(o.toString).repeat(0).returns("mrow?");
-        m.replay();
-        try {
-            o.toString;
-        } catch (Exception e) {}
-    }
-
-    unittest {
-        writef("repeat single test...");
-        scope(success) writefln("success");
-        scope(failure) writefln("failure");
-
-        Mocker m = new Mocker();
-        Object o = m.mock!(Object);
-        m.expect(o.toString).repeat(2).returns("foom?");
-
-        m.replay();
-
-        o.toString;
-        o.toString;
-        try {
-            o.toString;
-            assert (false, "expected exception not thrown");
-        } catch (ExpectationViolationException) {}
-    }
-
-    unittest {
-        writef("repository match counts unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-
-        auto r = new Mocker();
-        auto o = r.mock!(Object);
-        o.toString;
-        r.lastCall().repeat(2, 2).returns("mew.");
-        r.replay();
-        try {
-            r.verify();
-            assert (false, "expected exception not thrown");
-        } catch (ExpectationViolationException) {}
-    }
-
-    unittest {
-        writef("delegate payload test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-
-        bool calledPayload = false;
-        Mocker r = new Mocker();
-        auto o = r.mock!(Object);
-
-        o.print;
-        r.lastCall().action({ calledPayload = true; });
-        r.replay();
-
-        o.print;
-        assert (calledPayload);
-    }
-
-    unittest {
-        writef("exception payload test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-
-        Mocker r = new Mocker();
-        auto o = r.mock!(Object);
-
-        char[] msg = "divide by cucumber error";
-        o.print;
-        r.lastCall().throws(new Exception(msg));
-        r.replay();
-
-        try {
-            o.print;
-            assert (false, "expected exception not thrown");
-        } catch (Exception e) {
-            // Careful -- assertion errors derive from Exception
-            assert (e.msg == msg, e.msg);
-        }
-    }
-
-    class HasPrivateMethods {
-        protected void method () {}
-    }
-
-    unittest {
-        writef("passthrough test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-
-        Mocker r = new Mocker();
-        auto o = r.mock!(Object);
-        o.toString;
-        r.lastCall().passThrough();
-
-        r.replay();
-        char[] str = o.toString;
-        assert (str == "selfmock.MockObject.Mocked!(Object).Mocked", str);
-    }
-
-    unittest {
-        writef("associative arrays test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-
-        Mocker r = new Mocker();
-        auto o = r.mock!(Object);
-        r.expect(o.toHash()).passThrough().repeatAny;
-        r.expect(o.opEquals(null)).ignoreArgs().passThrough().repeatAny;
-
-        r.replay();
-        int[Object] i;
-        i[o] = 5;
-        int j = i[o];
-    }
-
-    unittest {
-        writef("ordering in order test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-
-        Mocker r = new Mocker();
-        auto o = r.mock!(Object);
-        r.ordered;
-        r.expect(o.toHash).returns(cast(hash_t)5);
-        r.expect(o.toString).returns("mow!");
-
-        r.replay();
-        o.toHash;
-        o.toString;
-        r.verify;
-    }
-
-    unittest {
-        writef("ordering not in order test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-
-        Mocker r = new Mocker();
-        auto o = r.mock!(Object);
-        r.ordered;
-        r.expect(o.toHash).returns(5);
-        r.expect(o.toString).returns("mow!");
-
-        r.replay();
-        try {
-            o.toString;
-            o.toHash;
-            assert (false);
-        } catch (ExpectationViolationException) {}
-    }
-
-    unittest {
-        writef("ordering interposed test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-
-        Mocker r = new Mocker();
-        auto o = r.mock!(Object);
-        r.ordered;
-        r.expect(o.toHash).returns(cast(hash_t)5);
-        r.expect(o.toString).returns("mow!");
-        r.unordered;
-        o.print;
-
-        r.replay();
-        o.toHash;
-        o.print;
-        o.toString;
-    }
-
-    unittest {
-        writef("allowing test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-
-        Mocker r = new Mocker();
-        auto o = r.mock!(Object);
-        r.allowing(o.toString).returns("foom?");
-
-        r.replay();
-        o.toString;
-        o.toString;
-        o.toString;
-        r.verify;
-    }
-
-    unittest {
-        writef("nothing for method to do test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-
-        try {
-            Mocker r = new Mocker();
-            auto o = r.mock!(Object);
-            r.allowing(o.toString);
-
-            r.replay();
-            assert (false, "expected a mocks setup exception");
-        } catch (MocksSetupException e) {
-        }
-    }
-
-    unittest {
-        writef("allow defaults test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-
-        Mocker r = new Mocker();
-        auto o = r.mock!(Object);
-        r.allowDefaults;
-        r.allowing(o.toString);
-
-        r.replay();
-        assert (o.toString == (char[]).init);
-    }
-
-    interface IFace {
-        void foo (char[] s);
-    }
-
-    class Smthng : IFace {
-        void foo (char[] s) { }
-    }
-//
-//    unittest {
-//        writefln("going through the guts of Smthng.");
-//        auto foo = new Smthng();
-//        auto guts = *(cast(int**)&foo);
-//        auto len = __traits(classInstanceSize, Smthng) / size_t.sizeof; 
-//        auto end = guts + len;
-//        for (; guts < end; guts++) {
-//            writefln("\t%x", *guts);
-//        } 
-//    }
-
-    unittest {
-        writef("mock interface test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        auto r = new Mocker;
-        IFace o = r.mock!(IFace);
-        version(MocksDebug) writefln("about to call once...");
-        o.foo("hallo");
-        r.replay;
-        version(MocksDebug) writefln("about to call twice...");
-        o.foo("hallo");
-        r.verify;
-    }
-    
-    unittest {
-        writef("cast mock to interface test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        auto r = new Mocker;
-        IFace o = r.mock!(Smthng);
-        version(MocksDebug) writefln("about to call once...");
-        o.foo("hallo");
-        r.replay;
-        version(MocksDebug) writefln("about to call twice...");
-        o.foo("hallo");
-        r.verify;
-    }
-
-    unittest {
-        writef("cast mock to interface test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        auto r = new Mocker;
-        IFace o = r.mock!(Smthng);
-        version(MocksDebug) writefln("about to call once...");
-        o.foo("hallo");
-        r.replay;
-        version(MocksDebug) writefln("about to call twice...");
-        o.foo("hallo");
-        r.verify;
-    }
-    
-    interface IRM 
-    {
-    	IM get();
-    	void set (IM im);
-    }
-    
-    unittest
-    {
-    	writef("return user-defined type test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        auto r = new Mocker;
-        auto o = r.mock!(IRM);
-        auto im = r.mock!(IM);
-        version(MocksDebug) writefln("about to call once...");
-        r.expect(o.get).returns(im);
-        o.set(im);
-        r.replay;
-        version(MocksDebug) writefln("about to call twice...");
-        assert (o.get is im, "returned the wrong value");
-        o.set(im);
-        r.verify;
-    }
-    
-    class HasMember
-    {
-    	int member;
-    }
-    
-    unittest
-    {
-    	writef("return user-defined type test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        auto r = new Mocker;
-        auto o = r.mock!(HasMember);    	
-    }
-
-    class Overloads
-    {
-    	void foo() {}
-    	void foo(int i) {}
-    }
-    
-    unittest
-    {
-    	writef("overloaded method test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
-        auto r = new Mocker;
-        auto o = r.mock!(Overloads);  
-        o.foo();
-        o.foo(1);
-        r.replay;
-        o.foo(1);
-        o.foo;
-        r.verify;
-    }
-    
-    void main () {
-        writefln("All tests pass.");
-    }
-
+version (MocksTest) 
+{
+    void main(){}
 }
