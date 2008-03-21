@@ -55,6 +55,18 @@ struct expect
 	Range count;
 	bool isnull = false;
 	bool truth = true;
+	
+	private void fail(char[] msg)
+	{
+		if (message.length)
+		{
+			throw new AssertionError(msg ~ " -- " ~ this.message);
+		}
+		else
+		{
+			throw new AssertionError(msg);
+		}
+	}
 
 	/**
 	 * Start an expectation with the given value.
@@ -88,10 +100,21 @@ struct expect
 	 */
 	expect that(T) (T value)
 	{
-		actual = Variant(value);
-		static if (isReferenceType!(T))
+		actual = value;
+		static if (is (typeof (value is null)))
 		{
-			isnull = value is null;
+			if (value is null)
+			{
+				isnull = true;
+			}
+			else
+			{
+				isnull = false;
+			}
+		}
+		else
+		{
+			isnull = false;
 		}
 		return *this;
 	}
@@ -136,7 +159,7 @@ struct expect
 					standardMessage, 
 					(truth) ? "equal to" : "not equal to", 
 					toString(var), 
-					toString(actual)));
+					actualString()));
 		}
 	}
 
@@ -156,9 +179,34 @@ struct expect
 				format("same as {0}", toString(var)),
 				truth);
 		}
-		else if ((actual.get!(T) is expected) != truth)
+		else
 		{
-			fail(format(standardMessage, "same as", toString(var), toString(actual)));
+			bool same = false;
+			static if (is (typeof (expected is null)))
+			{
+				if (expected is null)
+				{
+					same = isnull;
+				}
+			}
+			if (!same)
+			{
+				try 
+				{
+					T trial = actual.get!(T);
+					if (trial is expected)
+					{
+						same = true;
+					}
+				}
+				catch (VariantTypeMismatchException)
+				{
+				}
+			}
+			if (same != truth)
+			{
+				fail(format(standardMessage, "same as", toString(var), actualString()));
+			}
 		}
 	}
 
@@ -254,25 +302,43 @@ struct expect
 	 */
 	void isNull()
 	{
-		if ((actual.isImplicitly!(Object) && actual.get!(Object) is null) == truth)
-		{
-			return;
-		}
-		if ((actual.isImplicitly!(void*) && actual.get!(void*) is null) == truth)
+		if (isnull == truth)
 		{
 			return;
 		}
 		
-		fail(format(untypedMessage, truth ? "null" : "not null", toString(actual)));
+		fail(format(untypedMessage, truth ? "null" : "not null", actualString()));
 	}
 	
 	void isNaN()
 	{
 		if ((actual.isImplicitly!(real) && isnan(actual.get!(real))) != truth) 
 		{
-			fail(format(untypedMessage, "Not a Number", toString(actual)));
+			fail(format(untypedMessage, "Not a Number", actualString()));
 		}
 	}
+
+    void isA(T)()
+    {
+        bool failed = false;
+        try
+        {
+            failed = (actual.get!(T) is null);
+        }
+        catch (VariantTypeMismatchException)
+        {
+            failed = true;
+        }
+        if (failed)
+        {
+            fail(format(standardMessage, `instance of type `, T.stringof, actualString()));
+        }
+    }
+    
+    private char[] actualString()
+    {
+    	return (isnull) ? "null" : toString(actual);
+    }
 }
 
 // uncomment the following line to run tests

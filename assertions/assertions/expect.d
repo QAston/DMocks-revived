@@ -377,6 +377,17 @@ version (AssertionsTest)
 		
 		try 
 		{
+			expect(null).not.isNull; // Fails: not in exact range specified
+			failed = true;
+		}
+		catch (AssertionError e) 
+		{
+			Stdout(e.msg).newline;
+		}
+		expect(!failed);
+		
+		try 
+		{
 			expect("hello"[]).equals("boowah"[]);
 			failed = true;
 		}

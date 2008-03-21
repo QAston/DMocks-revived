@@ -54,9 +54,13 @@ class Builder
 				return cast(T) _built[mangle];
 			}
 		}
+		
+		_build_target_stack ~= T.stringof;
 
 		auto b = get_or_add!(T)();
 		T obj = b.build(this);
+		
+		_build_target_stack = _build_target_stack[0..$-1];
 
 		static if (is (T : Singleton))
 		{
@@ -130,6 +134,11 @@ class Builder
 		}
 		return null;
 	}
+	
+	public void autobuild (bool value)
+	{
+		_autobuild = value;
+	}
 
 	private
 	{
@@ -137,6 +146,7 @@ class Builder
 		Object [string] _built;
 		string[] _build_target_stack;
 		string _context;
+		bool _autobuild = false;
 
 		void checkCircular ()
 		{
@@ -170,10 +180,26 @@ class Builder
 			{
 				return cast(AbstractBuilder!(T)) _builders[mangle];
 			}
+			
+			if (!_autobuild)
+			{
+				buildexception();
+			}
 
 			auto b = make_builder!(T)();
 			_builders[mangle] = b;
 			return b;
+		}
+		
+		void buildexception()
+		{
+			string msg = "Could not instantiate type " ~ _build_target_stack[0] ~ ". Error was: could not build ";
+			foreach (target; _build_target_stack[0..$-1])
+			{
+				msg ~= `type ` ~ target ~ " which it is waiting for dependencies:\n";
+			}
+			msg ~= `type ` ~ _build_target_stack[$-1] ~ " which was not registered";
+			throw new BindingException(msg);
 		}
 
 		AbstractBuilder!(T) wrap (T) (AbstractBuilder!(T) b)
@@ -404,6 +430,18 @@ version (BuildTest)
 		auto boojum = builder.get!(Boojum);
 		assert (boojum.frumiosity['a'] is one);
 		assert (boojum.frumiosity['c'] is two);
+	}
+	
+	class Fred
+	{
+		this (IFrumious frum)
+		{
+			
+		}
+	}
+	
+	unittest {
+		builder.get!(Fred);
 	}
 
 	void main ()

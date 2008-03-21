@@ -1,5 +1,6 @@
 module dunit.testfixture;
-import tango.io.Stdout;
+import dunit.repository;
+import dunit.exception;
 
 /**
  * This is the base class for user-defined test fixtures. 
@@ -43,6 +44,13 @@ public abstract class TestFixture
 		 */
 		void delegate () [char[]] tests;
 		
+		void delegate () failing(TException)(void delegate() test)
+		{
+			auto closure = new catcher!(TException);
+			closure.dg = test;
+			return &closure.call;
+		}
+		
 		/** 
 		 * This method gets called before every test. Override it for any test fixture-specific behavior.  
 		 */
@@ -52,23 +60,24 @@ public abstract class TestFixture
 		 * This method gets called after every test. Override it for any test fixture-specific behavior. 
 		 */
 		void teardown () {}
-		
-		final void runtests (char[] fixtureName)
+	}
+}
+
+struct catcher(TException)
+{
+	void delegate() dg;
+	void call()
+	{
+		try
 		{
-			Stdout.formatln("Running test fixture {}:", fixtureName);
-			foreach (name, test; tests)
+			dg();
+			throw new AssertionError("Expected exception of type " ~ TException.stringof ~ " but none was thrown.");
+		}
+		catch (TException ex)
+		{
+			if (ex.classinfo !is TException.classinfo)
 			{
-				try
-				{
-					setup();
-					test();
-					teardown();
-					Stdout.formatln("\tTest {} passed.", name).newline;
-				}
-				catch (Object o)
-				{
-					Stdout.formatln("\tTest {} failed: {}", name, o);
-				}
+				throw ex;
 			}
 		}
 	}

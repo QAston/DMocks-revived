@@ -2,7 +2,7 @@ module assertions.exception;
 
 import tango.core.Exception;
 
-class UnsupportedOperationException : TracedException
+class UnsupportedOperationException : Exception
 {
 	this (char[] message) 
 	{
@@ -10,7 +10,7 @@ class UnsupportedOperationException : TracedException
 	}
 }
 
-class AssertionError : TracedException
+class AssertionError : Exception
 {
 	this (char[] message)
 	{

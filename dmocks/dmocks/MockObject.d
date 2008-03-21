@@ -12,31 +12,32 @@ class Mocked (T) : T, IMocked
     version (MocksDebug) 
     {
         pragma (msg, T.stringof);
-        pragma (msg, Body!(T)());
+        pragma (msg, Body!(T));
     }
     
-    mixin ((Body!(T)()));
+    mixin ((Body!(T)));
 }
 
-string Body (T) () {
-    return 
+template Body (T) 
+{
+    enum Body = 
    ` 
         public Caller _owner;
         `
             ~ Constructor!(T)()
-            ~  BodyPart!(T, 0)(); 
+            ~  BodyPart!(T, 0); 
 }
 
-string BodyPart (T, int i) ()
+template BodyPart (T, int i)
 {
-	pragma(msg, __traits(allMembers, T)[i]);
-    static if (i < __traits(allMembers, T).length - 1) 
+    static if (i < __traits(allMembers, T).length) 
     {
-    	return Methods!(T, __traits(allMembers, T)[i]) ~ BodyPart!(T, i + 1)();
+    	//pragma(msg, __traits(allMembers, T)[i]);
+    	enum BodyPart = Methods!(T, __traits(allMembers, T)[i]) ~ BodyPart!(T, i + 1)();
     }
     else 
     {
-    	return Methods!(T, __traits(allMembers, T)[i]);
+    	enum BodyPart = ``;
     }
 }
 
