@@ -36,17 +36,19 @@ public class MockRepository
 		version (OrderDebug)
 			Stdout.formatln("CheckOrder: init");
 		version (OrderDebug)
-			Stdout.formatln("CheckOrder: current: {}", selfmock.util.toString(current));
+			Stdout.formatln("CheckOrder: current: {}", selfmock.util.toString(
+					current));
 		if (current !is null)
 			version (OrderDebug)
-				Stdout.formatln("CheckOrder: current.Last: {}", selfmock.util.toString(
-						current.lastCall));
+				Stdout.formatln("CheckOrder: current.Last: {}",
+						selfmock.util.toString(current.lastCall));
 		version (OrderDebug)
-			Stdout.formatln("CheckOrder: previous: {}", selfmock.util.toString(previous));
+			Stdout.formatln("CheckOrder: previous: {}", selfmock.util.toString(
+					previous));
 		if (current !is null)
 			version (OrderDebug)
-				Stdout.formatln("CheckOrder: previous.Next: {}", selfmock.util.toString(
-						current.nextCall));
+				Stdout.formatln("CheckOrder: previous.Next: {}",
+						selfmock.util.toString(current.nextCall));
 		if (current is null || (current.lastCall is null && previous !is null && previous.nextCall is null))
 		{
 			version (OrderDebug)
@@ -125,216 +127,216 @@ public class MockRepository
 		throw new ExpectationViolationException(msg);
 	}
 
-public
-{
-	void allowDefaults (bool value)
+	public
 	{
-		_allowDefaults = value;
-	}
-
-	bool recording ()
-	{
-		return _recording;
-	}
-
-	void replay ()
-	{
-		checkLastCallSetup();
-		_recording = false;
-		_lastCall = null;
-		_lastOrdered = null;
-	}
-
-
-	void backToRecord ()
-	{
-		_recording = true;
-	}
-
-	ICall lastCall ()
-	{
-		return _lastCall;
-	}
-
-	void ordered (bool value)
-	{
-		version (MocksDebug)
-			Stdout.formatln("SETTING ORDERED: {}", value);
-		_ordered = value;
-	}
-
-	bool ordered ()
-	{
-		return _ordered;
-	}
-
-	void record (U...) (Mocked mocked, char[] name, U args, bool returns)
-	{
-		checkLastCallSetup();
-		ICall call;
-		// I hate having to check for an empty tuple.
-		static if (U.length)
+		void allowDefaults (bool value)
 		{
-			call = new Call(mocked, name, new Arguments!(U)(args));
-		}
-		else
-		{
-			call = new Call(mocked, name, new Arguments!(U)());
-		}
-		call.isVoid(!returns);
-
-		if (_ordered)
-		{
-			call.ordered = true;
-			call.lastCall = _lastOrdered;
-			if (_lastOrdered !is null)
-			{
-				_lastOrdered.nextCall = call;
-			}
-			_lastOrdered = call;
+			_allowDefaults = value;
 		}
 
-		_calls ~= call;
-		_lastCall = call;
-	}
+		bool recording ()
+		{
+			return _recording;
+		}
 
-	ICall match (U...) (Mocked mocked, char[] name, U args)
-	{
-		version (MocksDebug)
-			Stdout.formatln("about to match");
-		auto match = new Call(mocked, name, new Arguments!(U)(args));
-		version (MocksDebug)
-			Stdout.formatln("created call");
+		void replay ()
+		{
+			checkLastCallSetup();
+			_recording = false;
+			_lastCall = null;
+			_lastOrdered = null;
+		}
 
-		foreach (icall; _calls)
+
+		void backToRecord ()
+		{
+			_recording = true;
+		}
+
+		ICall lastCall ()
+		{
+			return _lastCall;
+		}
+
+		void ordered (bool value)
 		{
 			version (MocksDebug)
-				Stdout.formatln("checking call");
-			if (icall == match)
-			{
-				version (MocksDebug)
-					Stdout.formatln("found a match");
-				icall.called();
-				version (MocksDebug)
-					Stdout.formatln("called the match");
-				if (icall.ordered)
-				{
-					checkOrder(icall, _lastOrdered);
-					_lastOrdered = icall;
-				}
-
-				_lastCall = icall;
-				return icall;
-			}
+				Stdout.formatln("SETTING ORDERED: {}", value);
+			_ordered = value;
 		}
-		return null;
-	}
 
-	void verify ()
-	{
-		foreach (call; _calls)
+		bool ordered ()
 		{
-			if (!call.satisfied)
+			return _ordered;
+		}
+
+		void record (U...) (Mocked mocked, char[] name, U args, bool returns)
+		{
+			checkLastCallSetup();
+			ICall call;
+			// I hate having to check for an empty tuple.
+			static if (U.length)
 			{
-				// TODO: eventually we'll aggregate these, but for now,
-				// just quit on the first one.
-				throw new ExpectationViolationException(call.toString());
+				call = new Call(mocked, name, new Arguments!(U)(args));
+			}
+			else
+			{
+				call = new Call(mocked, name, new Arguments!(U)());
+			}
+			call.isVoid(!returns);
+
+			if (_ordered)
+			{
+				call.ordered = true;
+				call.lastCall = _lastOrdered;
+				if (_lastOrdered !is null)
+				{
+					_lastOrdered.nextCall = call;
+				}
+				_lastOrdered = call;
+			}
+
+			_calls ~= call;
+			_lastCall = call;
+		}
+
+		ICall match (U...) (Mocked mocked, char[] name, U args)
+		{
+			version (MocksDebug)
+				Stdout.formatln("about to match");
+			auto match = new Call(mocked, name, new Arguments!(U)(args));
+			version (MocksDebug)
+				Stdout.formatln("created call");
+
+			foreach (icall; _calls)
+			{
+				version (MocksDebug)
+					Stdout.formatln("checking call");
+				if (icall == match)
+				{
+					version (MocksDebug)
+						Stdout.formatln("found a match");
+					icall.called();
+					version (MocksDebug)
+						Stdout.formatln("called the match");
+					if (icall.ordered)
+					{
+						checkOrder(icall, _lastOrdered);
+						_lastOrdered = icall;
+					}
+
+					_lastCall = icall;
+					return icall;
+				}
+			}
+			return null;
+		}
+
+		void verify ()
+		{
+			foreach (call; _calls)
+			{
+				if (!call.satisfied)
+				{
+					// TODO: eventually we'll aggregate these, but for now,
+					// just quit on the first one.
+					throw new ExpectationViolationException(call.toString());
+				}
+			}
+		}
+
+		version (MocksTest)
+		{
+			unittest {
+				Stdout("repository record/replay unit test...");
+				scope (failure)
+					Stdout.formatln("failed");
+				scope (success)
+					Stdout.formatln("success");
+
+				MockRepository r = new MockRepository();
+				assert (r.recording());
+				r.replay();
+				assert (!r.recording());
+				r.backToRecord();
+				assert (r.recording());
+			}
+
+			unittest {
+				Stdout("match object with no expectations unit test...");
+				scope (failure)
+					Stdout.formatln("failed");
+				scope (success)
+					Stdout.formatln("success");
+
+				MockRepository r = new MockRepository();
+				r.match!()(new Mocked(), "toString");
+			}
+
+			unittest {
+				Stdout("repository match unit test...");
+				scope (failure)
+					Stdout.formatln("failed");
+				scope (success)
+					Stdout.formatln("success");
+				Mocked m = new Mocked();
+				char[] name = "Tom Jones";
+				int args = 3;
+
+				MockRepository r = new MockRepository();
+				r.record!(int)(m, name, args, false);
+				r.record!(int)(m, name, args, false);
+				ICall call = r.match!(int)(m, name, args);
+				assert (call !is null);
+				call = r.match!(int)(m, name, args + 5);
+				assert (call is null);
+			}
+
+			unittest {
+				Stdout("repository match ignore arguments unit test...");
+				scope (failure)
+					Stdout.formatln("failed");
+				scope (success)
+					Stdout.formatln("success");
+				Mocked m = new Mocked();
+				char[] name = "Tom Jones";
+				int args = 3;
+
+				MockRepository r = new MockRepository();
+				r.record!(int)(m, name, args, false);
+				r.record!(int)(m, name, args, false);
+				r._lastCall.ignoreArguments = true;
+				ICall call = r.match!(int)(m, name, args);
+				assert (call !is null);
+				call = r.match!(int)(m, name, args + 5);
+				assert (call !is null);
+			}
+
+			unittest {
+				Stdout("repository match counts unit test...");
+				scope (failure)
+					Stdout.formatln("failed");
+				scope (success)
+					Stdout.formatln("success");
+				Mocked m = new Mocked();
+				char[] name = "Tom Jones";
+				int args = 3;
+
+				MockRepository r = new MockRepository();
+				r.record!(int)(m, name, args, false);
+				ICall call = r.match!(int)(m, name, args);
+				assert (call !is null);
+				try
+				{
+					call = r.match!(int)(m, name, args);
+					assert (false, "expected exception not called");
+				}
+				catch (ExpectationViolationException e)
+				{
+				}
 			}
 		}
 	}
-
-	version (MocksTest)
-	{
-		unittest {
-			Stdout("repository record/replay unit test...");
-			scope (failure)
-				Stdout.formatln("failed");
-			scope (success)
-				Stdout.formatln("success");
-
-			MockRepository r = new MockRepository();
-			assert (r.recording());
-			r.replay();
-			assert (!r.recording());
-			r.backToRecord();
-			assert (r.recording());
-		}
-
-		unittest {
-			Stdout("match object with no expectations unit test...");
-			scope (failure)
-				Stdout.formatln("failed");
-			scope (success)
-				Stdout.formatln("success");
-
-			MockRepository r = new MockRepository();
-			r.match!()(new Mocked(), "toString");
-		}
-
-		unittest {
-			Stdout("repository match unit test...");
-			scope (failure)
-				Stdout.formatln("failed");
-			scope (success)
-				Stdout.formatln("success");
-			Mocked m = new Mocked();
-			char[] name = "Tom Jones";
-			int args = 3;
-
-			MockRepository r = new MockRepository();
-			r.record!(int)(m, name, args, false);
-			r.record!(int)(m, name, args, false);
-			ICall call = r.match!(int)(m, name, args);
-			assert (call !is null);
-			call = r.match!(int)(m, name, args + 5);
-			assert (call is null);
-		}
-
-		unittest {
-			Stdout("repository match ignore arguments unit test...");
-			scope (failure)
-				Stdout.formatln("failed");
-			scope (success)
-				Stdout.formatln("success");
-			Mocked m = new Mocked();
-			char[] name = "Tom Jones";
-			int args = 3;
-
-			MockRepository r = new MockRepository();
-			r.record!(int)(m, name, args, false);
-			r.record!(int)(m, name, args, false);
-			r._lastCall.ignoreArguments = true;
-			ICall call = r.match!(int)(m, name, args);
-			assert (call !is null);
-			call = r.match!(int)(m, name, args + 5);
-			assert (call !is null);
-		}
-
-		unittest {
-			Stdout("repository match counts unit test...");
-			scope (failure)
-				Stdout.formatln("failed");
-			scope (success)
-				Stdout.formatln("success");
-			Mocked m = new Mocked();
-			char[] name = "Tom Jones";
-			int args = 3;
-
-			MockRepository r = new MockRepository();
-			r.record!(int)(m, name, args, false);
-			ICall call = r.match!(int)(m, name, args);
-			assert (call !is null);
-			try
-			{
-				call = r.match!(int)(m, name, args);
-				assert (false, "expected exception not called");
-			}
-			catch (ExpectationViolationException e)
-			{
-			}
-		}
-	}
-}
 }
 
 version (MocksTest)

@@ -14,7 +14,7 @@ char[] method(alias theMethod, char[] name)()
     char[] returnType = ReturnTypeOf!(theMethod).stringof;
     char[] returns = (is (ReturnType!(theMethod) == void)) ? `false` : `true`;
     char[] returnArgs = getReturnArgs(returnType, ParameterTupleOf!(theMethod).stringof);
-    char[] qualified = "typeof(this).stringof ~ `" ~ name ~ "`";
+    char[] qualified = "typeof(this).stringof ~ `.` ~ `" ~ name ~ "`";
     char[] nameArgs = (args.length) ? qualified ~ `, ` ~ args : qualified;
     return 
     returnType ~ ` ` ~ name ~ `(` ~ sigargs ~ `)

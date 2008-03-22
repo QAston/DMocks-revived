@@ -5,6 +5,7 @@ import selfmock.repository;
 import selfmock.mockobject;
 import selfmock.util;
 import selfmock.action;
+import selfmock.arguments;
 
 version (MocksDebug)
 	import tango.io.Stdout;
@@ -39,7 +40,11 @@ class Caller
 			Stdout.formatln("checking if call is null...");
 		if (call is null)
 		{
-			throw new ExpectationViolationException();
+			ICall thecall = new Call(mocked, name, new Arguments!(U)(args));
+			thecall.repeat = Interval(0, 0);
+			thecall.called();
+			char[] msg = thecall.toString();
+			throw new ExpectationViolationException(msg);
 		}
 
 		rope = call.action.getActor().act!(TReturn, U)(args);

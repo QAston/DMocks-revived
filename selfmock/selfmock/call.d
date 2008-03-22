@@ -56,20 +56,20 @@ public interface ICall
 
 public class Call : ICall
 {
-private
-{
-	IAction _action;
-	bool _ignoreArguments;
-	bool _void;
-	bool _ordered;
-	IArguments _arguments;
-	Mocked _mocked;
-	char[] _name = "unknown";
-	Interval _repeat;
-	int _callCount;
-	ICall _lastCall = null;
-	ICall _nextCall = null;
-}
+	private
+	{
+		IAction _action;
+		bool _ignoreArguments;
+		bool _void;
+		bool _ordered;
+		IArguments _arguments;
+		Mocked _mocked;
+		char[] _name = "unknown";
+		Interval _repeat;
+		int _callCount;
+		ICall _lastCall = null;
+		ICall _nextCall = null;
+	}
 
 	bool hasAction ()
 	{
@@ -145,7 +145,8 @@ private
 		if (call._name != _name)
 		{
 			version (MocksDebug)
-				Stdout.formatln("Call.opEquals: wrong method; expected %s; was %s",
+				Stdout.formatln(
+						"Call.opEquals: wrong method; expected %s; was %s",
 						_name, call._name);
 			return false;
 		}

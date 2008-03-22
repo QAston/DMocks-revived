@@ -2,6 +2,7 @@ module selfmock.util;
 
 
 import tango.group.convert;
+import tango.core.Traits;
 
 version(MocksDebug) import tango.io.Stdout;
 version(MocksTest) import tango.io.Stdout;
@@ -16,16 +17,29 @@ char[] test(char[] name)()
 
 char[] toString (T) (T value) 
 {
+	static if (isStringType!(T))
+	{
+		static if (is (typeof(T[0]) == char))
+		{
+			return value;
+		}
+		else
+		{
+			return Utf.toString(value);
+		}
+	}
     static if (is (T : T[])) 
     {
         return ArrayToString(value);
     } 
-    /*
-    else static if (__traits(isScalar, T)) 
+    else static if (isRealType!(T)) 
     {
-        return Float.toString(cast(real)value);
+        return Float.toString(value);
     }
-    */
+    else static if (isIntegerType!(T))
+    {
+    	return Integer.toString(value);
+    }
     else static if (is (typeof (value is null))) 
     {
         return ((value is null) ? "<null>" : strof(value));
@@ -34,6 +48,18 @@ char[] toString (T) (T value)
     {
         return strof(value);
     }
+}
+
+template isStringType(T)
+{
+	static if (is (typeof(T[0])))
+	{
+		const bool isStringType = isCharType!(typeof(T[0]));
+	}
+	else
+	{
+		const bool isStringType = false;
+	}
 }
 
 char[] strof(T)(T value)

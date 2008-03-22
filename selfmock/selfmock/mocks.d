@@ -4,6 +4,7 @@ import selfmock.mockobject;
 import selfmock.repository; 
 import selfmock.util;
 import selfmock.call;
+import selfmock.caller;
 import tango.core.Variant;
 import tango.io.Stdout;
 
@@ -26,12 +27,12 @@ public class Mocker
 
         void add (T)(T mocked)
         {
-            Mocked actual = cast(Mocked)actual;
+            Mocked actual = cast(Mocked)mocked;
             if (actual is null)
             {
                 throw new InvalidOperationException("Did you try to add something to the mocker that isn't a mocked object?");
             }
-            actual.caller = new Caller(_repository);
+            actual._owner = new Caller(_repository);
         }
 
         /** 
