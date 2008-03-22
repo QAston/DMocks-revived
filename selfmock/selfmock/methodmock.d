@@ -1,28 +1,81 @@
 module selfmock.methodmock;
 import tango.core.Traits;
 import selfmock.traits;
+import selfmock.action;
+import selfmock.caller;
+import selfmock.mockobject;
+import selfmock.util;
 
-char[] method(alias theMethod)()
+
+char[] method(alias theMethod, char[] name)()
 {
-    char[] name = theMethod.stringof;
     char[] sigargs = typedArgs!(ParameterTupleOf!(theMethod));
-    char[] args = untypedArgs(ParameterTupleOf!(theMethod).length);
-    char[] returnType = ReturnType!(theMethod).stringof;
+    char[] args = untypedArgs!(ParameterTupleOf!(theMethod));
+    char[] returnType = ReturnTypeOf!(theMethod).stringof;
+    char[] returns = (is (ReturnType!(theMethod) == void)) ? `false` : `true`;
+    char[] returnArgs = getReturnArgs(returnType, ParameterTupleOf!(theMethod).stringof);
+    char[] qualified = "typeof(this).stringof ~ `" ~ name ~ "`";
+    char[] nameArgs = (args.length) ? qualified ~ `, ` ~ args : qualified;
     return 
     returnType ~ ` ` ~ name ~ `(` ~ sigargs ~ `)
     {
-        auto call = _owner.call(this, ` ~ name ~ `, ` ~ args ~ `);
-
+    	version(MocksDebug) Stdout("checking _owner...").newline;
+    	if (_owner is null)
+    	{
+    		throw new Exception("owner cannot be null! Contact the stupid mocks developer.");
+    	}
+    	auto rope = _owner.call!(` ~ returnArgs ~ `)(this, ` ~ nameArgs ~ `);
+    	if (rope.pass)
+    	{
+    		static if (is (typeof (super.` ~ name ~ `)))
+    		{
+    			return super.` ~ name ~ `(` ~ args ~ `);
+    		}
+    		else
+    		{
+    			throw new InvalidOperationException("I was supposed to pass this call through to an abstract class or interface -- I can't do that!");
+    		}
+    	}
+    	else
+    	{
+    		static if (!is (` ~ returnType ~ ` == void))
+    		{
+    			return rope.value;
+    		}
+    	}
     }`;
 }
 
-// Outputs `int arg3, char[] arg2, float arg1, Object arg0` or such.
+char[] nameof(char[] name)
+{
+	char[] realName = "";
+	foreach (c; name)
+	{
+		if (c == '(') return realName;
+		realName ~= c;
+	}
+	return realName;
+}
+
+char[] getReturnArgs(char[] returnType, char[] argTypes)
+{
+    if (argTypes.length > 2)
+    {
+        return returnType ~ `, ` ~ argTypes[1..$-1];
+    }
+    else
+    {
+        return returnType;
+    }
+}
+
+// Outputs `int arg3, char[] arg2, float arg1` or such.
 char[] typedArgs(T...)()
 {
-    if (T.length)
+    static if (T.length)
     {
-        char[] current = T.stringof ~ `arg` ~ ToString!(T.length);
-        if (T.length > 1)
+        char[] current = T[0].stringof ~ ` arg` ~ ToString!(T.length);
+        static if (T.length > 1)
         {
             current ~= `, ` ~ typedArgs!(T[1..$])();
         }
@@ -36,12 +89,12 @@ char[] typedArgs(T...)()
 
 char[] untypedArgs(T...)()
 {
-    if (T.length)
+    static if (T.length)
     {
         char[] current = `arg` ~ ToString!(T.length);
-        if (T.length > 1)
+        static if (T.length > 1)
         {
-            current ~= `, ` ~ typedArgs!(T[1..$])();
+            current ~= `, ` ~ untypedArgs!(T[1..$])();
         }
         return current;
     }
@@ -51,4 +104,24 @@ char[] untypedArgs(T...)()
     }
 }
 
+version (MocksTest)
+{
+	/*
+	interface IFoo
+	{
+		void bar();
+		void bat(int i);
+		int baz(IFoo other, int j);
+	}
+	
+	class Bar : Mocked, IFoo
+	{
+		//pragma(msg, method!(IFoo.bar, "bar")());
+		//pragma(msg, method!(IFoo.bat, "bat")());
+		mixin(method!(IFoo.bar, "bar")());
+		mixin(method!(IFoo.bat, "bat")());
+		mixin(method!(IFoo.baz, "baz")());
+	}
+	*/
+}
 

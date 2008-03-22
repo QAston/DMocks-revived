@@ -4,5 +4,5 @@ import selfmock.caller;
 
 class Mocked
 {
-    public Caller caller;
+    public Caller _owner;
 }

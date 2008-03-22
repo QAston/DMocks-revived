@@ -62,15 +62,22 @@ struct Actor
 		}
 		static if (is (TReturn == void))
 		{
-			if (self.action.hasValue)
+			if (!self.action.isEmpty)
 			{
 				alias typeof(delegate (ArgTypes a)
 				{
 				} ) action_type;
-				auto funcptr = self.action().peek!(action_type);
-				if (funcptr)
+				if (self.action().isImplicitly!(action_type))
 				{
-					(*funcptr)(args);
+					auto funcptr = self.action().get!(action_type);
+					if (funcptr)
+					{
+						funcptr(args);
+					}
+					else
+					{
+						rope.status = ActionStatus.FailBadAction;
+					}
 				}
 				else
 				{
@@ -80,20 +87,27 @@ struct Actor
 		}
 		else
 		{
-			if (self.returnValue.hasValue)
+			if (!self.returnValue.isEmpty)
 			{
-				rope.value = *self.returnValue().peek!(TReturn);
+				rope.value = self.returnValue().get!(TReturn);
 			}
-			else if (self.action.hasValue)
+			else if (!self.action.isEmpty)
 			{
 				alias typeof(delegate (ArgTypes a)
 				{
 					return TReturn.init;
 				} ) action_type;
-				auto funcptr = self.action().peek!(action_type);
-				if (funcptr)
+				if (self.action().isImplicitly!(action_type))
 				{
-					rope.value = (*funcptr)(args);
+					auto funcptr = self.action().get!(action_type);
+					if (funcptr)
+					{
+						rope.value = funcptr(args);
+					}
+					else
+					{
+						rope.status = ActionStatus.FailBadAction;
+					}
 				}
 				else
 				{

@@ -7,7 +7,7 @@ import selfmock.util;
 import selfmock.action;
 
 version (MocksDebug)
-	import std.stdio;
+	import tango.io.Stdout;
 
 
 class Caller
@@ -24,7 +24,7 @@ class Caller
 	{
 		ReturnOrPass!(TReturn) rope;
 		version (MocksDebug)
-			writefln("checking _owner.Recording...");
+			Stdout.formatln("checking _owner.Recording...");
 		if (_owner.recording)
 		{
 			_owner.record!(U)(mocked, name, args, !is (TReturn == void));
@@ -32,11 +32,11 @@ class Caller
 		}
 
 		version (MocksDebug)
-			writefln("checking for matching call...");
+			Stdout.formatln("checking for matching call...");
 		ICall call = _owner.match!(U)(mocked, name, args);
 
 		version (MocksDebug)
-			writefln("checking if call is null...");
+			Stdout.formatln("checking if call is null...");
 		if (call is null)
 		{
 			throw new ExpectationViolationException();
@@ -44,7 +44,7 @@ class Caller
 
 		rope = call.action.getActor().act!(TReturn, U)(args);
 		version (MocksDebug)
-			writefln("returning...");
+			Stdout.formatln("returning...");
 		return rope;
 	}
 }

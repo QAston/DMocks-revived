@@ -24,6 +24,16 @@ public class Mocker
             _repository = new MockRepository();
         }
 
+        void add (T)(T mocked)
+        {
+            Mocked actual = cast(Mocked)actual;
+            if (actual is null)
+            {
+                throw new InvalidOperationException("Did you try to add something to the mocker that isn't a mocked object?");
+            }
+            actual.caller = new Caller(_repository);
+        }
+
         /** 
          * Stop setting up expected calls. Any calls after this point will
          * be verified against the expectations set up before calling Replay.
@@ -264,5 +274,5 @@ public class ExternalCall
 
 version (MocksTest) 
 {
-    void main(){}
+//    void main(){}
 }
