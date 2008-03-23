@@ -3,6 +3,7 @@ module dunittests.integration;
 import dunit.api;
 import dunit.repository;
 import dunit.expect;
+import tango.io.Stdout;
 
 class TestTest : TestFixture
 {
@@ -28,6 +29,7 @@ class TestTest : TestFixture
 		{
 			tests["test one"] = 
 			{
+			 	Stdout("test one").newline;
 			 	test_one_count++;
 			 	throw new Exception("this is an expected error");
 			 	//assert(false, "this is an expected error");
@@ -41,5 +43,4 @@ class TestTest : TestFixture
 	}
 }
 
-void main () {}
-//mixin(DunitMain);
+mixin(DunitMain);

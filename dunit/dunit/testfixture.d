@@ -1,6 +1,7 @@
 module dunit.testfixture;
 import dunit.repository;
 import dunit.exception;
+import dunit.testcollection;
 
 /**
  * This is the base class for user-defined test fixtures. 
@@ -42,7 +43,12 @@ public abstract class TestFixture
 		/**
 		 * A collection of tests, indexed by description.
 		 */
-		void delegate () [char[]] tests;
+		TestCollection tests;
+		
+		this()
+		{
+			tests = new TestCollection(this);
+		}
 		
 		void delegate () failing(TException)(void delegate() test)
 		{

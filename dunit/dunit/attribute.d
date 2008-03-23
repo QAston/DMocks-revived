@@ -3,7 +3,7 @@ module dunit.attribute;
 public const char[] DunitAutorunTest = `
 	static this ()
 	{
-		dunit.repository.Repository.instance.add((typeof(this).stringof), new typeof(this)());
+		dunit.repository.Repository.instance.add((typeof(this).stringof), delegate TestFixture () { return new typeof(this)(); });
 	}
 
 	unittest
@@ -15,7 +15,7 @@ public const char[] DunitAutorunTest = `
 public const char[] DunitTest = `
 	static this ()
 	{
-		dunit.repository.Repository.instance.add((typeof(this).stringof), new typeof(this)());
+		dunit.repository.Repository.instance.add((typeof(this).stringof), delegate TestFixture () { return new typeof(this)(); });
 	}
 `;
 	

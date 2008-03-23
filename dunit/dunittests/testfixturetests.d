@@ -3,6 +3,8 @@ module dunittests.testfixturetests;
 import dunit.api;
 import dunit.repository;
 import dunit.expect;
+import dunit.main;
+
 class TestTest : TestFixture
 {
     mixin(DunitTest);
@@ -44,8 +46,8 @@ class TestTest : TestFixture
 
 void main () 
 {
+	dunit_main(null);
     TestTest tests = new TestTest();
-    tests.tests["test two"]();
     expect(tests.test_two_count).equals(1);
     auto dg = tests.failing!(Exception)
 	({ 
@@ -53,8 +55,6 @@ void main ()
 	});
     dg();
     auto array = tests.tests;
-    dg = array["failing test three"];
-    dg();
     dg = tests.failing!(Exception)({});
     try
     {
