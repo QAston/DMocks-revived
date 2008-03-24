@@ -25,6 +25,7 @@ interface ITestRunner
 	void endFixture (TestFixture fixture);
 	bool startFixture (char[] name);
 	void args(char[][] arguments);
+	int endTests();
 }
 
 public class TestResult

@@ -2,8 +2,27 @@ module dunit.consolerunner;
 
 import dunit.testrunner;
 import dunit.testfixture;
+import dunit.repository;
+import dunit.xmlrunner;
 import tango.io.Stdout;
 import tango.core.Array;
+
+private bool hasArg(char[][] args, char[] name, char brief)
+{
+	const char[][] prefixes = ["-", "--", "/"];
+	foreach (prefix; prefixes)
+	{
+		if (args.contains(prefix ~ name))
+		{
+			return true;
+		}
+		if (args.contains(prefix ~ brief))
+		{
+			return true;
+		}
+	}
+	return false;
+}
 
 class ConsoleRunner : ITestRunner
 {
@@ -19,16 +38,14 @@ class ConsoleRunner : ITestRunner
 
 	void args (char[][] arguments)
 	{
-		if (arguments.contains("-quiet") || arguments.contains("-q") || arguments.contains(
-				"--quiet"))
+		if (arguments.hasArg("xml", 'x'))
 		{
-			quiet = true;
+			Repository.instance().runner = new XmlRunner();
+			Repository.instance().runner.args = arguments;
+			return;
 		}
-		if (arguments.contains("-progress") || arguments.contains("-p") || arguments.contains(
-				"--progress"))
-		{
-			progress = true;
-		}
+		quiet = arguments.hasArg("quiet", 'q');
+		progress = arguments.hasArg("progress", 'p');
 	}
 
 	void notifyResult (TestFixture fixture, TestResult result)
@@ -79,8 +96,8 @@ class ConsoleRunner : ITestRunner
 		}
 	}
 
-	void endTests ()
+	int endTests ()
 	{
-
+		return fail;
 	}
 }

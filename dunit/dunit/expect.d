@@ -395,7 +395,7 @@ version (AssertionsTest)
 			expect(p).sameAs(o);
 			failed = true;
 		} catch (AssertionError e) {
-			Stdout(e.msg).newline;
+			(e.msg).newline;
 		}
 		expect(!failed);
 	
@@ -403,7 +403,7 @@ version (AssertionsTest)
 			expect([1, 2, 3, 4]).has(3, 4).where((int x) { return x % 2 == 0; });
 			failed = true;
 		} catch (AssertionError e) {
-			Stdout(e.msg).newline;
+			(e.msg).newline;
 		}
 		expect(!failed);
 		
@@ -440,7 +440,7 @@ version (AssertionsTest)
 		}
 		catch (AssertionError e) 
 		{
-			Stdout(e.msg).newline;
+			(e.msg).newline;
 		}
 		expect(!failed);
 		

@@ -16,37 +16,25 @@ void ensure_main (char[][] args = null)
 	}
 }
 
-bool contains (T) (T[] array, T value)
-{
-	foreach (T thing; array)
-	{
-		if (thing == value)
-			return true;
-	}
-	return false;
-}
-
-// TODO: only run particular tests (based on packages listed on command line)
-// Any other options?
-
-void dunit_main (char[][] args)
+int dunit_main (char[][] args)
 {
 	Repository repo = Repository.instance;
-	ITestRunner runner = repo.runner;
-	if (runner is null)
+	if (repo.runner is null)
 	{
-		runner = repo.runner = new ConsoleRunner();
+		repo.runner = new ConsoleRunner();
 	}
 
-	runner.args = args;
+	repo.runner.args = args;
 
 	foreach (fixtureName, fixtureBuilder; repo.testFixtures)
 	{
-		if (!runner.startFixture(fixtureName))
+		if (!repo.runner.startFixture(fixtureName))
 		{
 			continue;
 		}
 		auto fixture = fixtureBuilder();
-		runner.endFixture(fixture);
+		repo.runner.endFixture(fixture);
 	}
+	
+	return repo.runner.endTests();
 }
