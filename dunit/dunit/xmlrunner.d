@@ -112,6 +112,7 @@ class TestHierarchy
 	 */
 	char[] qualified;
 	char[] segment;
+	// Currently, you cannot have both leaves and children.
 	TestResult[] leaves;
 	TestHierarchy[] children;
 
@@ -132,6 +133,22 @@ class TestHierarchy
 		}
 
 		return fail;
+	}
+
+	double time ()
+	{
+		double seconds = 0.0;
+		foreach (leaf; leaves)
+		{
+			seconds += leaf.seconds;
+		}
+
+		foreach (child; children)
+		{
+			seconds += child.time;
+		}
+
+		return seconds;
 	}
 
 	void add (char[] name, TestResult result)
@@ -187,7 +204,7 @@ class TestHierarchy
 		{
 			fragment = qualified[lastSectionStart + 1..$];
 		}
-		char[] text = format(fixtureStart, fragment, success, 0.0);
+		char[] text = format(fixtureStart, fragment, success, time);
 
 		foreach (child; children)
 		{
