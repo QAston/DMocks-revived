@@ -2,16 +2,32 @@ module dunit.xmlrunner;
 
 import dunit.testrunner;
 import dunit.testfixture;
+import dunit.expect;
 import tango.core.Array;
 import tango.text.convert.Layout;
 import tango.io.stream.TextFileStream;
 import tango.time.WallClock;
+import tango.time.StopWatch;
 
 Layout!(char) format;
 
 static this ()
 {
 	format = new Layout!(char);
+}
+
+char[] nowDate()
+{
+	const char[] dateformat = "{}-{}-{}";
+	auto date = WallClock.toDate.date;
+	return format(dateformat, date.year, date.month, date.day);
+}
+
+char[] nowTime()
+{
+	const char[] dateformat = "{}:{}:{}";
+	auto time = WallClock.now.time.span;
+	return format(dateformat, time.hours, time.minutes % 60, time.seconds % 60);
 }
 
 class XmlRunner : ITestRunner
@@ -25,6 +41,7 @@ class XmlRunner : ITestRunner
   {6}
   </test-results>`;
 	TestHierarchy hierarchy;
+	StopWatch watch;
 
 	this ()
 	{
@@ -33,11 +50,15 @@ class XmlRunner : ITestRunner
 
 	void notifyResult (TestFixture test, TestResult result)
 	{
+		result.seconds = watch.stop;
+		result.assertions = expect.assertionCount;
 		hierarchy.add(test.classinfo.name, result);
 	}
 
 	bool startTest (TestFixture test, char[] name)
 	{
+		expect.assertionCount = 0;
+		watch.start;
 		return true;
 	}
 
@@ -63,18 +84,18 @@ class XmlRunner : ITestRunner
 
 		TextFileOutput output = new TextFileOutput("TestResults.xml");
 		output.formatln(testFormat, "$NAME", total, failed, notRun,
-				WallClock.toDate.date, WallClock.toDate.time, hierarchy.toXml);
+				nowDate(), nowTime(), hierarchy.toXml);
 		output.flush();
 		output.close();
-		return 0;
+		return failed;
 	}
 }
 
 class TestHierarchy
 {
 	const char[]
-			fixtureStart = `<test-suite name="{0}" success="{1}" time="{2}" asserts="0"><results>`;
-	const char[] fixtureEnd = `</results></test-suite>`;
+			fixtureStart = `<test-suite name="{0}" success="{1}" time="{2}" asserts="0"><results>` ~ '\n';
+	const char[] fixtureEnd = "\n" ~ `</results></test-suite>`;
 	const char[]
 			passedTest = `<test-case name="{0}.{1}" executed="True" success="True" time="{2}" asserts="{3}" />`;
 	const char[]
@@ -187,12 +208,12 @@ class TestHierarchy
 	{
 		if (leaf.type == ResultType.Fail)
 		{
-			return format(failedTest, qualified, leaf.name, 0.0, 0, leaf.ex,
+			return format(failedTest, qualified, leaf.name, leaf.seconds, leaf.assertions, leaf.ex,
 					leaf.stacktrace);
 		}
 		else
 		{
-			return format(passedTest, qualified, leaf.name, 0.0, 0);
+			return format(passedTest, qualified, leaf.name, leaf.seconds, leaf.assertions);
 		}
 	}
 }

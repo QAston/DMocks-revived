@@ -31,16 +31,23 @@ class TestTest : TestFixture
 			{
 			 	Stdout("test one").newline;
 			 	test_one_count++;
-			 	throw new Exception("this is an expected error");
+			 	expect.because("this is expected").that(1u).equals(2u);
 			 	//assert(false, "this is an expected error");
 			};
 			tests["test two"] =
 			{
+			 	for (int i = 0; i < 10000000; i++){foo();}
 			 	test_two_count++;
 			};
 			tests["failing test three"] = failing!(Exception)({ throw new Exception("mew?"); });
 		}
 	}
+}
+
+int j;
+void foo()
+{
+	j++;
 }
 
 mixin(DunitMain);

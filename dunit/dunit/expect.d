@@ -50,6 +50,8 @@ Variant toVar(T)(T obj) {
  */
 struct expect
 {
+	static int assertionCount = 0;
+	
 	char[] message;
 	Variant actual;
 	Range count;
@@ -100,6 +102,7 @@ struct expect
 	 */
 	expect that(T) (T value)
 	{
+		assertionCount++;
 		actual = value;
 		static if (is (typeof (value is null)))
 		{

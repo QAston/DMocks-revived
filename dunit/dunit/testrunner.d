@@ -34,6 +34,8 @@ public class TestResult
 	ResultType type;
 	Exception ex;
 	char[] stacktrace;
+	double seconds;
+	int assertions;
 
 	this (char[] name)
 	{
