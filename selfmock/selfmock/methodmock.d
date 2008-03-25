@@ -4,16 +4,21 @@ import selfmock.traits;
 import selfmock.action;
 import selfmock.caller;
 import selfmock.mockobject;
-import selfmock.util;
+public import selfmock.util;
 
 
-char[] method(alias theMethod, char[] name)()
+char[] method(alias themethod, char[] name)()
 {
-    char[] sigargs = typedArgs!(ParameterTupleOf!(theMethod));
-    char[] args = untypedArgs!(ParameterTupleOf!(theMethod));
-    char[] returnType = ReturnTypeOf!(theMethod).stringof;
-    char[] returns = (is (ReturnType!(theMethod) == void)) ? `false` : `true`;
-    char[] returnArgs = getReturnArgs(returnType, ParameterTupleOf!(theMethod).stringof);
+	return method!(name, ReturnTypeOf!(themethod), ParameterTupleOf!(themethod));
+}
+
+char[] method(char[] name, TReturn, TArgs...)()
+{
+    char[] sigargs = typedArgs!(TArgs);
+    char[] args = untypedArgs!(TArgs);
+    char[] returnType = TReturn.stringof;
+    char[] returns = (is (TReturn == void)) ? `false` : `true`;
+    char[] returnArgs = getReturnArgs(returnType, TArgs.stringof);
     char[] qualified = "typeof(this).stringof ~ `.` ~ `" ~ name ~ "`";
     char[] nameArgs = (args.length) ? qualified ~ `, ` ~ args : qualified;
     return 
@@ -118,9 +123,9 @@ version (MocksTest)
 	{
 		//pragma(msg, method!(IFoo.bar, "bar")());
 		//pragma(msg, method!(IFoo.bat, "bat")());
-		mixin(method!(IFoo.bar, "bar")());
-		mixin(method!(IFoo.bat, "bat")());
-		mixin(method!(IFoo.baz, "baz")());
+		mixin(method!(typeof(IFoo.bar), "bar")());
+		mixin(method!(typeof(IFoo.bat), "bat")());
+		mixin(method!(typeof(IFoo.baz), "baz")());
 	}
 	*/
 }

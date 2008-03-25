@@ -52,6 +52,14 @@ public class Mocker
         {
             _repository.backToRecord;
         }
+        
+        /**
+         * Return true if the repository is currently in a record state.
+         */
+        bool isRecording ()
+        {
+        	return _repository.recording();
+        }
 
         /**
          * Check to see if there are any expected calls that haven't been
@@ -82,12 +90,6 @@ public class Mocker
         void unordered () 
         {
             _repository.ordered = false;
-        }
-
-        /** Get a mock object of the given type. */
-        void register (Mocked o)
-        {
-            throw new InvalidOperationException();
         }
 
         /**
@@ -186,7 +188,7 @@ public class ExternalCall
     */
    ExternalCall returns (T)(T value) 
    {
-       _call.Action.returnValue(Variant(value));
+       _call.action.returnValue(Variant(value));
        return this;
    }
 
