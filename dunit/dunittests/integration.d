@@ -50,4 +50,8 @@ void foo()
 	j++;
 }
 
+static this()
+{
+    testAssemblyName("frumios");
+}
 mixin(DunitMain);

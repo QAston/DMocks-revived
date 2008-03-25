@@ -34,17 +34,19 @@ class XmlRunner : ITestRunner
 {
 	// Format string OF DOOM!
 	const char[]
-			testFormat = `﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+			testFormat = `<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <test-results name="{0}" total="{1}" failures="{2}" not-run="{3}" date="{4}" time="{5}">
   <environment />
   <culture-info current-culture="en-US" current-uiculture="en-US" />
   {6}
   </test-results>`;
+    char[] outfilename;
 	TestHierarchy hierarchy;
 	StopWatch watch;
 
 	this ()
 	{
+        outfilename = "TestResults.xml";
 		hierarchy = new TestHierarchy();
 	}
 
@@ -73,6 +75,17 @@ class XmlRunner : ITestRunner
 
 	void args (char[][] arguments)
 	{
+        const char[] filearg = "file=";
+        foreach (arg; arguments)
+        {
+            int i = arg.find(filearg);
+            if (i < arg.length)
+            {
+                int start = filearg.length + i;
+                outfilename = arg[start .. $];
+                return;
+            }
+        }
 	}
 
 	int endTests ()
@@ -82,7 +95,7 @@ class XmlRunner : ITestRunner
 		uint passed = hierarchy.sum(ResultType.Pass);
 		uint total = failed + notRun + passed;
 
-		TextFileOutput output = new TextFileOutput("TestResults.xml");
+		TextFileOutput output = new TextFileOutput(outfilename);
 		output.formatln(testFormat, "$NAME", total, failed, notRun,
 				nowDate(), nowTime(), hierarchy.toXml);
 		output.flush();
@@ -97,11 +110,13 @@ class TestHierarchy
 			fixtureStart = `<test-suite name="{0}" success="{1}" time="{2}" asserts="0"><results>` ~ '\n';
 	const char[] fixtureEnd = "\n" ~ `</results></test-suite>`;
 	const char[]
-			passedTest = `<test-case name="{0}.{1}" executed="True" success="True" time="{2}" asserts="{3}" />`;
+			passedTest = `<test-case name="{0}.{1}" executed="True" success="True" time="{2}" asserts="{3}" />
+`;
 	const char[]
 			failedTest = `
 		<test-case name="{0}.{1}" executed="True" success="False" time="{2}" asserts="{3}">
-		<failure><message><![CDATA[{4}]]></message><stack-trace><![CDATA[{5}]]></stack-trace></failure></test-case>`;
+		<failure><message><![CDATA[{4}]]></message><stack-trace><![CDATA[{5}]]></stack-trace></failure></test-case>
+`;
 
 
 	/**
@@ -194,17 +209,21 @@ class TestHierarchy
 			success = `True`;
 		}
 
-		int lastSectionStart = rfind(qualified, '.');
-		char[] fragment;
-		if (lastSectionStart == qualified.length)
-		{
-			fragment = qualified;
-		}
-		else
-		{
-			fragment = qualified[lastSectionStart + 1..$];
-		}
-		char[] text = format(fixtureStart, fragment, success, time);
+        char[] text;
+        if (qualified.length)
+        {
+            int lastSectionStart = rfind(qualified, '.');
+            char[] fragment;
+            if (lastSectionStart == qualified.length)
+            {
+                fragment = qualified;
+            }
+            else
+            {
+                fragment = qualified[lastSectionStart + 1..$];
+            }
+            text = format(fixtureStart, fragment, success, time);
+        }
 
 		foreach (child; children)
 		{
@@ -216,7 +235,10 @@ class TestHierarchy
 			text ~= getXml(leaf);
 		}
 
-		text ~= fixtureEnd;
+        if (qualified.length)
+        {
+            text ~= fixtureEnd;
+        }
 
 		return text;
 	}

@@ -78,7 +78,9 @@ public TestResult run (void delegate () test, TestFixture fixture, char[] name)
 	
 	try
 	{
+        fixture.setup();
 		test();
+        fixture.teardown();
 		result.type = ResultType.Pass;
 	}
 	catch (Exception ex)

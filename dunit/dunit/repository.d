@@ -24,6 +24,7 @@ class Repository
 		uint testCount;
 		uint failed;
 		uint passed;
+        char[] testAssemblyName;
 
 		void add (char[] name, TestFixture delegate () value)
 		{
