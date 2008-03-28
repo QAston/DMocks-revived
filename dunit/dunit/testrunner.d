@@ -30,6 +30,7 @@ interface ITestRunner
 
 public class TestResult
 {
+	TestFixture parent;
 	char[] name;
 	ResultType type;
 	Exception ex;
@@ -37,8 +38,9 @@ public class TestResult
 	double seconds;
 	int assertions;
 
-	this (char[] name)
+	this (char[] name, TestFixture fixture)
 	{
+		this.parent = fixture;
 		this.name = name;
 		type = ResultType.NotRun;
 	}
@@ -65,7 +67,7 @@ public class TestResult
 
 public TestResult run (void delegate () test, TestFixture fixture, char[] name)
 {
-	TestResult result = new TestResult(name);
+	TestResult result = new TestResult(name, fixture);
 	ITestRunner runner = Repository.instance.runner;
 	if (runner is null)
 	{
