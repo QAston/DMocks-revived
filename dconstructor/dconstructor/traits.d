@@ -63,9 +63,9 @@ unittest {
 	assert (is (assocArrayKey!(int [long]) == long));
 }
 
-string Tostring (int i)
+char[] Tostring (int i)
 {
-	string ret = ``;
+	char[] ret = ``;
 	do
 	{
 		ret = `` ~ cast(char) ('0' + (i % 10)) ~ ret;
@@ -77,11 +77,11 @@ string Tostring (int i)
 
 template ToString (int i)
 {
-	const string ToString = Tostring(i);
+	const char[] ToString = Tostring(i);
 }
 
 unittest {
-	string str = ToString!(17795);
+	char[] str = ToString!(17795);
 	assert (str == "17795", str);
 	assert (ToString!(0) == "0");
 }

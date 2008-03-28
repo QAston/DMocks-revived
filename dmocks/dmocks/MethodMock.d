@@ -58,7 +58,7 @@ string ReturningMethod (string type, string name, int index, bool returns)()
 	return `override ` ~ ret ~ ` ` ~ name ~ `
 	(` ~ paramTypes ~ ` params)` ~
 	`{
-	version(MocksDebug)version(MocksDebug) writefln("checking _owner...");
+	version(MocksDebug) writefln("checking _owner...");
 	if (_owner is null) 
 	{
 		throw new Exception("owner cannot be null! Contact the stupid mocks developer.");

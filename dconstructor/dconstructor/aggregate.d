@@ -38,6 +38,7 @@ TValue[TKey] dup (TValue, TKey)(TValue[TKey] aa)
 /**
  * Provides a static, global associative array with the given keys and values.
  * Anything taking a dictionary of that type will be given this dictionary.
+ * The exception, of course, being when it's wrapped in a MultiBuilder.
  */
 class GlobalDictionaryBuilder (TKey, TValue) : AbstractBuilder!(TValue [TKey])
 {

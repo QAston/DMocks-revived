@@ -5,12 +5,12 @@ import dconstructor.exception;
 
 class MultiBuilder (T) : AbstractBuilder!(T)
 {
-	private AbstractBuilder!(T) [string] _subbuilders;
+	private AbstractBuilder!(T) [char[]] _subbuilders;
 	private AbstractBuilder!(T) _default;
 
 	T build (Builder b)
 	{
-		string objective = b._build_for;
+		char[] objective = b._build_for;
 		if (objective is null || !(objective in _subbuilders))
 		{
 			if (_default is null)
@@ -23,7 +23,7 @@ class MultiBuilder (T) : AbstractBuilder!(T)
 		return _subbuilders[objective].build(b);
 	}
 
-	void add (string objective, AbstractBuilder!(T) maker)
+	void add (char[] objective, AbstractBuilder!(T) maker)
 	{
 		if (objective is null)
 		{

@@ -18,30 +18,8 @@ static this ()
 	format = new Layout!(char);
 }
 
-char[] nowDate()
-{
-	const char[] dateformat = "{}-{}-{}";
-	auto date = WallClock.toDate.date;
-	return format(dateformat, date.year, date.month, date.day);
-}
-
-char[] nowTime()
-{
-	const char[] dateformat = "{}:{}:{}";
-	auto time = WallClock.now.time.span;
-	return format(dateformat, time.hours, time.minutes % 60, time.seconds % 60);
-}
-
 class XmlRunner : ITestRunner
 {
-	// Format string OF DOOM!
-	const char[]
-			testFormat = `<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results name="{0}" total="{1}" failures="{2}" not-run="{3}" date="{4}" time="{5}">
-  <environment />
-  <culture-info current-culture="en-US" current-uiculture="en-US" />
-  {6}
-  </test-results>`;
     char[] outfilename;
 	TestHierarchy hierarchy;
 	StopWatch watch;

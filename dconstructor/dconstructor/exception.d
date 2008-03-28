@@ -4,7 +4,7 @@ import dconstructor.util;
 
 class BindingException : Exception
 {
-	this (string msg)
+	this (char[] msg)
 	{
 		super(msg);
 	}
@@ -12,13 +12,13 @@ class BindingException : Exception
 
 class CircularDependencyException : Exception
 {
-	private const string _defaultMessage = "A circular dependency was encountered."
+	private const char[] _defaultMessage = "A circular dependency was encountered.";
 	this () 
 	{
 		this(_defaultMessage);
 	}
 
-	this (string msg)
+	this (char[] msg)
 	{
 		super(msg);
 	}

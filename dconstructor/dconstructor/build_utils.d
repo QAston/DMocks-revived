@@ -4,7 +4,7 @@ import dconstructor.singleton;
 import dconstructor.util;
 import dconstructor.traits;
 
-string get_deps (T) ()
+char[] get_deps (T) ()
 {
 	static if (is (typeof(new T) == T))
 	{
@@ -12,19 +12,34 @@ string get_deps (T) ()
 	}
 	else
 	{
-		return `return new T(` ~ get_deps_impl!(T, 0)() ~ `);`;
+		return `return new T(` ~ get_deps_impl!(T, 0, "_ctor")() ~ `);`;
 	}
 }
 
-string get_deps_impl (T, int i) ()
+// TODO: this is an ugly dependency. 
+char[] get_post_deps (T) ()
 {
-	static if (i < ParameterTupleOf!(T._ctor).length)
+	static if (is (typeof (T.inject) == function))
 	{
-		string
-				ret = `parent.get!(ParameterTupleOf!(T._ctor)[` ~ (to_string!(i)) ~ `])`;
-		static if (i < ParameterTupleOf!(T._ctor).length - 1)
+		return `obj.inject(` ~ get_deps_impl!(T, 0, "inject") ~ `);`;
+	}
+	else
+	{
+		return ``;
+	}
+}
+
+char[] get_deps_impl (T, int i, char[] method) ()
+{
+	mixin("alias T." ~ method ~ " inject_method;");
+	static if (i < ParameterTupleOf!(inject_method).length)
+	{
+		char[]
+				ret = `parent.get!(ParameterTupleOf!(T.` ~ method ~ `)[` ~ (to_string!(
+						i)) ~ `])`;
+		static if (i < ParameterTupleOf!(inject_method).length - 1)
 			ret ~= `,`;
-		return ret ~ get_deps_impl!(T, i + 1)();
+		return ret ~ get_deps_impl!(T, i + 1, method)();
 	}
 	else
 	{

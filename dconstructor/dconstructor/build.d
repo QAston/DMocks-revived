@@ -8,6 +8,7 @@ private
 	import dconstructor.aggregate;
 	import dconstructor.exception;
 	import dconstructor.util;
+	import dconstructor.build_utils;
 	import dconstructor.traits;
 
 	version (BuildTest)
@@ -47,7 +48,7 @@ class Builder
 		checkCircular();
 		static if (is (T : Singleton))
 		{
-			string mangle = T.stringof;
+			char[] mangle = T.stringof;
 			// No inheritance for non-classes, so this is safe....
 			if (mangle in _built)
 			{
@@ -59,6 +60,7 @@ class Builder
 
 		auto b = get_or_add!(T)();
 		T obj = b.build(this);
+		post_build(this, obj);
 		
 		_build_target_stack = _build_target_stack[0..$-1];
 
@@ -90,6 +92,13 @@ class Builder
 		static assert (is (TImpl : TVisible), "binding failure: cannot convert type " ~ TImpl.stringof ~ " to type " ~ TVisible.stringof);
 		// again, only possible b/c no inheritance for structs
 		wrap!(TVisible)(new DelegatingBuilder!(TVisible, TImpl)());
+		return this;
+	}
+	
+	Builder register (T) ()
+	{
+		static assert (is (T == class), "Currently, only classes can be registered for creation.");
+		wrap!(T)(new ObjectBuilder!(T)());
 		return this;
 	}
 
@@ -126,7 +135,7 @@ class Builder
 	}
 
 	/** Internal use only. */
-	public string _build_for ()
+	public char[] _build_for ()
 	{
 		if (_build_target_stack.length >= 2)
 		{
@@ -142,14 +151,18 @@ class Builder
 
 	private
 	{
-		ISingleBuilder [string] _builders;
-		Object [string] _built;
-		string[] _build_target_stack;
-		string _context;
+		ISingleBuilder [char[]] _builders;
+		Object [char[]] _built;
+		char[][] _build_target_stack;
+		char[] _context;
 		bool _autobuild = false;
 
 		void checkCircular ()
 		{
+			if (_build_target_stack.length < 2)
+			{
+				return;
+			}
 			auto newest = _build_target_stack[$ - 1]; 
 			foreach (i, elem; _build_target_stack[0..$-2])
 			{
@@ -160,14 +173,14 @@ class Builder
 			}
 		}
 
-		void circular (string[] building, string newest)
+		void circular (char[][] building, char[] newest)
 		{
-			string msg = "Encountered circular dependencies while building ";
+			char[] msg = "Encountered circular dependencies while building ";
 			msg ~= _build_target_stack[0];
 			msg ~= ". The build stack was:\n";
 			foreach (build; building)
 			{
-				msg ~= "\t" ~ building ~ ", which requires:\n";
+				msg ~= "\t" ~ build ~ ", which requires:\n";
 			}
 			msg ~= "\t" ~ newest;
 			throw new CircularDependencyException(msg);
@@ -175,7 +188,7 @@ class Builder
 
 		AbstractBuilder!(T) get_or_add (T) ()
 		{
-			string mangle = T.stringof;
+			char[] mangle = T.stringof;
 			if (mangle in _builders)
 			{
 				return cast(AbstractBuilder!(T)) _builders[mangle];
@@ -193,7 +206,7 @@ class Builder
 		
 		void buildexception()
 		{
-			string msg = "Could not instantiate type " ~ _build_target_stack[0] ~ ". Error was: could not build ";
+			char[] msg = "Could not instantiate type " ~ _build_target_stack[0] ~ ". Error was: could not build ";
 			foreach (target; _build_target_stack[0..$-1])
 			{
 				msg ~= `type ` ~ target ~ " which it is waiting for dependencies:\n";
@@ -209,9 +222,9 @@ class Builder
 			return ret;
 		}
 
-		AbstractBuilder!(T) wrap_s (T) (string context, AbstractBuilder!(T) b)
+		AbstractBuilder!(T) wrap_s (T) (char[] context, AbstractBuilder!(T) b)
 		{
-			string mangle = T.stringof;
+			char[] mangle = T.stringof;
 			if (mangle in _builders)
 			{
 				auto existing = cast(MultiBuilder!(T)) _builders[mangle];
@@ -255,12 +268,21 @@ class Builder
 	}
 }
 
+void post_build(T)(Builder parent, T obj)
+{
+	mixin(get_post_deps!(T)());
+}
+
 /** The default object builder. Forward reference issues, arg */
 public Builder builder;
 
 static this ()
 {
 	builder = new Builder();
+	version (BuildTest)
+	{
+		builder.autobuild = true;
+	}
 }
 
 // For storing AbstractBuilder!(T) arrays for heterogenous T
@@ -302,29 +324,42 @@ version (BuildTest)
 		}
 	}
 
+	Builder getbuilder()
+	{
+		auto b = new Builder();
+		b.autobuild = true;
+		b.register!(Foo)();
+		b.register!(Bar)();
+		b.register!(Frumious)();
+		b.register!(Wha)();
+		b.register!(Bandersnatch)();
+		b.register!(Snark)();
+		return b;
+	}
+	
 	unittest {
 		// tests no explicit constructor
-		auto b = new Builder();
+		auto b = getbuilder();
 		auto o = b.get!(Object)();
 		assert (o !is null);
 	}
 
 	unittest {
-		auto b = new Builder();
+		auto b = getbuilder();
 		auto o = b.get!(Foo)();
 		auto p = b.get!(Bar)();
 		assert (o !is null);
 	}
 
 	unittest {
-		auto b = new Builder();
+		auto b = getbuilder();
 		auto o = b.get!(Frumious)();
 		assert (o !is null);
 		assert (o.kid !is null);
 	}
 
 	unittest {
-		auto b = new Builder();
+		auto b = getbuilder();
 		b.bind!(IFrumious, Frumious)();
 		auto o = b.get!(IFrumious)();
 		assert (o !is null);
@@ -337,13 +372,13 @@ version (BuildTest)
 	 unittest {
 	 // This shouldn't compile. The body of this test will be commented
 	 // out in the general case for that reason.
-	 auto b = new Builder();
+	 auto b = getbuilder();
 	 b.bind!(Frumious, Foo);
 	 }
 	 */
 
 	unittest {
-		auto b = new Builder();
+		auto b = getbuilder();
 		b.bind!(IFrumious, Frumious)();
 		b.bind!(Foo, Bar)();
 		auto o = b.get!(IFrumious)();
@@ -355,7 +390,7 @@ version (BuildTest)
 	}
 
 	unittest {
-		auto b = new Builder();
+		auto b = getbuilder();
 		try
 		{
 			b.get!(IFrumious)();
@@ -372,14 +407,14 @@ version (BuildTest)
 
 	unittest {
 		// tests no explicit constructor and singleton
-		auto b = new Builder();
+		auto b = getbuilder();
 		auto one = b.get!(Wha)();
 		auto two = b.get!(Wha)();
 		assert (one is two);
 	}
 
 	unittest {
-		auto b = new Builder();
+		auto b = getbuilder();
 		auto o = new Object;
 		b.provide(o);
 		assert (b.get!(Object) is o);
@@ -444,8 +479,24 @@ version (BuildTest)
 		builder.get!(Fred);
 	}
 
+	class SetterInject
+	{
+		public IFrumious myFrum;
+		void inject(IFrumious frum)
+		{
+			myFrum = frum;
+		}
+	}
+	
+	unittest
+	{
+		builder.bind!(IFrumious, Frumious);
+		auto s = builder.get!(SetterInject);
+		assert (s.myFrum !is null);
+	}
+	
 	void main ()
 	{
-		writefln("All tests pass.");
+		Stdout.formatln("All tests pass.");
 	}
 }
