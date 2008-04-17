@@ -6,6 +6,7 @@ import tango.text.xml.Document;
 import tango.text.xml.XmlPrinter;
 import tango.text.xml.PullParser;
 import tango.group.convert;
+import tango.core.Exception;
 
 alias Document!(char) Xmldoc;
 alias Document!(char).Node Node;
@@ -22,7 +23,6 @@ char[] getXml(TestHierarchy hierarchy)
 
 void getXml(char[] name, TestResultSet tests, Xmldoc doc)
 {
-	// won't compile...need to stringize these
 	Node testsuite = doc.root.element(null, "testsuite", null)
 		.attribute(null, "name", name)
 		.attribute(null, "timestamp", "")

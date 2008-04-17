@@ -22,7 +22,7 @@ public class Mocker
     {
         this () 
         {
-            _repository = new MockRepository();
+            _repository = MockRepository.get();
         }
 
         void add (T)(T mocked)

@@ -12,6 +12,19 @@ version (MocksDebug)
 
 public class MockRepository
 {
+	// Singleton
+	private static MockRepository _singleton;
+	public static MockRepository get()
+	{
+		if (_singleton is null)
+		{
+			_singleton = new MockRepository();
+		}
+		return _singleton;
+	}
+
+
+
 	// TODO: split this up somehow!
 	private bool _allowDefaults = false;
 	private ICall[] _calls = [];
