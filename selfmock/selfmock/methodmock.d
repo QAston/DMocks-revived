@@ -7,9 +7,9 @@ import selfmock.mockobject;
 public import selfmock.util;
 
 
-char[] method(alias themethod, char[] name)()
+template method(alias themethod, char[] name)
 {
-	return method!(name, ReturnTypeOf!(themethod), ParameterTupleOf!(themethod));
+	const char[] method = method!(name, ReturnTypeOf!(themethod), ParameterTupleOf!(themethod))();
 }
 
 char[] method(char[] name, TReturn, TArgs...)()
