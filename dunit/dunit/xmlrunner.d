@@ -10,6 +10,7 @@ import tango.io.stream.TextFileStream;
 import tango.time.WallClock;
 import tango.time.StopWatch;
 import tango.text.xml.Document;
+import tango.io.Console;
 
 Layout!(char) format;
 
@@ -35,6 +36,10 @@ class XmlRunner : ITestRunner
 		result.seconds = watch.stop;
 		result.assertions = expect.assertionCount;
 		hierarchy.add(test.classinfo.name, result);
+		if (result.type == ResultType.Fail)
+		{
+			Cerr(result.ex).newline()(result.stacktrace).newline()();
+		}
 	}
 
 	bool startTest (TestFixture test, char[] name)

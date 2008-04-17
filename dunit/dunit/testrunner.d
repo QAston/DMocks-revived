@@ -51,11 +51,11 @@ public class TestResult
 		{
 			if (stacktrace.length)
 			{
-				return format("Error: {0}: {1}\n{2}", name, ex, stacktrace);
+				return format("Error: {}: {}: {}\n{}", name, ex.classinfo.name, ex.msg, stacktrace);
 			}
 			else
 			{
-				return format("Error: {0}: {1}", name, ex.classinfo.name);
+				return format("Error: {}: {}: {}", name, ex.classinfo.name, ex.msg);
 			}
 		}
 		else

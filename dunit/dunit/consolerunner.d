@@ -72,10 +72,12 @@ class ConsoleRunner : ITestRunner
 
 	bool startTest (TestFixture fixture, char[] name)
 	{
+        /*
 		if (!quiet)
 		{
-			Stdout.formatln("running {}...", name);
+			Stdout.format("running {}...", name);
 		}
+        */
 		return true;
 	}
 
