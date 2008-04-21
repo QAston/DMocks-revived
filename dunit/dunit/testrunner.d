@@ -1,6 +1,7 @@
 module dunit.testrunner;
 
 import tango.text.convert.Layout;
+import tango.text.Util;
 import dunit.testfixture;
 import dunit.repository;
 
@@ -51,11 +52,11 @@ public class TestResult
 		{
 			if (stacktrace.length)
 			{
-				return format("Error: {}: {}: {}\n{}", name, ex.classinfo.name, ex.msg, stacktrace);
+				return format("Error: {}: {}: {}\n\n{}", name, ex.classinfo.name, ex.msg, stacktrace);
 			}
 			else
 			{
-				return format("Error: {}: {}: {}", name, ex.classinfo.name, ex.msg);
+				return format("Error: {}: {}:\n\n{}", name, ex.classinfo.name, ex.msg);
 			}
 		}
 		else
@@ -90,7 +91,7 @@ public TestResult run (void delegate () test, TestFixture fixture, char[] name)
 		result.ex = ex;
 		if (ex.info)
 		{
-			result.stacktrace = ex.info.toString;
+			result.stacktrace = ex.info.toString().substitute("0x", "\n0x");
 		}
 		result.type = ResultType.Fail;
 	}

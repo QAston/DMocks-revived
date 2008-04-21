@@ -21,11 +21,11 @@ char[] toString (T) (T value)
 	{
 		static if (is (typeof(T[0]) == char))
 		{
-			return value;
+			return `"` ~ value ~ `"`;
 		}
 		else
 		{
-			return Utf.toString(value);
+			return `"` ~ Utf.toString(value) ~ `"`;
 		}
 	}
     static if (is (T : T[])) 

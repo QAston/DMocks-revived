@@ -5,6 +5,7 @@ import selfmock.mockobject;
 import selfmock.util;
 import selfmock.arguments;
 import selfmock.action;
+import selfmock.repository;
 
 version (MocksDebug)
 	import tango.io.Stdout;
@@ -191,7 +192,7 @@ public class Call : ICall
 		{
 			version (MocksDebug)
 				Stdout.formatln("repeat violated");
-			throw new ExpectationViolationException(toString);
+			Thrower.exception(this);
 		}
 		version (MocksDebug)
 			Stdout.formatln("repeat verified");
@@ -243,6 +244,24 @@ public class Call : ICall
 	}
 }
 
+class Thrower
+{
+	static void exception(ICall current)
+	{
+		auto repo = MockRepository.get;
+		char[] message = current.toString();
+		foreach (call; repo.calls)
+		{
+			if (call is current)
+				continue;
+			if (call.satisfied())
+				continue;
+			message ~= '\n';
+			message ~= call.toString();
+		}
+		throw new ExpectationViolationException(message);
+	}
+}
 
 version (MocksTest)
 {

@@ -16,7 +16,6 @@ char[] get_deps (T) ()
 	}
 }
 
-// TODO: this is an ugly dependency. 
 char[] get_post_deps (T) ()
 {
 	static if (is (typeof (T.inject) == function))

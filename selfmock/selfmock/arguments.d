@@ -46,7 +46,7 @@ template Arguments (U...)
                 if (args is null) return false;
                 foreach (i, arg; arguments) 
                 {
-                    if (args.arguments[i] !is arg) 
+                    if (args.arguments[i] != arg) 
                     {
                         return false;
                     }

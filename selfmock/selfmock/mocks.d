@@ -7,6 +7,7 @@ import selfmock.call;
 import selfmock.caller;
 import tango.core.Variant;
 import tango.io.Stdout;
+import jive.stacktrace;
 
 version (MocksDebug) import tango.io.Stdout;
 version (MocksTest) import tango.io.Stdout;
@@ -22,17 +23,8 @@ public class Mocker
     {
         this () 
         {
-            _repository = MockRepository.get();
-        }
-
-        void add (T)(T mocked)
-        {
-            Mocked actual = cast(Mocked)mocked;
-            if (actual is null)
-            {
-                throw new InvalidOperationException("Did you try to add something to the mocker that isn't a mocked object?");
-            }
-            actual._owner = new Caller(_repository);
+            _repository = MockRepository.get;
+            _repository.clear();
         }
 
         /** 
