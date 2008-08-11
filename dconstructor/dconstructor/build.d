@@ -10,7 +10,6 @@ private
 	import dconstructor.exception;
 	import dconstructor.build_utils;
 	import dconstructor.traits;
-	import tango.io.Stdout;
 
 	version (BuildTest)
 	{
@@ -73,7 +72,6 @@ class Builder(TInterceptor...)
 	 */
 	typeof(this) bind (TVisible, TImpl) ()
 	{
-		Stdout("binding stuff: {}, {}", TVisible.stringof, TImpl.stringof).newline().flush();
 		static assert (is (TImpl : TVisible), "binding failure: cannot convert type " ~ TImpl.stringof ~ " to type " ~ TVisible.stringof);
 		// again, only possible b/c no inheritance for structs
 		wrap!(TVisible)(new DelegatingBuilder!(typeof(this), TVisible, TImpl)());
@@ -207,8 +205,8 @@ class Builder(TInterceptor...)
 			{
 				msg ~= `type ` ~ target ~ " which it is waiting for dependencies:\n";
 			}
-			msg ~= `type ` ~ _build_target_stack[$-1] ~ ".";
-			msg ~= "Error: " ~ message;
+			msg ~= `type ` ~ _build_target_stack[$-1] ~ ":\n";
+			msg ~=  message;
 			throw new BindingException(msg);
 		}
 
@@ -224,19 +222,14 @@ class Builder(TInterceptor...)
 			char[] mangle = T.stringof;
 			if (mangle in _builders)
 			{
-				Stdout("tried registering a builder that already exists: {}", T.stringof).newline().flush();
 				auto existing = cast(MultiBuilder!(typeof(this), T)) _builders[mangle];
-				Stdout("adding to existing").newline().flush();
-				assert (existing !is null, "added something but it isn't a multibuilder!");
+				assert (existing !is null, "added something but it isn't a multibuilder!" ~ _builders[mangle].toString());
 				existing.add(context, b);
-				Stdout("added to existing").newline().flush();
 				return existing;
 			}
-			Stdout("registering new builder: {}", T.stringof).newline().flush();
 			MultiBuilder!(typeof(this), T) mb = new MultiBuilder!(typeof(this), T)();
 			mb.add(context, b);
-			_builders[mangle] = b;
-			Stdout("registered new builder: {}", T.stringof).newline().flush();
+			_builders[mangle] = mb;
 			return b;
 		}
 
@@ -250,6 +243,7 @@ class Builder(TInterceptor...)
 			static if (is (T : T[]) || is (T V : V [K]))
 			{
 				buildexception ("Cannot build an array or associative array; you have to provide it.");
+				return null;
 			}
 			else static if (is (T == struct))
 			{
@@ -265,6 +259,7 @@ class Builder(TInterceptor...)
 				// a bound interface can't be built directly. Everything's
 				// resolved at runtime.
 				buildexception ("no bindings, not provided, and cannot create an instance. You must bind interfaces and provide primitives manually.");
+				return null;
 			}
 		}
 	}

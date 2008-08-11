@@ -7,7 +7,7 @@ private
 	import tango.core.Traits;
 }
 
-interface ISingleBuilder {}
+abstract class ISingleBuilder {}
 
 abstract class AbstractBuilder (TBuilder, T) : ISingleBuilder
 {
