@@ -4,12 +4,12 @@ import tango.sys.win32.Types;
 
 private
 {
+	import dconstructor.interceptor;
 	import dconstructor.singleton;
 	import dconstructor.object_builder;
 	import dconstructor.multibuilder;
 	import dconstructor.aggregate;
 	import dconstructor.exception;
-	import dconstructor.util;
 	import dconstructor.build_utils;
 	import dconstructor.traits;
 
@@ -76,7 +76,7 @@ class Builder(TInterceptor...)
 	{
 		static assert (is (TImpl : TVisible), "binding failure: cannot convert type " ~ TImpl.stringof ~ " to type " ~ TVisible.stringof);
 		// again, only possible b/c no inheritance for structs
-		wrap!(TVisible)(new DelegatingBuilder!(TVisible, TImpl)());
+		wrap!(TVisible)(new DelegatingBuilder!(typeof(this), TVisible, TImpl)());
 		return this;
 	}
 	
@@ -182,12 +182,12 @@ class Builder(TInterceptor...)
 			throw new CircularDependencyException(msg);
 		}
 
-		AbstractBuilder!(T) get_or_add (T) ()
+		AbstractBuilder!(typeof(this), T) get_or_add (T) ()
 		{
 			char[] mangle = T.stringof;
 			if (mangle in _builders)
 			{
-				return cast(AbstractBuilder!(T)) _builders[mangle];
+				return cast(AbstractBuilder!(typeof(this), T)) _builders[mangle];
 			}
 			
 			if (!_autobuild)
@@ -211,40 +211,36 @@ class Builder(TInterceptor...)
 			throw new BindingException(msg);
 		}
 
-		AbstractBuilder!(T) wrap (T) (AbstractBuilder!(T) b)
+		AbstractBuilder!(typeof(this), T) wrap (T) (AbstractBuilder!(typeof(this), T) b)
 		{
-			auto ret = wrap_s(_context, b);
+			auto ret = wrap_s!(T)(_context, b);
 			_context = null;
 			return ret;
 		}
 
-		AbstractBuilder!(T) wrap_s (T) (char[] context, AbstractBuilder!(T) b)
+		AbstractBuilder!(typeof(this), T) wrap_s (T) (char[] context, AbstractBuilder!(typeof(this), T) b)
 		{
 			char[] mangle = T.stringof;
 			if (mangle in _builders)
 			{
-				auto existing = cast(MultiBuilder!(T)) _builders[mangle];
+				auto existing = cast(MultiBuilder!(typeof(this), T)) _builders[mangle];
 				existing.add(context, b);
 				return existing;
 			}
-			MultiBuilder!(T) mb = new MultiBuilder!(T)();
+			MultiBuilder!(typeof(this), T) mb = new MultiBuilder!(typeof(this), T)();
 			mb.add(context, b);
 			_builders[mangle] = b;
 			return b;
 		}
 
-		AbstractBuilder!(T) make_builder (T) ()
+		AbstractBuilder!(typeof(this), T) make_builder (T) ()
 		{
 			return wrap_s!(T)(null, make_real_builder!(T)());
 		}
 
-		AbstractBuilder!(T) make_real_builder (T) ()
+		AbstractBuilder!(typeof(this), T) make_real_builder (T) ()
 		{
-			static if (is (T : ImplementedBy!(U), U))
-			{
-				return new DelegatingBuilder!(typeof(this), T, U)();
-			}
-			else static if (is (T : T[]) || is (T V : V [K]))
+			static if (is (T : T[]) || is (T V : V [K]))
 			{
 				static assert (false, "Cannot build an array or associative array; you have to provide it.");
 			}
@@ -268,31 +264,21 @@ class Builder(TInterceptor...)
 	}
 }
 
-void post_build(T)(Builder parent, T obj)
+void post_build(TBuilder, T)(TBuilder parent, T obj)
 {
 	mixin(get_post_deps!(T)());
 }
 
 /** The default object builder. Forward reference issues, arg */
-public Builder builder;
+public Builder!() builder;
 
 static this ()
 {
-	builder = new Builder();
+	builder = new Builder!()();
 	version (BuildTest)
 	{
 		builder.autobuild = true;
 	}
-}
-
-// For storing AbstractBuilder!(T) arrays for heterogenous T
-interface ISingleBuilder
-{
-}
-
-abstract class AbstractBuilder (TBuilder, T) : ISingleBuilder
-{
-	T build (TBuilder parent);
 }
 
 version (BuildTest)

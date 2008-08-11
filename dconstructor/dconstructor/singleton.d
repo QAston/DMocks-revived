@@ -29,7 +29,7 @@ public template Implements(T)
 	const Implements = `
 	static this ()
 	{
-		builder.bind!(T, typeof(this));
+		builder.bind!(` ~ T.stringof ~ `, typeof(this));
 	}
 	`;
 }

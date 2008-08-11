@@ -4,6 +4,14 @@ private
 {
 	import dconstructor.singleton;
 	import dconstructor.build_utils;
+	import tango.core.Traits;
+}
+
+interface ISingleBuilder {}
+
+abstract class AbstractBuilder (TBuilder, T) : ISingleBuilder
+{
+	T build (TBuilder parent);
 }
 
 class SingletonBuilder (TBuilder, T): AbstractBuilder!(TBuilder, T)

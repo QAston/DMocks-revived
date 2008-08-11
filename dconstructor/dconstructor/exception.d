@@ -1,7 +1,5 @@
 module dconstructor.exception;
 
-import dconstructor.util;
-
 class BindingException : Exception
 {
 	this (char[] msg)

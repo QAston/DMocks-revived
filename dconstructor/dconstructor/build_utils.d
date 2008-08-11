@@ -1,7 +1,6 @@
 module dconstructor.build_utils;
 
 import dconstructor.singleton;
-import dconstructor.util;
 import dconstructor.traits;
 
 char[] get_deps (T) ()
@@ -34,7 +33,7 @@ char[] get_deps_impl (T, int i, char[] method) ()
 	static if (i < ParameterTupleOf!(inject_method).length)
 	{
 		char[]
-				ret = `parent.get!(ParameterTupleOf!(T.` ~ method ~ `)[` ~ (to_string!(
+				ret = `parent.get!(ParameterTupleOf!(T.` ~ method ~ `)[` ~ (ToString!(
 						i)) ~ `])`;
 		static if (i < ParameterTupleOf!(inject_method).length - 1)
 			ret ~= `,`;

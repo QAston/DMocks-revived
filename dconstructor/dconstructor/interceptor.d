@@ -1,23 +1,24 @@
 module dconstructor.interceptor;
 
-public class InterceptorCollection (T...)
+public class InterceptorCollection (TInterceptor...)
 {
-	static if (T.length > 0)
+	static if (TInterceptor.length > 0)
 	{
-		private T[0] _mine;
+		private alias TInterceptor[0] TMine;
+		private TMine _mine;
 	}
 
-	static if (T.length > 1)
+	static if (TInterceptor.length > 1)
 	{
-		private InterceptorCollection!(T[1 .. $]) _tail;
+		private InterceptorCollection!(TInterceptor[1 .. $]) _tail;
 	}
 	
 	this ()
 	{
-		static if (T.length > 0)
+		static if (TInterceptor.length > 0)
 		{
-			_mine = new typeof(T[0])();
-			static if (T.length > 1)
+			_mine = new TMine();
+			static if (TInterceptor.length > 1)
 			{
 				_tail = typeof(_tail)();
 			}
@@ -26,11 +27,11 @@ public class InterceptorCollection (T...)
 
 	public void intercept(T) (T built)
 	{
-		static if (T.length > 0)
+		static if (TInterceptor.length > 0)
 		{
 			_mine.intercept!(T) (built);
 		}
-		static if (T.length > 1)
+		static if (TInterceptor.length > 1)
 		{
 			_tail.intercept!(T) (built);
 		}

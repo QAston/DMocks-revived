@@ -1,6 +1,6 @@
 module dconstructor.multibuilder;
 
-import dconstructor.build;
+import dconstructor.object_builder;
 import dconstructor.exception;
 
 class MultiBuilder (TBuilder, T) : AbstractBuilder!(TBuilder, T)
