@@ -3,12 +3,12 @@ module dconstructor.multibuilder;
 import dconstructor.build;
 import dconstructor.exception;
 
-class MultiBuilder (T) : AbstractBuilder!(T)
+class MultiBuilder (TBuilder, T) : AbstractBuilder!(TBuilder, T)
 {
-	private AbstractBuilder!(T) [char[]] _subbuilders;
-	private AbstractBuilder!(T) _default;
+	private AbstractBuilder!(TBuilder, T) [char[]] _subbuilders;
+	private AbstractBuilder!(TBuilder, T) _default;
 
-	T build (Builder b)
+	T build (TBuilder b)
 	{
 		char[] objective = b._build_for;
 		if (objective is null || !(objective in _subbuilders))
@@ -23,7 +23,7 @@ class MultiBuilder (T) : AbstractBuilder!(T)
 		return _subbuilders[objective].build(b);
 	}
 
-	void add (char[] objective, AbstractBuilder!(T) maker)
+	void add (char[] objective, AbstractBuilder!(TBuilder, T) maker)
 	{
 		if (objective is null)
 		{
@@ -35,7 +35,7 @@ class MultiBuilder (T) : AbstractBuilder!(T)
 		}
 	}
 
-	void set_default (AbstractBuilder!(T) maker)
+	void set_default (AbstractBuilder!(TBuilder, T) maker)
 	{
 		_default = maker;
 	}

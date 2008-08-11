@@ -1,5 +1,7 @@
 module dconstructor.build;
 
+import tango.sys.win32.Types;
+
 private
 {
 	import dconstructor.singleton;
@@ -25,14 +27,15 @@ private
 }
 
 /**
- * The main object builder. Use it to create objects.
- *
- * The rest of the project can import myproject.build rather than 
- * dconstructor.build without paying attention to the differences. It will
- * require recompiling the whole project, though.
+ * The main object builder. Use it to create objects and change type bindings.
  */
-class Builder
+class Builder(TInterceptor...)
 {
+	this ()
+	{
+		_interceptor = new InterceptorCollection!(TInterceptor)();
+	}
+	
 	/**
 	 * Get an instance of type T. T can be anything -- primitive, array,
 	 * interface, struct, or class.
@@ -46,30 +49,12 @@ class Builder
 	T get (T) ()
 	{
 		checkCircular();
-		static if (is (T : Singleton))
-		{
-			char[] mangle = T.stringof;
-			// No inheritance for non-classes, so this is safe....
-			if (mangle in _built)
-			{
-				return cast(T) _built[mangle];
-			}
-		}
-		
 		_build_target_stack ~= T.stringof;
-
 		auto b = get_or_add!(T)();
 		T obj = b.build(this);
 		post_build(this, obj);
-		
+		_interceptor.intercept(obj);
 		_build_target_stack = _build_target_stack[0..$-1];
-
-		static if (is (T : Singleton))
-		{
-			// No inheritance for non-classes, so this is safe....
-			_built[T.stringof] = cast(Object) obj;
-		}
-
 		return obj;
 	}
 
@@ -98,7 +83,11 @@ class Builder
 	Builder register (T) ()
 	{
 		static assert (is (T == class), "Currently, only classes can be registered for creation.");
-		wrap!(T)(new ObjectBuilder!(T)());
+		if (_defaultSingleton || is (T : Singleton))
+		{
+			wrap!(T)(new SingletonBuilder!(typeof(this), T)());
+		}
+		wrap!(T)(new ObjectBuilder!(typeof(this), T)());
 		return this;
 	}
 
@@ -110,7 +99,7 @@ class Builder
 	 */
 	Builder provide (T) (T obj)
 	{
-		wrap!(T)(new StaticBuilder!(T)(obj));
+		wrap!(T)(new StaticBuilder!(typeof(this), T)(obj));
 		return this;
 	}
 
@@ -120,7 +109,7 @@ class Builder
 	 */
 	Builder list (TVal) (TVal[] elems)
 	{
-		wrap!(TVal[])(new GlobalListBuilder!(TVal)(elems));
+		wrap!(TVal[])(new GlobalListBuilder!(typeof(this), TVal)(elems));
 		return this;
 	}
 
@@ -130,7 +119,7 @@ class Builder
 	 */
 	Builder map (TVal, TKey) (TVal [TKey] elems)
 	{
-		wrap!(TVal[TKey])(new GlobalDictionaryBuilder!(TKey, TVal)(elems));
+		wrap!(TVal[TKey])(new GlobalDictionaryBuilder!(typeof(this), TKey, TVal)(elems));
 		return this;
 	}
 
@@ -148,6 +137,11 @@ class Builder
 	{
 		_autobuild = value;
 	}
+	
+	public void defaultSingleton (bool value)
+	{
+		_defaultSingleton = value;
+	}
 
 	private
 	{
@@ -156,6 +150,8 @@ class Builder
 		char[][] _build_target_stack;
 		char[] _context;
 		bool _autobuild = false;
+		bool _defaultSingleton = true;
+		InterceptorCollection!(TInterceptor) _interceptor;
 
 		void checkCircular ()
 		{
@@ -244,17 +240,21 @@ class Builder
 
 		AbstractBuilder!(T) make_real_builder (T) ()
 		{
-			static if (is (T : T[]) || is (T V : V [K]))
+			static if (is (T : ImplementedBy!(U), U))
+			{
+				return new DelegatingBuilder!(typeof(this), T, U)();
+			}
+			else static if (is (T : T[]) || is (T V : V [K]))
 			{
 				static assert (false, "Cannot build an array or associative array; you have to provide it.");
 			}
 			else static if (is (T == struct))
 			{
-				return new StructBuilder!(T);
+				return new StructBuilder!(typeof(this), T);
 			}
 			else static if (is (T == class))
 			{
-				return new ObjectBuilder!(T);
+				return new ObjectBuilder!(typeof(this), T);
 			}
 			else
 			{
@@ -290,9 +290,9 @@ interface ISingleBuilder
 {
 }
 
-abstract class AbstractBuilder (T) : ISingleBuilder
+abstract class AbstractBuilder (TBuilder, T) : ISingleBuilder
 {
-	T build (Builder parent);
+	T build (TBuilder parent);
 }
 
 version (BuildTest)

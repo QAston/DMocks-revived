@@ -10,7 +10,7 @@ import dconstructor.build;
  * statically. This array is provided for every type that requires an 
  * array of that type.
  */
-class GlobalListBuilder (TList) : AbstractBuilder!(TList[])
+class GlobalListBuilder (TBuilder, TList) : AbstractBuilder!(TBuilder, TList[])
 {
 	private TList[] _objs;
 
@@ -19,7 +19,7 @@ class GlobalListBuilder (TList) : AbstractBuilder!(TList[])
 		_objs = objs.dup;
 	}
 
-	TList[] build (Builder parent)
+	TList[] build (TBuilder parent)
 	{
 		return _objs.dup;
 	}
@@ -40,7 +40,7 @@ TValue[TKey] dup (TValue, TKey)(TValue[TKey] aa)
  * Anything taking a dictionary of that type will be given this dictionary.
  * The exception, of course, being when it's wrapped in a MultiBuilder.
  */
-class GlobalDictionaryBuilder (TKey, TValue) : AbstractBuilder!(TValue [TKey])
+class GlobalDictionaryBuilder (TBuilder, TKey, TValue) : AbstractBuilder!(TBuilder, TValue [TKey])
 {
 	private TValue [TKey] _dict;
 
@@ -49,7 +49,7 @@ class GlobalDictionaryBuilder (TKey, TValue) : AbstractBuilder!(TValue [TKey])
 		_dict = dup(dict);
 	}
 
-	TValue [TKey] build (Builder parent)
+	TValue [TKey] build (TBuilder parent)
 	{
 		return dup(_dict);
 	}

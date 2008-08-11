@@ -3,32 +3,48 @@ module dconstructor.object_builder;
 private
 {
 	import dconstructor.singleton;
-	import dconstructor.exception;
-	import dconstructor.util;
-	import dconstructor.traits;
-	import dconstructor.build;
 	import dconstructor.build_utils;
 }
 
-class ObjectBuilder (T) : AbstractBuilder!(T)
+class SingletonBuilder (TBuilder, T): AbstractBuilder!(TBuilder, T)
 {
-	T build (Builder parent)
+	private T _singleton;
+
+	T build (TBuilder parent)
+	{
+		if (_singleton is null)
+		{
+			_singleton = getSingleton (parent);
+		}
+		return _singleton;
+	}
+
+	private T getSingleton (TBuilder parent)
 	{
 		static assert (is (T == class), "Tried to build something that wasn't a class with an ObjectBuilder. Maybe you're missing a binding? Sorry.");
-		mixin(get_deps!(T)());
+		mixin (get_deps!(T) ());
+	}
+}
+
+class ObjectBuilder (TBuilder, T): AbstractBuilder!(TBuilder, T)
+{
+	T build (TBuilder parent)
+	{
+		static assert (is (T == class), "Tried to build something that wasn't a class with an ObjectBuilder. Maybe you're missing a binding? Sorry.");
+		mixin (get_deps!(T) ());
 	}
 }
 
 // This is cruddy. Without struct constructors, ugly!
-class StructBuilder (T) : AbstractBuilder!(T)
+class StructBuilder (TBuilder, T): AbstractBuilder!(TBuilder, T)
 {
-	T build (Builder parent)
+	T build (TBuilder parent)
 	{
 		return T.init;
 	}
 }
 
-class StaticBuilder (T) : AbstractBuilder!(T)
+class StaticBuilder (TBuilder, T): AbstractBuilder!(TBuilder, T)
 {
 	private T _provided;
 
@@ -37,15 +53,15 @@ class StaticBuilder (T) : AbstractBuilder!(T)
 		_provided = t;
 	}
 
-	T build (Builder parent)
+	T build (TBuilder parent)
 	{
 		return _provided;
 	}
 }
 
-class DelegatingBuilder (T, TImpl) : AbstractBuilder!(T)
+class DelegatingBuilder (TBuilder, T, TImpl): AbstractBuilder!(TBuilder, T)
 {
-	T build (Builder parent)
+	T build (TBuilder parent)
 	{
 		return cast(T) parent.get!(TImpl);
 	}
