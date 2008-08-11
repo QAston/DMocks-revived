@@ -1,7 +1,5 @@
 module dconstructor.build;
 
-import tango.sys.win32.Types;
-
 private
 {
 	import dconstructor.interceptor;
@@ -12,6 +10,7 @@ private
 	import dconstructor.exception;
 	import dconstructor.build_utils;
 	import dconstructor.traits;
+	import tango.io.Stdout;
 
 	version (BuildTest)
 	{
@@ -63,7 +62,7 @@ class Builder(TInterceptor...)
 	 * Subsequent calls will not apply to the given type unless you call this
 	 * method again.
 	 */
-	Builder on (T) ()
+	typeof(this) on (T) ()
 	{
 		_context = T.stringof;
 		return this;
@@ -72,15 +71,17 @@ class Builder(TInterceptor...)
 	/**
 	 * When someone asks for TVisible, give them a TImpl instead.
 	 */
-	Builder bind (TVisible, TImpl) ()
+	typeof(this) bind (TVisible, TImpl) ()
 	{
+		Stdout("binding stuff: {}, {}", TVisible.stringof, TImpl.stringof).newline().flush();
 		static assert (is (TImpl : TVisible), "binding failure: cannot convert type " ~ TImpl.stringof ~ " to type " ~ TVisible.stringof);
 		// again, only possible b/c no inheritance for structs
 		wrap!(TVisible)(new DelegatingBuilder!(typeof(this), TVisible, TImpl)());
+		register!(TImpl)();
 		return this;
 	}
 	
-	Builder register (T) ()
+	typeof(this) register (T) ()
 	{
 		static assert (is (T == class), "Currently, only classes can be registered for creation.");
 		if (_defaultSingleton || is (T : Singleton))
@@ -97,7 +98,7 @@ class Builder(TInterceptor...)
 	 * Implicit singletonization. This is required for structs, if you want to
 	 * set any of the fields (since by default static opCall is not called).
 	 */
-	Builder provide (T) (T obj)
+	typeof(this) provide (T) (T obj)
 	{
 		wrap!(T)(new StaticBuilder!(typeof(this), T)(obj));
 		return this;
@@ -107,7 +108,7 @@ class Builder(TInterceptor...)
 	 * Whenever anyone asks for an array of the given type, insert the given
 	 * array. There is no other way to provide structs.
 	 */
-	Builder list (TVal) (TVal[] elems)
+	typeof(this) list (TVal) (TVal[] elems)
 	{
 		wrap!(TVal[])(new GlobalListBuilder!(typeof(this), TVal)(elems));
 		return this;
@@ -117,7 +118,7 @@ class Builder(TInterceptor...)
 	 * Whenever someone asks for an associative array of the given type,
 	 * insert the given associative array.
 	 */
-	Builder map (TVal, TKey) (TVal [TKey] elems)
+	typeof(this) map (TVal, TKey) (TVal [TKey] elems)
 	{
 		wrap!(TVal[TKey])(new GlobalDictionaryBuilder!(typeof(this), TKey, TVal)(elems));
 		return this;
@@ -146,7 +147,6 @@ class Builder(TInterceptor...)
 	private
 	{
 		ISingleBuilder [char[]] _builders;
-		Object [char[]] _built;
 		char[][] _build_target_stack;
 		char[] _context;
 		bool _autobuild = false;
@@ -192,7 +192,7 @@ class Builder(TInterceptor...)
 			
 			if (!_autobuild)
 			{
-				buildexception();
+				buildexception ("Type " ~ T.stringof ~ "was not registered.");
 			}
 
 			auto b = make_builder!(T)();
@@ -200,14 +200,15 @@ class Builder(TInterceptor...)
 			return b;
 		}
 		
-		void buildexception()
+		void buildexception (char[] message)
 		{
 			char[] msg = "Could not instantiate type " ~ _build_target_stack[0] ~ ". Error was: could not build ";
 			foreach (target; _build_target_stack[0..$-1])
 			{
 				msg ~= `type ` ~ target ~ " which it is waiting for dependencies:\n";
 			}
-			msg ~= `type ` ~ _build_target_stack[$-1] ~ " which was not registered";
+			msg ~= `type ` ~ _build_target_stack[$-1] ~ ".";
+			msg ~= "Error: " ~ message;
 			throw new BindingException(msg);
 		}
 
@@ -223,13 +224,19 @@ class Builder(TInterceptor...)
 			char[] mangle = T.stringof;
 			if (mangle in _builders)
 			{
+				Stdout("tried registering a builder that already exists: {}", T.stringof).newline().flush();
 				auto existing = cast(MultiBuilder!(typeof(this), T)) _builders[mangle];
+				Stdout("adding to existing").newline().flush();
+				assert (existing !is null, "added something but it isn't a multibuilder!");
 				existing.add(context, b);
+				Stdout("added to existing").newline().flush();
 				return existing;
 			}
+			Stdout("registering new builder: {}", T.stringof).newline().flush();
 			MultiBuilder!(typeof(this), T) mb = new MultiBuilder!(typeof(this), T)();
 			mb.add(context, b);
 			_builders[mangle] = b;
+			Stdout("registered new builder: {}", T.stringof).newline().flush();
 			return b;
 		}
 
@@ -242,7 +249,7 @@ class Builder(TInterceptor...)
 		{
 			static if (is (T : T[]) || is (T V : V [K]))
 			{
-				static assert (false, "Cannot build an array or associative array; you have to provide it.");
+				buildexception ("Cannot build an array or associative array; you have to provide it.");
 			}
 			else static if (is (T == struct))
 			{
@@ -257,8 +264,7 @@ class Builder(TInterceptor...)
 				// If this is a static assert, it always gets tripped, since
 				// a bound interface can't be built directly. Everything's
 				// resolved at runtime.
-				throw new BindingException(
-						"Cannot build " ~ T.stringof ~ ": no bindings, not provided, and cannot create an " ~ "instance. You must bind interfaces and provide " ~ "primitives manually.");
+				buildexception ("no bindings, not provided, and cannot create an instance. You must bind interfaces and provide primitives manually.");
 			}
 		}
 	}
@@ -269,16 +275,19 @@ void post_build(TBuilder, T)(TBuilder parent, T obj)
 	mixin(get_post_deps!(T)());
 }
 
+private Builder!() _builder;
 /** The default object builder. Forward reference issues, arg */
-public Builder!() builder;
-
-static this ()
+public Builder!() builder()
 {
-	builder = new Builder!()();
-	version (BuildTest)
+	if (_builder is null)
 	{
-		builder.autobuild = true;
+		_builder = new Builder!()();
+		version (BuildTest)
+		{
+			builder.autobuild = true;
+		}
 	}
+	return _builder;
 }
 
 version (BuildTest)
@@ -310,7 +319,7 @@ version (BuildTest)
 		}
 	}
 
-	Builder getbuilder()
+	Builder getbuilder()()
 	{
 		auto b = new Builder();
 		b.autobuild = true;
@@ -325,27 +334,27 @@ version (BuildTest)
 	
 	unittest {
 		// tests no explicit constructor
-		auto b = getbuilder();
+		auto b = getbuilder()();
 		auto o = b.get!(Object)();
 		assert (o !is null);
 	}
 
 	unittest {
-		auto b = getbuilder();
+		auto b = getbuilder()();
 		auto o = b.get!(Foo)();
 		auto p = b.get!(Bar)();
 		assert (o !is null);
 	}
 
 	unittest {
-		auto b = getbuilder();
+		auto b = getbuilder()();
 		auto o = b.get!(Frumious)();
 		assert (o !is null);
 		assert (o.kid !is null);
 	}
 
 	unittest {
-		auto b = getbuilder();
+		auto b = getbuilder()();
 		b.bind!(IFrumious, Frumious)();
 		auto o = b.get!(IFrumious)();
 		assert (o !is null);
@@ -358,13 +367,13 @@ version (BuildTest)
 	 unittest {
 	 // This shouldn't compile. The body of this test will be commented
 	 // out in the general case for that reason.
-	 auto b = getbuilder();
+	 auto b = getbuilder()();
 	 b.bind!(Frumious, Foo);
 	 }
 	 */
 
 	unittest {
-		auto b = getbuilder();
+		auto b = getbuilder()();
 		b.bind!(IFrumious, Frumious)();
 		b.bind!(Foo, Bar)();
 		auto o = b.get!(IFrumious)();
@@ -376,7 +385,7 @@ version (BuildTest)
 	}
 
 	unittest {
-		auto b = getbuilder();
+		auto b = getbuilder()();
 		try
 		{
 			b.get!(IFrumious)();
@@ -393,21 +402,21 @@ version (BuildTest)
 
 	unittest {
 		// tests no explicit constructor and singleton
-		auto b = getbuilder();
+		auto b = getbuilder()();
 		auto one = b.get!(Wha)();
 		auto two = b.get!(Wha)();
 		assert (one is two);
 	}
 
 	unittest {
-		auto b = getbuilder();
+		auto b = getbuilder()();
 		auto o = new Object;
 		b.provide(o);
 		assert (b.get!(Object) is o);
 	}
 
 	unittest {
-		assert (builder !is null);
+		assert (builder() !is null);
 	}
 
 	class Bandersnatch : IFrumious
@@ -425,11 +434,11 @@ version (BuildTest)
 	}
 
 	unittest {
-		IFrumious one = builder.get!(Frumious);
-		IFrumious two = builder.get!(Bandersnatch);
-		builder.list([one, two]);
+		IFrumious one = builder().get!(Frumious);
+		IFrumious two = builder().get!(Bandersnatch);
+		builder().list([one, two]);
 
-		auto snark = builder.get!(Snark);
+		auto snark = builder().get!(Snark);
 		assert (snark.frumiousity[0] is one);
 		assert (snark.frumiousity[1] is two);
 	}
@@ -444,11 +453,11 @@ version (BuildTest)
 	}
 
 	unittest {
-		IFrumious one = builder.get!(Frumious);
-		IFrumious two = builder.get!(Bandersnatch);
-		builder.map(['a': one, 'c': two]);
+		IFrumious one = builder().get!(Frumious);
+		IFrumious two = builder().get!(Bandersnatch);
+		builder().map(['a': one, 'c': two]);
 
-		auto boojum = builder.get!(Boojum);
+		auto boojum = builder().get!(Boojum);
 		assert (boojum.frumiosity['a'] is one);
 		assert (boojum.frumiosity['c'] is two);
 	}
@@ -462,7 +471,7 @@ version (BuildTest)
 	}
 	
 	unittest {
-		builder.get!(Fred);
+		builder().get!(Fred);
 	}
 
 	class SetterInject
@@ -476,8 +485,8 @@ version (BuildTest)
 	
 	unittest
 	{
-		builder.bind!(IFrumious, Frumious);
-		auto s = builder.get!(SetterInject);
+		builder().bind!(IFrumious, Frumious);
+		auto s = builder().get!(SetterInject);
 		assert (s.myFrum !is null);
 	}
 	
