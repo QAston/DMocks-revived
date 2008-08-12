@@ -69,8 +69,15 @@ class StaticBuilder (TBuilder, T): AbstractBuilder!(TBuilder, T)
 
 class DelegatingBuilder (TBuilder, T, TImpl): AbstractBuilder!(TBuilder, T)
 {
+	private ObjectBuilder!(TBuilder, TImpl) _builder;
+
+	this ()
+	{
+		_builder = new typeof(_builder)();
+	}
+
 	T build (TBuilder parent)
 	{
-		return cast(T) parent.get!(TImpl);
+		return cast(T)_builder.build(parent);
 	}
 }
