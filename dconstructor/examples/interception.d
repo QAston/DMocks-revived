@@ -66,9 +66,9 @@ class Server : IServer
 
 class ThreadRunnableInterceptor
 {
-	void intercept (T)(T obj, char[][] buildStack)
+	void intercept (T)(T obj)
 	{
-		Stdout.formatln("interceptor, build stack: {}", buildStack);
+		Stdout.formatln("interceptor, build stack: {}", builder().buildStack());
 		static if (is (typeof (T.Run)))
 		{
 			auto thread = new Thread(&obj.Run);

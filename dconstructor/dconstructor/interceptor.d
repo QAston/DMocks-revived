@@ -31,11 +31,11 @@ public class InterceptorCollection (TInterceptor...)
 		if (built.intercepted) return;
 		static if (TInterceptor.length > 0)
 		{
-			_mine.intercept!(T) (built.object, buildStack);
+			_mine.intercept!(T) (built.object);
 		}
 		static if (TInterceptor.length > 1)
 		{
-			_tail.intercept!(T) (built.object, buildStack);
+			_tail.intercept!(T) (built, buildStack);
 		}
 	}
 }

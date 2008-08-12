@@ -127,6 +127,14 @@ class Builder(TInterceptor...)
 		return this;
 	}
 
+	/** Returns an ordered list of the names of the types being built.
+	  * TODO: should return an ordered list of ClassInfo objects for the
+	  * types being built. */
+	public char[][] buildStack ()
+	{
+		return _build_target_stack.dup;
+	}
+
 	/** Internal use only. */
 	public char[] _build_for ()
 	{
