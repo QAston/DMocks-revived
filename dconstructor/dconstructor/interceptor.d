@@ -1,4 +1,5 @@
 module dconstructor.interceptor;
+import dconstructor.object_builder;
 
 public class InterceptorCollection (TInterceptor...)
 {
@@ -25,38 +26,17 @@ public class InterceptorCollection (TInterceptor...)
 		}
 	}
 
-	public void intercept(T) (T built)
+	public void intercept(T) (Entity!(T) built, char[][] buildStack)
 	{
+		if (built.intercepted) return;
 		static if (TInterceptor.length > 0)
 		{
-			_mine.intercept!(T) (built);
+			_mine.intercept!(T) (built.object, buildStack);
 		}
 		static if (TInterceptor.length > 1)
 		{
-			_tail.intercept!(T) (built);
+			_tail.intercept!(T) (built.object, buildStack);
 		}
 	}
 }
 
-unittest
-{
-	class Something
-	{
-		static int count;
-		static Object[] seen = [];
-		void intercept(T)(T obj)
-		{
-			static if (is (T : Object))
-			{
-				seen ~= obj;
-			}
-			count++;
-		}
-	}
-	
-	auto coll = new InterceptorCollection!(Something)();
-	Object o = new Object();
-	coll.intercept(o);
-	assert (Something.seen.length == 1, "intercepted the wrong number of elements");
-	assert (Something.seen[0] is o, "intercepted the wrong element");
-}

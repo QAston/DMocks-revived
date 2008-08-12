@@ -4,6 +4,7 @@
 module dconstructor.aggregate;
 
 import dconstructor.build;
+import dconstructor.object_builder;
 
 /**
  * Provides an array of the given type. Members of the array are provided 
@@ -19,9 +20,12 @@ class GlobalListBuilder (TBuilder, TList) : AbstractBuilder!(TBuilder, TList[])
 		_objs = objs.dup;
 	}
 
-	TList[] build (TBuilder parent)
+	Entity!(TList[]) build (TBuilder parent)
 	{
-		return _objs.dup;
+		Entity!(TList[]) entity;
+		entity.object = _objs.dup;
+		entity.intercepted = true;
+		return entity;
 	}
 }
 
@@ -49,8 +53,11 @@ class GlobalDictionaryBuilder (TBuilder, TKey, TValue) : AbstractBuilder!(TBuild
 		_dict = dup(dict);
 	}
 
-	TValue [TKey] build (TBuilder parent)
+	Entity!(TValue [TKey]) build (TBuilder parent)
 	{
-		return dup(_dict);
+		Entity!(TValue [TKey]) entity;
+		entity.object = dup(_dict);
+		entity.intercepted = true;
+		return entity;
 	}
 }

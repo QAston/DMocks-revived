@@ -7,27 +7,41 @@ private
 	import tango.core.Traits;
 }
 
+
+struct Entity(T)
+{
+	T object;
+	bool intercepted;
+}
+
 abstract class ISingleBuilder {}
 
 abstract class AbstractBuilder (TBuilder, T) : ISingleBuilder
 {
-	T build (TBuilder parent);
+	Entity!(T) build (TBuilder parent);
 }
 
 class SingletonBuilder (TBuilder, T): AbstractBuilder!(TBuilder, T)
 {
 	private T _singleton;
 
-	T build (TBuilder parent)
+	Entity!(T) build (TBuilder parent)
 	{
+		Entity!(T) entity;
 		if (_singleton is null)
 		{
-			_singleton = getSingleton (parent);
+			_singleton = get (parent);
+			entity.intercepted = false;
 		}
-		return _singleton;
+		else
+		{
+			entity.intercepted = true;
+		}
+		entity.object = _singleton;
+		return entity;
 	}
 
-	private T getSingleton (TBuilder parent)
+	T get (TBuilder parent)
 	{
 		static assert (is (T == class), "Tried to build something that wasn't a class with an ObjectBuilder. Maybe you're missing a binding? Sorry.");
 		mixin (get_deps!(T) ());
@@ -36,7 +50,15 @@ class SingletonBuilder (TBuilder, T): AbstractBuilder!(TBuilder, T)
 
 class ObjectBuilder (TBuilder, T): AbstractBuilder!(TBuilder, T)
 {
-	T build (TBuilder parent)
+	Entity!(T) build (TBuilder parent)
+	{
+		Entity!(T) entity;
+		entity.intercepted = false;
+		entity.object = get(parent);
+		return entity;
+	}
+
+	T get (TBuilder parent)
 	{
 		static assert (is (T == class), "Tried to build something that wasn't a class with an ObjectBuilder. Maybe you're missing a binding? Sorry.");
 		mixin (get_deps!(T) ());
@@ -46,13 +68,15 @@ class ObjectBuilder (TBuilder, T): AbstractBuilder!(TBuilder, T)
 // This is cruddy. Without struct constructors, ugly!
 class StructBuilder (TBuilder, T): AbstractBuilder!(TBuilder, T)
 {
-	T build (TBuilder parent)
+	Entity!(T) build (TBuilder parent)
 	{
-		return T.init;
+		Entity!(T) entity;
+		entity.object = T.init;
+		return entity;
 	}
 }
 
-class StaticBuilder (TBuilder, T): AbstractBuilder!(TBuilder, T)
+class StaticBuilder (TBuilder, T): SingletonBuilder!(TBuilder, T)
 {
 	private T _provided;
 
@@ -61,7 +85,7 @@ class StaticBuilder (TBuilder, T): AbstractBuilder!(TBuilder, T)
 		_provided = t;
 	}
 
-	T build (TBuilder parent)
+	override T get (TBuilder parent)
 	{
 		return _provided;
 	}
@@ -76,8 +100,12 @@ class DelegatingBuilder (TBuilder, T, TImpl): AbstractBuilder!(TBuilder, T)
 		_builder = new typeof(_builder)();
 	}
 
-	T build (TBuilder parent)
+	Entity!(T) build (TBuilder parent)
 	{
-		return cast(T)_builder.build(parent);
+		Entity!(T) entity;
+		auto actual = _builder.build(parent);
+		entity.object = actual.object;
+		entity.intercepted = actual.intercepted;
+		return entity;
 	}
 }

@@ -8,7 +8,7 @@ class MultiBuilder (TBuilder, T) : AbstractBuilder!(TBuilder, T)
 	private AbstractBuilder!(TBuilder, T) [char[]] _subbuilders;
 	private AbstractBuilder!(TBuilder, T) _default;
 
-	T build (TBuilder b)
+	Entity!(T) build (TBuilder b)
 	{
 		char[] objective = b._build_for;
 		if (objective is null || !(objective in _subbuilders))
@@ -44,10 +44,5 @@ class MultiBuilder (TBuilder, T) : AbstractBuilder!(TBuilder, T)
 	{
 		throw new BindingException(
 				"Trying to build type " ~ T.stringof ~ ": no binding for the current type, and no default binding.");
-	}
-
-	override char[] toString ()
-	{
-		return "MultiBuilder: " ~ T.stringof;
 	}
 }

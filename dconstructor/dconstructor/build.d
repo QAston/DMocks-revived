@@ -49,11 +49,11 @@ class Builder(TInterceptor...)
 		checkCircular();
 		_build_target_stack ~= T.stringof;
 		auto b = get_or_add!(T)();
-		T obj = b.build(this);
-		post_build(this, obj);
-		_interceptor.intercept(obj);
+		Entity!(T) obj = b.build(this);
+		post_build(this, obj.object);
+		_interceptor.intercept(obj, _build_target_stack.dup);
 		_build_target_stack = _build_target_stack[0..$-1];
-		return obj;
+		return obj.object;
 	}
 
 	/**
