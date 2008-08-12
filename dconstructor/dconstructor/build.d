@@ -82,11 +82,14 @@ class Builder(TInterceptor...)
 	typeof(this) register (T) ()
 	{
 		static assert (is (T == class), "Currently, only classes can be registered for creation.");
-		if (_defaultSingleton || is (T : Singleton))
+		if ((_defaultSingleton || is (T : Singleton)) && !is (T : Instance))
 		{
 			wrap!(T)(new SingletonBuilder!(typeof(this), T)());
 		}
-		wrap!(T)(new ObjectBuilder!(typeof(this), T)());
+		else
+		{
+			wrap!(T)(new ObjectBuilder!(typeof(this), T)());
+		}
 		return this;
 	}
 
