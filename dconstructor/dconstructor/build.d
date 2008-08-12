@@ -79,6 +79,8 @@ class Builder(TInterceptor...)
 		return this;
 	}
 	
+	/** Notify dconstructor about this type so it can build it later. This is not
+	  * necessary if you are using the autobuild option. */
 	typeof(this) register (T) ()
 	{
 		static assert (is (T == class), "Currently, only classes can be registered for creation.");
@@ -135,11 +137,18 @@ class Builder(TInterceptor...)
 		return null;
 	}
 	
+	/** If set to true, dconstructor will try to build any type you give it. If set to
+	  * false, dconstructor will only build types that have been registered. The default
+	  * is false. */
 	public void autobuild (bool value)
 	{
 		_autobuild = value;
 	}
 	
+	/** If set to true, all types will be treated as singletons unless they inherit from
+	  * dconstructor.singleton.Instance. If set to false, no types will be treated as
+	  * singletons unless they inherit from dconstructor.singleton.Singleton. The default
+	  * is true. */
 	public void defaultSingleton (bool value)
 	{
 		_defaultSingleton = value;

@@ -1,0 +1,12 @@
+MODULES =
+	$(MODULE_FULL dconstructor.build)
+	$(MODULE_FULL dconstructor.provider)
+	$(MODULE_FULL dconstructor.singleton)
+	$(MODULE_FULL dconstructor.multibuilder)
+	$(MODULE_FULL dconstructor.object_builder)
+	$(MODULE_FULL dconstructor.traits)
+	$(MODULE_FULL dconstructor.api)
+	$(MODULE_FULL dconstructor.aggregate)
+	$(MODULE_FULL dconstructor.exception)
+	$(MODULE_FULL dconstructor.interceptor)
+	$(MODULE_FULL dconstructor.build_utils)

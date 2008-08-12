@@ -1,3 +1,7 @@
 finish the singleton / instance stuff
 multiple constructors
 	when some args can't be satisfied, skip it and try the next
+
+custom providers
+	I want to give a different logger instance for each type being built, with the name of the relevant classe.
+	This requires some sort of Context object, with information on the build stack.
