@@ -1,0 +1,3 @@
+finish the singleton / instance stuff
+multiple constructors
+	when some args can't be satisfied, skip it and try the next
