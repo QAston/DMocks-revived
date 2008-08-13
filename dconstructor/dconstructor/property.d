@@ -1,4 +1,4 @@
-module dconstructor.singleton;
+module dconstructor.property;
 
 /**
  * An empty interface from which a class can inherit to mark it as a singleton.

@@ -2,7 +2,7 @@ module dconstructor.object_builder;
 
 private
 {
-	import dconstructor.singleton;
+	import dconstructor.property;
 	import dconstructor.build_utils;
 	import tango.core.Traits;
 }

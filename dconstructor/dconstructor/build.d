@@ -3,7 +3,7 @@ module dconstructor.build;
 private
 {
 	import dconstructor.interceptor;
-	import dconstructor.singleton;
+	import dconstructor.property;
 	import dconstructor.object_builder;
 	import dconstructor.multibuilder;
 	import dconstructor.aggregate;
