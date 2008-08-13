@@ -26,7 +26,7 @@ public class InterceptorCollection (TInterceptor...)
 		}
 	}
 
-	public void intercept(T) (Entity!(T) built, char[][] buildStack)
+	public void intercept(T) (Entity!(T) built)
 	{
 		if (built.intercepted) return;
 		static if (TInterceptor.length > 0)

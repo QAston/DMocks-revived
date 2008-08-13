@@ -43,15 +43,17 @@
 <script>explorer.outline.writeEnabled = false;</script>
 
 
-<dd>Get an instance of type T. T can be anything -- primitive, array,
- interface, struct, or class.
+<dd>Get an instance of type T. T can be an interface or class.
 <br><br>
 If T is an interface and there are no bindings for it, throw a
- BindingException.
+ BindingException. If T is a class that was not registered, and
+ autobuild is set to <b>false</b>, throw a BindingException.
 <br><br>
 
  If T is a singleton (if it implements the Singleton interface),
- build a copy if none exist, else return the existing copy.
+ or if T is not an instance class (does not implement Instance)
+ and autobuild is set to <b>true</b>, build a copy if none exist, else
+ return the existing copy.
 	 
 <br><br>
 
@@ -68,15 +70,17 @@ If T is an interface and there are no bindings for it, throw a
 <script>explorer.outline.writeEnabled = false;</script>
 
 
-<dd>Get an instance of type T. T can be anything -- primitive, array,
- interface, struct, or class.
+<dd>Get an instance of type T. T can be an interface or class.
 <br><br>
 If T is an interface and there are no bindings for it, throw a
- BindingException.
+ BindingException. If T is a class that was not registered, and
+ autobuild is set to <b>false</b>, throw a BindingException.
 <br><br>
 
  If T is a singleton (if it implements the Singleton interface),
- build a copy if none exist, else return the existing copy.
+ or if T is not an instance class (does not implement Instance)
+ and autobuild is set to <b>true</b>, build a copy if none exist, else
+ return the existing copy.
 	 
 <br><br>
 
@@ -343,21 +347,6 @@ should return an ordered list of ClassInfo objects for the
 </dd>
 
 <script>explorer.outline.writeEnabled = true;</script>
-<dt><span class="decl">char[] 
-<span class="currsymbol">_build_for</span>
-<script>explorer.outline.addDecl('_build_for');</script>
-
-();
-</span></dt>
-<script>explorer.outline.writeEnabled = false;</script>
-
-
-<dd>Internal use only. 
-<br><br>
-
-</dd>
-
-<script>explorer.outline.writeEnabled = true;</script>
 <dt><span class="decl">void 
 <span class="currsymbol">autobuild</span>
 <script>explorer.outline.addDecl('autobuild');</script>
@@ -391,6 +380,21 @@ should return an ordered list of ClassInfo objects for the
 <br><br>
 
 </dd>
+
+<script>explorer.outline.writeEnabled = true;</script>
+<dt><span class="decl">char[] 
+<span class="currsymbol">_build_for</span>
+<script>explorer.outline.addDecl('_build_for');</script>
+
+();
+</span></dt>
+<script>explorer.outline.writeEnabled = false;</script>
+
+
+<dd>Internal use only. 
+<br><br>
+
+</dd>
 </dl>
 <script>explorer.outline.decSymbolLevel();</script>
 
@@ -411,7 +415,7 @@ should return an ordered list of ClassInfo objects for the
 <span class="currsymbol">builder</span>
 <script>explorer.outline.addDecl('builder');</script>
 
-. Forward reference issues, arg 
+. 
 <br><br>
 
 </dd>
@@ -423,7 +427,7 @@ should return an ordered list of ClassInfo objects for the
 		<tr><td id="docfooter">
 			Page was generated with
 			<img src="candydoc/img/candydoc.gif" style="vertical-align:middle; position:relative; top:-1px">
-			on Tue Aug 12 15:43:38 2008
+			on Wed Aug 13 09:56:12 2008
 
 		</td></tr>
 	</table>

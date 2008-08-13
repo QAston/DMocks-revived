@@ -3,8 +3,4 @@ multiple constructors
 
 custom providers
 	I want to give a different logger instance for each type being built, with the name of the relevant classe.
-	This requires some sort of Context object, with information on the build stack.
 
-The system for interface bindings is not to my liking. You end up building an interface, and that depends on the concrete implementation...not very nice.
-
-Singletons are intercepted every time they are provided. This is not good.

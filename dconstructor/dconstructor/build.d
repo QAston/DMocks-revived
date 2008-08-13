@@ -35,14 +35,16 @@ class Builder(TInterceptor...)
 	}
 	
 	/**
-	 * Get an instance of type T. T can be anything -- primitive, array,
-	 * interface, struct, or class.
+	 * Get an instance of type T. T can be an interface or class.
 	 *
 	 * If T is an interface and there are no bindings for it, throw a
-	 * BindingException.
+	 * BindingException. If T is a class that was not registered, and
+	 * autobuild is set to false, throw a BindingException.
 	 *
 	 * If T is a singleton (if it implements the Singleton interface), 
-	 * build a copy if none exist, else return the existing copy.
+	 * or if T is not an instance class (does not implement Instance)
+	 * and autobuild is set to true, build a copy if none exist, else 
+	 * return the existing copy.
 	 */
 	T get (T) ()
 	{
@@ -51,7 +53,7 @@ class Builder(TInterceptor...)
 		auto b = get_or_add!(T)();
 		Entity!(T) obj = b.build(this);
 		post_build(this, obj.object);
-		_interceptor.intercept(obj, _build_target_stack.dup);
+		_interceptor.intercept(obj);
 		_build_target_stack = _build_target_stack[0..$-1];
 		return obj.object;
 	}
@@ -75,7 +77,6 @@ class Builder(TInterceptor...)
 		static assert (is (TImpl : TVisible), "binding failure: cannot convert type " ~ TImpl.stringof ~ " to type " ~ TVisible.stringof);
 		// again, only possible b/c no inheritance for structs
 		wrap!(TVisible)(new DelegatingBuilder!(typeof(this), TVisible, TImpl)());
-		register!(TImpl)();
 		return this;
 	}
 	
@@ -134,16 +135,6 @@ class Builder(TInterceptor...)
 	{
 		return _build_target_stack.dup;
 	}
-
-	/** Internal use only. */
-	public char[] _build_for ()
-	{
-		if (_build_target_stack.length >= 2)
-		{
-			return _build_target_stack[$ - 2];
-		}
-		return null;
-	}
 	
 	/** If set to true, dconstructor will try to build any type you give it. If set to
 	  * false, dconstructor will only build types that have been registered. The default
@@ -160,6 +151,17 @@ class Builder(TInterceptor...)
 	public void defaultSingleton (bool value)
 	{
 		_defaultSingleton = value;
+	}
+
+	/** Internal use only. */
+	public char[] _build_for ()
+	{
+		// TODO: this is ugly. What is it doing?
+		if (_build_target_stack.length >= 2)
+		{
+			return _build_target_stack[$ - 2];
+		}
+		return null;
 	}
 
 	private
@@ -291,7 +293,7 @@ void post_build(TBuilder, T)(TBuilder parent, T obj)
 }
 
 private Builder!() _builder;
-/** The default object builder. Forward reference issues, arg */
+/** The default object builder. */
 public Builder!() builder()
 {
 	if (_builder is null)
@@ -334,9 +336,9 @@ version (BuildTest)
 		}
 	}
 
-	Builder getbuilder()()
+	Builder getbuilder()
 	{
-		auto b = new Builder();
+		auto b = new Builder!()();
 		b.autobuild = true;
 		b.register!(Foo)();
 		b.register!(Bar)();
@@ -355,21 +357,21 @@ version (BuildTest)
 	}
 
 	unittest {
-		auto b = getbuilder()();
+		auto b = getbuilder();
 		auto o = b.get!(Foo)();
 		auto p = b.get!(Bar)();
 		assert (o !is null);
 	}
 
 	unittest {
-		auto b = getbuilder()();
+		auto b = getbuilder();
 		auto o = b.get!(Frumious)();
 		assert (o !is null);
 		assert (o.kid !is null);
 	}
 
 	unittest {
-		auto b = getbuilder()();
+		auto b = getbuilder();
 		b.bind!(IFrumious, Frumious)();
 		auto o = b.get!(IFrumious)();
 		assert (o !is null);
@@ -388,7 +390,7 @@ version (BuildTest)
 	 */
 
 	unittest {
-		auto b = getbuilder()();
+		auto b = getbuilder();
 		b.bind!(IFrumious, Frumious)();
 		b.bind!(Foo, Bar)();
 		auto o = b.get!(IFrumious)();
@@ -400,7 +402,7 @@ version (BuildTest)
 	}
 
 	unittest {
-		auto b = getbuilder()();
+		auto b = getbuilder();
 		try
 		{
 			b.get!(IFrumious)();
@@ -417,14 +419,14 @@ version (BuildTest)
 
 	unittest {
 		// tests no explicit constructor and singleton
-		auto b = getbuilder()();
+		auto b = getbuilder();
 		auto one = b.get!(Wha)();
 		auto two = b.get!(Wha)();
 		assert (one is two);
 	}
 
 	unittest {
-		auto b = getbuilder()();
+		auto b = getbuilder();
 		auto o = new Object;
 		b.provide(o);
 		assert (b.get!(Object) is o);
