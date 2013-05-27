@@ -21,7 +21,7 @@ string toString (T) (T value)
     } 
     else static if (__traits(isScalar, T)) 
     {
-        return std.conv.toString(value);
+        return std.conv.to!string(value);
     }
     else static if (is (typeof (value is null))) 
     {
@@ -94,7 +94,7 @@ struct Interval
 
     string toString () 
     {
-        return std.conv.toString(Min) ~ ".." ~ std.conv.toString(Max);
+        return std.conv.to!string(Min) ~ ".." ~ std.conv.to!string(Max);
     }
 
     static Interval opCall (int min, int max) 

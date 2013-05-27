@@ -1,0 +1,12 @@
+# Object files
+*.o
+
+# Libraries
+*.lib
+*.a
+
+# project files
+.dub
+*.suo
+*.sln
+*.visualdproj

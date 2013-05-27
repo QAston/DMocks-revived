@@ -19,7 +19,7 @@ public interface ICall
 {
 	// TODO: separate this into Match, Action, and Ordering.
 	// Ordering doesn't need any template stuff.
-	int opEquals (Object other);
+	bool opEquals (Object other);
 
 	string toString ();
 
@@ -125,7 +125,7 @@ private
 		return _repeat;
 	}
 
-	override int opEquals (Object other)
+	override bool opEquals (Object other)
 	{
 		auto call = cast(typeof(this)) other;
 		if (call is null)

@@ -1,0 +1,14 @@
+{
+        "name": "dmocks-revived",
+        "description": "A mocking framework for the D programming language",
+        "homepage": "http://github.com/QAston/DMocks-revived",
+        "authors": [
+                "Christopher Wright",
+                "QAston"
+        ],
+        "license": "BSD",
+        "sourcePaths": [
+                "dmocks"
+        ],
+		"buildRequirements" : ["silenceDeprecations", "allowWarnings", "relaxProperties"]
+}
