@@ -1,7 +1,5 @@
-dmocks : a mock object framework for the D Programming Language
-
-Version 1.
-
+DMocks-revived - a mock object framework for the D Programming Language
+The project is based on the dmocks subproject of felt project (http://dsource.org/projects/dmocks/)
 
 Rationale.
     Assuming that you've decided to use unit tests (fantastic! I applaud your decision), you need a strategy for keeping your unit tests small, so they only test one method or one small group of methods at a time. Otherwise, you're using a unit test system for integration tests (which is fine).

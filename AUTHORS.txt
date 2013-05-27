@@ -1,0 +1,4 @@
+DMocks-revived project is based on code by Christopher Wright, author of the felt project http://dsource.org/projects/dmocks/. Felt project was abandoned in 2008.
+Later, in 2013 part of the project called dmocks was picked up from the Felt codebase to have a working mocking framework for D, called DMocks-revived.
+Following people have contributed to DMocks-revived:
+	QAston <qaston@gmail.com>
