@@ -1,9 +1,9 @@
-module dmocks.Repository;
+module dmocks.repository;
 
-import dmocks.Util;
-import dmocks.Model;
-import dmocks.Call;
-import dmocks.Arguments;
+import dmocks.util;
+import dmocks.model;
+import dmocks.call;
+import dmocks.arguments;
 import std.variant;
 import std.stdio;
 
@@ -36,16 +36,16 @@ public class MockRepository
 		version (OrderDebug)
 			writefln("CheckOrder: init");
 		version (OrderDebug)
-			writefln("CheckOrder: current: %s", dmocks.Util.toString(current));
+			writefln("CheckOrder: current: %s", dmocks.util.toString(current));
 		if (current !is null)
 			version (OrderDebug)
-				writefln("CheckOrder: current.Last: %s", dmocks.Util.toString(
+				writefln("CheckOrder: current.Last: %s", dmocks.util.toString(
 						current.LastCall));
 		version (OrderDebug)
-			writefln("CheckOrder: previous: %s", dmocks.Util.toString(previous));
+			writefln("CheckOrder: previous: %s", dmocks.util.toString(previous));
 		if (current !is null)
 			version (OrderDebug)
-				writefln("CheckOrder: previous.Next: %s", dmocks.Util.toString(
+				writefln("CheckOrder: previous.Next: %s", dmocks.util.toString(
 						current.NextCall));
 		if (current is null || (current.LastCall is null && previous !is null && previous.NextCall is null))
 		{
@@ -110,8 +110,8 @@ public class MockRepository
 	private void ThrowBackwardOrderException (ICall previous, ICall current)
 	{
 		string
-				msg = "Ordered calls received in wrong order: \n" ~ "Before: " ~ dmocks.Util.toString(
-						current) ~ "\n" ~ "Expected: " ~ current.LastCall().toString ~ "\n" ~ "Actual: " ~ dmocks.Util.toString(
+				msg = "Ordered calls received in wrong order: \n" ~ "Before: " ~ dmocks.util.toString(
+						current) ~ "\n" ~ "Expected: " ~ current.LastCall().toString ~ "\n" ~ "Actual: " ~ dmocks.util.toString(
 						current);
 		throw new ExpectationViolationException(msg);
 	}
@@ -119,8 +119,8 @@ public class MockRepository
 	private void ThrowForwardOrderException (ICall previous, ICall actual)
 	{
 		string
-				msg = "Ordered calls received in wrong order: \n" ~ "After: " ~ dmocks.Util.toString(
-						previous) ~ "\n" ~ "Expected: " ~ previous.NextCall().toString ~ "\n" ~ "Actual: " ~ dmocks.Util.toString(
+				msg = "Ordered calls received in wrong order: \n" ~ "After: " ~ dmocks.util.toString(
+						previous) ~ "\n" ~ "Expected: " ~ previous.NextCall().toString ~ "\n" ~ "Actual: " ~ dmocks.util.toString(
 						actual);
 		throw new ExpectationViolationException(msg);
 	}

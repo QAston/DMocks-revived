@@ -1,9 +1,9 @@
-module dmocks.Caller;
+module dmocks.caller;
 
-import dmocks.Call;
-import dmocks.Repository;
-import dmocks.Model;
-import dmocks.Util;
+import dmocks.call;
+import dmocks.repository;
+import dmocks.model;
+import dmocks.util;
 import dmocks.Action;
 
 version (DMocksDebug)

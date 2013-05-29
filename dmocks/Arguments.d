@@ -1,4 +1,4 @@
-module dmocks.Arguments;
+module dmocks.arguments;
 
 
 interface IArguments
@@ -60,7 +60,7 @@ template Arguments (U...)
                 string value = "(";
                 foreach (u; Arguments) 
                 {
-                    value ~= dmocks.Util.toString(u) ~ ", ";
+                    value ~= dmocks.util.toString(u) ~ ", ";
                 }
 
                 return value[0..$-2] ~ ")";

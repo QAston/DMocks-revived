@@ -1,4 +1,4 @@
-module dmocks.Util;
+module dmocks.util;
 
 
 static import std.conv;

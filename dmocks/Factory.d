@@ -1,9 +1,9 @@
-module dmocks.Factory;
+module dmocks.factory;
 
-import dmocks.MockObject;
-import dmocks.Repository; 
-import dmocks.Util;
-import dmocks.Caller;
+import dmocks.mockobject;
+import dmocks.repository; 
+import dmocks.util;
+import dmocks.caller;
 import std.stdio;
 
 public class MockFactory 

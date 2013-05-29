@@ -1,10 +1,10 @@
-module dmocks.Mocks;
+module dmocks.mocks;
 
-import dmocks.MockObject;
-import dmocks.Factory;
-import dmocks.Repository; 
-import dmocks.Util;
-import dmocks.Call;
+import dmocks.mockobject;
+import dmocks.factory;
+import dmocks.repository; 
+import dmocks.util;
+import dmocks.call;
 import std.variant;
 import std.stdio;
 

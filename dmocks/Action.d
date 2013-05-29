@@ -1,7 +1,7 @@
 module dmocks.Action;
 
 import std.variant;
-import dmocks.Util;
+import dmocks.util;
 version (DMocksTest) import std.stdio;
 
 interface IAction

@@ -1,4 +1,4 @@
-module dmocks.Model;
+module dmocks.model;
 
 interface IMocked {}
 

@@ -1,9 +1,9 @@
-module dmocks.Call;
+module dmocks.call;
 
 import std.variant;
-import dmocks.Util;
-import dmocks.Model;
-import dmocks.Arguments;
+import dmocks.util;
+import dmocks.model;
+import dmocks.arguments;
 import dmocks.Action;
 
 version (DMocksDebug)
@@ -89,7 +89,7 @@ private
 				args = (_arguments is null) ? "(<unknown>)" : _arguments.toString;
 		version (DMocksDebug)
 			writefln("trying get callcount string");
-		string callCount = dmocks.Util.toString(_callCount);
+		string callCount = dmocks.util.toString(_callCount);
 		version (DMocksDebug)
 			writefln("trying get repeat string");
 		string expected = _repeat.toString;
@@ -204,7 +204,7 @@ private
 	void LastCall (ICall call)
 	{
 		version (DMocksDebug)
-			writefln("SETTING LASTCALL: ", dmocks.Util.toString(call));
+			writefln("SETTING LASTCALL: ", dmocks.util.toString(call));
 		_lastCall = call;
 	}
 
@@ -216,7 +216,7 @@ private
 	void NextCall (ICall call)
 	{
 		version (DMocksDebug)
-			writefln("SETTING NEXTCALL: ", dmocks.Util.toString(call));
+			writefln("SETTING NEXTCALL: ", dmocks.util.toString(call));
 		_nextCall = call;
 	}
 
