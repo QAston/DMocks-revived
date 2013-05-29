@@ -4,8 +4,8 @@ module dmocks.Util;
 static import std.conv;
 import std.utf;
 
-version(MocksDebug) import std.stdio;
-version(MocksTest) import std.stdio;
+version(DMocksDebug) import std.stdio;
+version(DMocksTest) import std.stdio;
 
 string test(string name)() {
 	return `writef("` ~ name ~ ` test");
@@ -45,12 +45,13 @@ string strof(T)(T value)
 	}
 }
 
-unittest 
-{
-    int i = 5;
-    assert (toString(5) == "5");
-    Interval t = Interval(1, 2);
-    assert (toString(t) == "1..2");
+version (DMocksTest) {
+	unittest {
+		int i = 5;
+		assert (toString(5) == "5");
+		Interval t = Interval(1, 2);
+		assert (toString(t) == "1..2");
+	}
 }
 
 string ArrayToString (T) (T[] value) 
@@ -92,7 +93,7 @@ struct Interval
     int Min;
     int Max;
 
-    string toString () 
+    string toString () const
     {
         return std.conv.to!string(Min) ~ ".." ~ std.conv.to!string(Max);
     }

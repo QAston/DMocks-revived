@@ -8,8 +8,8 @@ import dmocks.Call;
 import std.variant;
 import std.stdio;
 
-version (MocksDebug) import std.stdio;
-version (MocksTest) import std.stdio;
+version (DMocksDebug) import std.stdio;
+version (DMocksTest) import std.stdio;
 
 /++
     A class through which one creates mock objects and manages expected calls. 
@@ -258,7 +258,7 @@ public class ExternalCall
    }
 }
 
-version (MocksTest) {
+version (DMocksTest) {
 	
     class Templated(T) {}
     interface IM {
@@ -584,10 +584,10 @@ version (MocksTest) {
         scope(success) writefln("success");
         auto r = new Mocker;
         IFace o = r.mock!(IFace);
-        version(MocksDebug) writefln("about to call once...");
+        version(DMocksDebug) writefln("about to call once...");
         o.foo("hallo");
         r.replay;
-        version(MocksDebug) writefln("about to call twice...");
+        version(DMocksDebug) writefln("about to call twice...");
         o.foo("hallo");
         r.verify;
     }
@@ -598,10 +598,10 @@ version (MocksTest) {
         scope(success) writefln("success");
         auto r = new Mocker;
         IFace o = r.mock!(Smthng);
-        version(MocksDebug) writefln("about to call once...");
+        version(DMocksDebug) writefln("about to call once...");
         o.foo("hallo");
         r.replay;
-        version(MocksDebug) writefln("about to call twice...");
+        version(DMocksDebug) writefln("about to call twice...");
         o.foo("hallo");
         r.verify;
     }
@@ -612,10 +612,10 @@ version (MocksTest) {
         scope(success) writefln("success");
         auto r = new Mocker;
         IFace o = r.mock!(Smthng);
-        version(MocksDebug) writefln("about to call once...");
+        version(DMocksDebug) writefln("about to call once...");
         o.foo("hallo");
         r.replay;
-        version(MocksDebug) writefln("about to call twice...");
+        version(DMocksDebug) writefln("about to call twice...");
         o.foo("hallo");
         r.verify;
     }
@@ -634,11 +634,11 @@ version (MocksTest) {
         auto r = new Mocker;
         auto o = r.mock!(IRM);
         auto im = r.mock!(IM);
-        version(MocksDebug) writefln("about to call once...");
+        version(DMocksDebug) writefln("about to call once...");
         r.expect(o.get).returns(im);
         o.set(im);
         r.replay;
-        version(MocksDebug) writefln("about to call twice...");
+        version(DMocksDebug) writefln("about to call twice...");
         assert (o.get is im, "returned the wrong value");
         o.set(im);
         r.verify;
@@ -679,8 +679,11 @@ version (MocksTest) {
         r.verify;
     }
     
-    void main () {
-        writefln("All tests pass.");
-    }
+	version (DMocksTestStandalone)
+	{
+		void main () {
+			writefln("All tests pass.");
+		}
+	}
 
 }

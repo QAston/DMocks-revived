@@ -6,10 +6,10 @@ import dmocks.Model;
 import dmocks.Arguments;
 import dmocks.Action;
 
-version (MocksDebug)
+version (DMocksDebug)
 	import std.stdio;
 
-version (MocksTest)
+version (DMocksTest)
 	import std.stdio;
 
 /++
@@ -83,21 +83,21 @@ private
 
 	override string toString ()
 	{
-		version (MocksDebug)
+		version (DMocksDebug)
 			writefln("trying get arg string");
 		string
 				args = (_arguments is null) ? "(<unknown>)" : _arguments.toString;
-		version (MocksDebug)
+		version (DMocksDebug)
 			writefln("trying get callcount string");
 		string callCount = dmocks.Util.toString(_callCount);
-		version (MocksDebug)
+		version (DMocksDebug)
 			writefln("trying get repeat string");
 		string expected = _repeat.toString;
-		version (MocksDebug)
+		version (DMocksDebug)
 			writefln("putting it together");
 		string
 				ret = _name ~ args ~ " Expected: " ~ expected ~ " Actual: " ~ callCount;
-		version (MocksDebug)
+		version (DMocksDebug)
 			writefln("returning");
 		return ret;
 	}
@@ -130,21 +130,21 @@ private
 		auto call = cast(typeof(this)) other;
 		if (call is null)
 		{
-			version (MocksDebug)
+			version (DMocksDebug)
 				writefln("Call.opEquals: wrong type");
 			return false;
 		}
 
 		if (call._mocked !is _mocked)
 		{
-			version (MocksDebug)
+			version (DMocksDebug)
 				writefln("Call.opEquals: wrong mock");
 			return false;
 		}
 
 		if (call._name != _name)
 		{
-			version (MocksDebug)
+			version (DMocksDebug)
 				writefln("Call.opEquals: wrong method; expected %s; was %s",
 						_name, call._name);
 			return false;
@@ -152,7 +152,7 @@ private
 
 		if ((!_ignoreArguments) && (_arguments != call._arguments))
 		{
-			version (MocksDebug)
+			version (DMocksDebug)
 				writefln("Call.opEquals: wrong arguments");
 			return false;
 		}
@@ -181,18 +181,18 @@ private
 
 	void Called ()
 	{
-		version (MocksDebug)
+		version (DMocksDebug)
 			writefln("call called");
 		_callCount++;
-		version (MocksDebug)
+		version (DMocksDebug)
 			writefln("checking against repeat");
 		if (_callCount > _repeat.Max)
 		{
-			version (MocksDebug)
+			version (DMocksDebug)
 				writefln("repeat violated");
 			throw new ExpectationViolationException(toString);
 		}
-		version (MocksDebug)
+		version (DMocksDebug)
 			writefln("repeat verified");
 	}
 
@@ -203,7 +203,7 @@ private
 
 	void LastCall (ICall call)
 	{
-		version (MocksDebug)
+		version (DMocksDebug)
 			writefln("SETTING LASTCALL: ", dmocks.Util.toString(call));
 		_lastCall = call;
 	}
@@ -215,7 +215,7 @@ private
 
 	void NextCall (ICall call)
 	{
-		version (MocksDebug)
+		version (DMocksDebug)
 			writefln("SETTING NEXTCALL: ", dmocks.Util.toString(call));
 		_nextCall = call;
 	}
@@ -243,7 +243,7 @@ private
 }
 
 
-version (MocksTest)
+version (DMocksTest)
 {
 	unittest {
 		// Matching.

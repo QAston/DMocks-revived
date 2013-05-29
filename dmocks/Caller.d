@@ -6,7 +6,7 @@ import dmocks.Model;
 import dmocks.Util;
 import dmocks.Action;
 
-version (MocksDebug)
+version (DMocksDebug)
 	import std.stdio;
 
 
@@ -23,7 +23,7 @@ class Caller
 			string name, U args)
 	{
 		ReturnOrPass!(TReturn) rope;
-		version (MocksDebug)
+		version (DMocksDebug)
 			writefln("checking _owner.Recording...");
 		if (_owner.Recording)
 		{
@@ -31,11 +31,11 @@ class Caller
 			return rope;
 		}
 
-		version (MocksDebug)
+		version (DMocksDebug)
 			writefln("checking for matching call...");
 		ICall call = _owner.Match!(U)(mocked, name, args);
 
-		version (MocksDebug)
+		version (DMocksDebug)
 			writefln("checking if call is null...");
 		if (call is null)
 		{
@@ -43,7 +43,7 @@ class Caller
 		}
 
 		rope = call.Action.getActor().act!(TReturn, U)(args);
-		version (MocksDebug)
+		version (DMocksDebug)
 			writefln("returning...");
 		return rope;
 	}

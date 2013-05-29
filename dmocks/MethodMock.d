@@ -13,7 +13,7 @@ Returns a string containing the overrides for this method
 and all its overloads.
 ++/
 string Methods (T, string name) () {
-	version(MocksDebug) pragma(msg, name);
+	version(DMocksDebug) pragma(msg, name);
 	string methodBodies = "";
 	// This is gross! Waiting on DMD1723 to fix.
 	//static if (__traits(compiles, (__traits(getVirtualFunctions, T, name))))
@@ -58,7 +58,7 @@ string ReturningMethod (string type, string name, int index, bool returns)()
 	return `override ` ~ ret ~ ` ` ~ name ~ `
 	(` ~ paramTypes ~ ` params)` ~
 	`{
-	version(MocksDebug) writefln("checking _owner...");
+	version(DMocksDebug) writefln("checking _owner...");
 	if (_owner is null) 
 	{
 		throw new Exception("owner cannot be null! Contact the stupid mocks developer.");
@@ -103,7 +103,7 @@ string TypedArguments (T...)() {
 
 	return ret;
 }
-version (MocksTest) {
+version (DMocksTest) {
 	unittest {
 		writef("typedarguments unit test...");
 		scope(failure) writefln("failed");
@@ -128,7 +128,7 @@ string Arguments (T...)() {
 
 	return ret;
 }
-version (MocksTest) {
+version (DMocksTest) {
 	unittest {
 		// If this fails, it'll show you what went wrong...
 		writef("arguments unit test...");
@@ -144,7 +144,7 @@ Some things complain about the extra parentheses; remove them.
 string String (U...)() {
 	return (U.stringof)[1..$-1];
 }
-version (MocksTest) {
+version (DMocksTest) {
 	unittest {
 		writef("tuple string unit test...");
 		scope(failure) writefln("failed");

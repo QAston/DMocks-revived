@@ -7,7 +7,7 @@ import dmocks.Arguments;
 import std.variant;
 import std.stdio;
 
-version (MocksDebug)
+version (DMocksDebug)
 	version = OrderDebug;
 
 public class MockRepository
@@ -158,7 +158,7 @@ public
 
 	void Ordered (bool value)
 	{
-		version (MocksDebug)
+		version (DMocksDebug)
 			writefln("SETTING ORDERED: %s", value);
 		_ordered = value;
 	}
@@ -200,22 +200,22 @@ public
 
 	ICall Match (U...) (IMocked mocked, string name, U args)
 	{
-		version (MocksDebug)
+		version (DMocksDebug)
 			writefln("about to match");
 		auto match = new Call(mocked, name, new Arguments!(U)(args));
-		version (MocksDebug)
+		version (DMocksDebug)
 			writefln("created call");
 
 		foreach (icall; _calls)
 		{
-			version (MocksDebug)
+			version (DMocksDebug)
 				writefln("checking call");
 			if (icall == match)
 			{
-				version (MocksDebug)
+				version (DMocksDebug)
 					writefln("found a match");
 				icall.Called();
-				version (MocksDebug)
+				version (DMocksDebug)
 					writefln("called the match");
 				if (icall.Ordered)
 				{
@@ -243,7 +243,7 @@ public
 		}
 	}
 
-	version (MocksTest)
+	version (DMocksTest)
 	{
 		unittest {
 			writef("repository record/replay unit test...");
@@ -337,7 +337,7 @@ public
 }
 }
 
-version (MocksTest)
+version (DMocksTest)
 {
 	unittest {
 		writef("argument equality unit test...");

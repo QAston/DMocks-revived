@@ -2,7 +2,7 @@ module dmocks.Action;
 
 import std.variant;
 import dmocks.Util;
-version (MocksTest) import std.stdio;
+version (DMocksTest) import std.stdio;
 
 interface IAction
 {
@@ -172,7 +172,7 @@ public
 }
 }
 
-version (MocksTest)
+version (DMocksTest)
 {
 	unittest
 	{

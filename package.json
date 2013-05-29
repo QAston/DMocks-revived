@@ -3,12 +3,28 @@
         "description": "A mocking framework for the D programming language",
         "homepage": "http://github.com/QAston/DMocks-revived",
         "authors": [
-                "Christopher Wright",
                 "QAston"
         ],
         "license": "BSD",
         "sourcePaths": [
                 "dmocks"
         ],
-		"buildRequirements" : ["silenceDeprecations", "allowWarnings", "relaxProperties"]
+		"buildRequirements" : ["relaxProperties"],
+		"configurations": [
+			{
+				"name": "library",
+				"targetType": "library",
+			},
+			{
+				"name": "tests",
+				"targetType": "executable",
+				"versions": [
+					"DMocksTest",
+					"DMocksTestStandalone"
+				],
+				"dflags": [
+					"-unittest"
+				]
+			}
+		]
 }

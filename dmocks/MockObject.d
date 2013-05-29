@@ -9,7 +9,7 @@ import std.traits;
 
 class Mocked (T) : T, IMocked 
 {
-    version (MocksDebug) 
+    version (DMocksDebug) 
     {
         pragma (msg, T.stringof);
         pragma (msg, Body!(T));
