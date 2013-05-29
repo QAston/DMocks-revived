@@ -32,12 +32,12 @@ template BodyPart (T, int i)
 {
     static if (i < __traits(allMembers, T).length) 
     {
-    	//pragma(msg, __traits(allMembers, T)[i]);
-    	enum BodyPart = Methods!(T, __traits(allMembers, T)[i]) ~ BodyPart!(T, i + 1)();
+        //pragma(msg, __traits(allMembers, T)[i]);
+        enum BodyPart = Methods!(T, __traits(allMembers, T)[i]) ~ BodyPart!(T, i + 1)();
     }
     else 
     {
-    	enum BodyPart = ``;
+        enum BodyPart = ``;
     }
 }
 

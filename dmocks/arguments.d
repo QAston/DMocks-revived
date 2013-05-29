@@ -3,8 +3,8 @@ module dmocks.arguments;
 
 interface IArguments
 {
-	bool opEquals(IArguments other);
-	string toString();
+    bool opEquals(IArguments other);
+    string toString();
 }
 
 /++
@@ -25,7 +25,7 @@ template Arguments (U...)
 
             override string toString () 
             { 
-            	return "()"; 
+                return "()"; 
             }
         }
     } 
@@ -35,7 +35,7 @@ template Arguments (U...)
         {
             this (U args) 
             { 
-            	Arguments = args; 
+                Arguments = args; 
             }
             
             public U Arguments;

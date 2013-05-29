@@ -156,7 +156,7 @@ public class ExternalCall
 
    this (ICall call) 
    {
-	   assert (call !is null, "can't create an ExternalCall if ICall is null");
+       assert (call !is null, "can't create an ExternalCall if ICall is null");
        _call = call;
    }
 
@@ -259,7 +259,7 @@ public class ExternalCall
 }
 
 version (DMocksTest) {
-	
+    
     class Templated(T) {}
     interface IM {
         void bar ();
@@ -270,28 +270,22 @@ version (DMocksTest) {
     }
 
     unittest {
-        writef("nontemplated mock unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("nontemplated mock"));
         (new Mocker()).mock!(Object);
     }
 
     unittest {
-        writef("templated mock unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("templated mock"));
         (new Mocker()).mock!(Templated!(int));
     }
 
     unittest {
-        writef("templated mock unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("templated mock"));
         (new Mocker()).mock!(IM);
     }
 
     unittest {
-        writef("execute mock method unit test...");
+        mixin(test!("execute mock method"));
         scope(failure) writefln("failed");
         scope(success) writefln("success");
         auto r = new Mocker();
@@ -301,18 +295,13 @@ version (DMocksTest) {
     }
 
 //    unittest {
-//        writef("constructor argument unit test...");
-//        scope(failure) writefln("failed");
-//        scope(success) writefln("success");
+//		  mixin(test!("constructor argument"));
 //        auto r = new Mocker();
 //        r.mock!(ConstructorArg);
 //    }
 
     unittest {
-        writef("lastCall test...");
-        scope(success) writefln("success");
-        scope(failure) writefln("failure");
-
+        mixin(test!("lastCall"));
         Mocker m = new Mocker();
         Object o = m.mock!(Object);
         o.print;
@@ -322,9 +311,7 @@ version (DMocksTest) {
     }
 
     unittest {
-        writef("return a value test...");
-        scope(success) writefln("success");
-        scope(failure) writefln("failure");
+        mixin(test!("return a value"));
 
         Mocker m = new Mocker();
         Object o = m.mock!(Object);
@@ -336,9 +323,7 @@ version (DMocksTest) {
     }
 
     unittest {
-        writef("expect test...");
-        scope(success) writefln("success");
-        scope(failure) writefln("failure");
+        mixin(test!("expect"));
 
         Mocker m = new Mocker();
         Object o = m.mock!(Object);
@@ -350,9 +335,7 @@ version (DMocksTest) {
     }
 
     unittest {
-        writef("repeat single test...");
-        scope(success) writefln("success");
-        scope(failure) writefln("failure");
+        mixin(test!("repeat single"));
 
         Mocker m = new Mocker();
         Object o = m.mock!(Object);
@@ -369,9 +352,7 @@ version (DMocksTest) {
     }
 
     unittest {
-        writef("repository match counts unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("repository match counts"));
 
         auto r = new Mocker();
         auto o = r.mock!(Object);
@@ -385,9 +366,7 @@ version (DMocksTest) {
     }
 
     unittest {
-        writef("delegate payload test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("delegate payload"));
 
         bool calledPayload = false;
         Mocker r = new Mocker();
@@ -402,9 +381,7 @@ version (DMocksTest) {
     }
 
     unittest {
-        writef("exception payload test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("exception payload"));
 
         Mocker r = new Mocker();
         auto o = r.mock!(Object);
@@ -428,9 +405,7 @@ version (DMocksTest) {
     }
 
     unittest {
-        writef("passthrough test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("passthrough"));
 
         Mocker r = new Mocker();
         auto o = r.mock!(Object);
@@ -443,9 +418,7 @@ version (DMocksTest) {
     }
 
     unittest {
-        writef("associative arrays test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("associative arrays"));
 
         Mocker r = new Mocker();
         auto o = r.mock!(Object);
@@ -459,9 +432,7 @@ version (DMocksTest) {
     }
 
     unittest {
-        writef("ordering in order test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("ordering in order"));
 
         Mocker r = new Mocker();
         auto o = r.mock!(Object);
@@ -476,9 +447,7 @@ version (DMocksTest) {
     }
 
     unittest {
-        writef("ordering not in order test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("ordering not in order"));
 
         Mocker r = new Mocker();
         auto o = r.mock!(Object);
@@ -495,9 +464,7 @@ version (DMocksTest) {
     }
 
     unittest {
-        writef("ordering interposed test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("ordering interposed"));
 
         Mocker r = new Mocker();
         auto o = r.mock!(Object);
@@ -514,9 +481,7 @@ version (DMocksTest) {
     }
 
     unittest {
-        writef("allowing test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("allowing"));
 
         Mocker r = new Mocker();
         auto o = r.mock!(Object);
@@ -530,9 +495,7 @@ version (DMocksTest) {
     }
 
     unittest {
-        writef("nothing for method to do test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("nothing for method to do"));
 
         try {
             Mocker r = new Mocker();
@@ -546,9 +509,7 @@ version (DMocksTest) {
     }
 
     unittest {
-        writef("allow defaults test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("allow defaults test"));
 
         Mocker r = new Mocker();
         auto o = r.mock!(Object);
@@ -568,7 +529,7 @@ version (DMocksTest) {
     }
 //
 //    unittest {
-//        writefln("going through the guts of Smthng.");
+//        mixin(test!("going through the guts of Smthng"));
 //        auto foo = new Smthng();
 //        auto guts = *(cast(int**)&foo);
 //        auto len = __traits(classInstanceSize, Smthng) / size_t.sizeof; 
@@ -579,9 +540,7 @@ version (DMocksTest) {
 //    }
 
     unittest {
-        writef("mock interface test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("mock interface"));
         auto r = new Mocker;
         IFace o = r.mock!(IFace);
         version(DMocksDebug) writefln("about to call once...");
@@ -593,9 +552,8 @@ version (DMocksTest) {
     }
     
     unittest {
-        writef("cast mock to interface test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("cast mock to interface"));
+
         auto r = new Mocker;
         IFace o = r.mock!(Smthng);
         version(DMocksDebug) writefln("about to call once...");
@@ -607,9 +565,8 @@ version (DMocksTest) {
     }
 
     unittest {
-        writef("cast mock to interface test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("cast mock to interface"));
+
         auto r = new Mocker;
         IFace o = r.mock!(Smthng);
         version(DMocksDebug) writefln("about to call once...");
@@ -622,15 +579,14 @@ version (DMocksTest) {
     
     interface IRM 
     {
-    	IM get();
-    	void set (IM im);
+        IM get();
+        void set (IM im);
     }
     
     unittest
     {
-    	writef("return user-defined type test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("return user-defined type"));
+
         auto r = new Mocker;
         auto o = r.mock!(IRM);
         auto im = r.mock!(IM);
@@ -646,29 +602,27 @@ version (DMocksTest) {
     
     class HasMember
     {
-    	int member;
+        int member;
     }
     
     unittest
     {
-    	writef("return user-defined type test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("return user-defined type"));
+
         auto r = new Mocker;
         auto o = r.mock!(HasMember);    	
     }
 
     class Overloads
     {
-    	void foo() {}
-    	void foo(int i) {}
+        void foo() {}
+        void foo(int i) {}
     }
     
     unittest
     {
-    	writef("overloaded method test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("overloaded method"));
+
         auto r = new Mocker;
         auto o = r.mock!(Overloads);  
         o.foo();
@@ -679,11 +633,10 @@ version (DMocksTest) {
         r.verify;
     }
     
-	version (DMocksTestStandalone)
-	{
-		void main () {
-			writefln("All tests pass.");
-		}
-	}
-
+    version (DMocksTestStandalone)
+    {
+        void main () {
+            writefln("All tests pass.");
+        }
+    }
 }

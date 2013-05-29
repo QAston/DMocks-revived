@@ -8,9 +8,9 @@ version(DMocksDebug) import std.stdio;
 version(DMocksTest) import std.stdio;
 
 string test(string name)() {
-	return `writef("` ~ name ~ ` test");
-			scope(failure) writefln("failed");
-			scope(success) writefln("success");`;
+    return `writef("` ~ name ~ ` test");
+            scope(failure) writefln("failed");
+            scope(success) writefln("success");`;
 }
 
 string toString (T) (T value) 
@@ -35,23 +35,23 @@ string toString (T) (T value)
 
 string strof(T)(T value)
 {
-	static if (is (typeof (value.toString)))
-	{
-		return value.toString;
-	}
-	else
-	{
-		return T.stringof;
-	}
+    static if (is (typeof (value.toString)))
+    {
+        return value.toString;
+    }
+    else
+    {
+        return T.stringof;
+    }
 }
 
 version (DMocksTest) {
-	unittest {
-		int i = 5;
-		assert (toString(5) == "5");
-		Interval t = Interval(1, 2);
-		assert (toString(t) == "1..2");
-	}
+    unittest {
+        int i = 5;
+        assert (toString(5) == "5");
+        Interval t = Interval(1, 2);
+        assert (toString(t) == "1..2");
+    }
 }
 
 string ArrayToString (T) (T[] value) 
@@ -77,14 +77,14 @@ string ArrayToString (T) (T[] value)
 
 template IsConcreteClass(T)
 {
-	static if ((is (T == class)) && (!__traits(isAbstractClass, T)))
-	{
-		const bool IsConcreteClass = true;
-	}
-	else 
-	{
-		const bool IsConcreteClass = false;
-	}
+    static if ((is (T == class)) && (!__traits(isAbstractClass, T)))
+    {
+        const bool IsConcreteClass = true;
+    }
+    else 
+    {
+        const bool IsConcreteClass = false;
+    }
 }
 
 struct Interval 
@@ -120,12 +120,12 @@ public class ExpectationViolationException : Exception
     private static string _defaultMessage = "An unexpected call has occurred."; 
     this () 
     { 
-    	super(typeof(this).stringof ~ ": " ~  _defaultMessage); 
+        super(typeof(this).stringof ~ ": " ~  _defaultMessage); 
     }
     
     this (string msg) 
     { 
-    	super(msg);
+        super(msg);
     }
 }
 
