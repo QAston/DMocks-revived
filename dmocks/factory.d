@@ -1,6 +1,6 @@
 module dmocks.factory;
 
-import dmocks.mockobject;
+import dmocks.object_mock;
 import dmocks.repository; 
 import dmocks.util;
 import dmocks.caller;

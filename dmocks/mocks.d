@@ -1,6 +1,6 @@
 module dmocks.mocks;
 
-import dmocks.mockobject;
+import dmocks.object_mock;
 import dmocks.factory;
 import dmocks.repository; 
 import dmocks.util;
@@ -439,7 +439,7 @@ version (DMocksTest) {
 
         r.replay();
         string str = o.toString;
-        assert (str == "dmocks.MockObject.Mocked!(Object).Mocked", str);
+        assert (str == "dmocks.object_mock.Mocked!(Object).Mocked", str);
     }
 
     unittest {

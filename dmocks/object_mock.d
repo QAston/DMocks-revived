@@ -1,4 +1,4 @@
-module dmocks.mock_object;
+module dmocks.object_mock;
 
 import dmocks.util;
 import dmocks.caller;
