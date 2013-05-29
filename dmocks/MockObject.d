@@ -1,8 +1,8 @@
-module dmocks.mockobject;
+module dmocks.mock_object;
 
 import dmocks.util;
 import dmocks.caller;
-import dmocks.methodmock;
+import dmocks.method_mock;
 import dmocks.model;
 import std.traits;
 

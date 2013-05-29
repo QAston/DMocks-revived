@@ -1,4 +1,4 @@
-module dmocks.methodmock;
+module dmocks.method_mock;
 
 import dmocks.repository;
 import std.stdio;
