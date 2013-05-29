@@ -6,7 +6,6 @@ import dmocks.method_mock;
 import dmocks.model;
 import std.traits;
 
-
 class Mocked (T) : T, IMocked 
 {
     version (DMocksDebug) 
@@ -33,7 +32,7 @@ template BodyPart (T, int i)
     static if (i < __traits(allMembers, T).length) 
     {
         //pragma(msg, __traits(allMembers, T)[i]);
-        enum BodyPart = Methods!(T, __traits(allMembers, T)[i]) ~ BodyPart!(T, i + 1)();
+        enum BodyPart = Methods!(T, __traits(allMembers, T)[i]) ~ BodyPart!(T, i + 1);
     }
     else 
     {

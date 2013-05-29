@@ -9,7 +9,6 @@ import dmocks.Action;
 version (DMocksDebug)
     import std.stdio;
 
-
 class Caller
 {
     private MockRepository _owner;
@@ -19,7 +18,7 @@ class Caller
         _owner = owner;
     }
 
-    public ReturnOrPass!(TReturn) Call (TReturn, U...) (IMocked mocked,
+    @trusted public ReturnOrPass!(TReturn) Call (TReturn, U...) (IMocked mocked,
             string name, U args)
     {
         ReturnOrPass!(TReturn) rope;

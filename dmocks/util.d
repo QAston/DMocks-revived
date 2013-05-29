@@ -1,6 +1,5 @@
 module dmocks.util;
 
-
 static import std.conv;
 import std.utf;
 
@@ -8,70 +7,15 @@ version(DMocksDebug) import std.stdio;
 version(DMocksTest) import std.stdio;
 
 string test(string name)() {
-    return `writef("` ~ name ~ ` test");
-            scope(failure) writefln("failed");
-            scope(success) writefln("success");`;
-}
-
-string toString (T) (T value) 
-{
-    static if (is (T : T[])) 
-    {
-        return ArrayToString(value);
-    } 
-    else static if (__traits(isScalar, T)) 
-    {
-        return std.conv.to!string(value);
-    }
-    else static if (is (typeof (value is null))) 
-    {
-        return ((value is null) ? "<null>" : strof(value));
-    } 
-    else 
-    {
-        return strof(value);
-    }
-}
-
-string strof(T)(T value)
-{
-    static if (is (typeof (value.toString)))
-    {
-        return value.toString;
-    }
-    else
-    {
-        return T.stringof;
-    }
+    return `writeln("` ~ name ~ ` test");
+            scope(failure) writeln("failed");
+            scope(success) writeln("success");`;
 }
 
 version (DMocksTest) {
     unittest {
-        int i = 5;
-        assert (toString(5) == "5");
         Interval t = Interval(1, 2);
-        assert (toString(t) == "1..2");
-    }
-}
-
-string ArrayToString (T) (T[] value) 
-{
-    static if (is (T == string) || is (T == wstring) || is (T == dstring)) 
-    {
-        return `"` ~ toUTF8(value) ~ `"`;
-    } 
-    else 
-    {
-        string ret = "[";
-        foreach (i, elem; value) 
-        {
-            ret ~= elem;
-            if (i < value.length - 1) 
-            {
-                ret ~= ", ";
-            }
-        }
-        return ret ~ "]";
+        assert (to!string(t) == "1..2");
     }
 }
 

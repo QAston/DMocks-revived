@@ -1,6 +1,7 @@
 module dmocks.call;
 
 import std.variant;
+import std.conv;
 import dmocks.util;
 import dmocks.model;
 import dmocks.arguments;
@@ -89,10 +90,10 @@ private
                 args = (_arguments is null) ? "(<unknown>)" : _arguments.toString;
         version (DMocksDebug)
             writefln("trying get callcount string");
-        string callCount = dmocks.util.toString(_callCount);
+        string callCount = _callCount.to!string;
         version (DMocksDebug)
             writefln("trying get repeat string");
-        string expected = _repeat.toString;
+        string expected = _repeat.to!string;
         version (DMocksDebug)
             writefln("putting it together");
         string

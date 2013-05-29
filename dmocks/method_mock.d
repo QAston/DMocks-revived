@@ -1,9 +1,13 @@
 module dmocks.method_mock;
 
-import dmocks.repository;
+
 import std.stdio;
 import std.traits;
 import std.metastrings;
+import std.conv;
+
+import dmocks.util;
+import dmocks.repository;
 
 //These are too complicated for decent unittests. Can't mock templates!
 
@@ -15,13 +19,12 @@ and all its overloads.
 string Methods (T, string name) () {
     version(DMocksDebug) pragma(msg, name);
     string methodBodies = "";
-    // This is gross! Waiting on DMD1723 to fix.
-    //static if (__traits(compiles, (__traits(getVirtualFunctions, T, name))))
+
     static if (is (typeof(__traits(getVirtualFunctions, T, name))))
     {
         foreach (i, method; __traits(getVirtualFunctions, T, name)) 
         {
-            static if (!__traits(isFinalFunction, func))
+            static if (!__traits(isFinalFunction, method))
             {
                 alias typeof(method) func;
                 methodBodies ~= ReturningMethod!(T.stringof, name, i, !is (ReturnType!(func) == void));
@@ -50,8 +53,8 @@ This function has a return value.
 ++/
 string ReturningMethod (string type, string name, int index, bool returns)() 
 {
-    string indexstr = ToString!(index);
-    string self = `typeof(__traits(getVirtualFunctions, T, "` ~ name ~ `")[` ~ ToString!(index) ~ `])`;
+    string indexstr = index.to!string;
+    string self = `typeof(__traits(getVirtualFunctions, T, "` ~ name ~ `")[` ~ index.to!string ~ `])`;
     string ret = returns ? `ReturnType!(` ~ self ~ `)` : `void`;
     string paramTypes = `ParameterTypeTuple!(` ~ self ~ `)`;
     string qualified = type ~ `.` ~ name;
@@ -95,7 +98,7 @@ method signatures and so forth.
 string TypedArguments (T...)() {
     string ret = "";
     foreach (i, U; T) {
-        ret ~= U.stringof ~ " arg" ~ ToString!(i) ~ ", ";
+        ret ~= U.stringof ~ " arg" ~ i.to!string ~ ", ";
     }
 
     if (T.length > 0) 
@@ -105,9 +108,7 @@ string TypedArguments (T...)() {
 }
 version (DMocksTest) {
     unittest {
-        writef("typedarguments unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("typedarguments unit"));
         assert (TypedArguments!(float, int, Object) == "float arg0, int arg1, Object arg2");
     }
 }
@@ -120,7 +121,7 @@ where n == T.length. To be used with TypedArguments.
 string Arguments (T...)() {
     string ret = "";
     foreach (i, U; T) {
-        ret ~= "arg" ~ ToString!(i) ~ ", ";
+        ret ~= "arg" ~ i.to!string ~ ", ";
     }
 
     if (T.length > 0) 
@@ -131,9 +132,7 @@ string Arguments (T...)() {
 version (DMocksTest) {
     unittest {
         // If this fails, it'll show you what went wrong...
-        writef("arguments unit test...");
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
+        mixin(test!("arguments unit"));
         assert (Arguments!(float, int, Object) == "arg0, arg1, arg2", Arguments!(float, int, Object)); 
     }
 }

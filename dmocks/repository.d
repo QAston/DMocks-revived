@@ -6,6 +6,7 @@ import dmocks.call;
 import dmocks.arguments;
 import std.variant;
 import std.stdio;
+import std.conv;
 
 version (DMocksDebug)
     version = OrderDebug;
@@ -109,19 +110,15 @@ public class MockRepository
 
     private void ThrowBackwardOrderException (ICall previous, ICall current)
     {
-        string
-                msg = "Ordered calls received in wrong order: \n" ~ "Before: " ~ dmocks.util.toString(
-                        current) ~ "\n" ~ "Expected: " ~ current.LastCall().toString ~ "\n" ~ "Actual: " ~ dmocks.util.toString(
-                        current);
+        string msg = "Ordered calls received in wrong order: \n" ~ "Before: " ~ current.to!string
+                         ~ "\n" ~ "Expected: " ~ current.LastCall().to!string ~ "\n" ~ "Actual: " ~ current.to!string;
         throw new ExpectationViolationException(msg);
     }
 
     private void ThrowForwardOrderException (ICall previous, ICall actual)
     {
-        string
-                msg = "Ordered calls received in wrong order: \n" ~ "After: " ~ dmocks.util.toString(
-                        previous) ~ "\n" ~ "Expected: " ~ previous.NextCall().toString ~ "\n" ~ "Actual: " ~ dmocks.util.toString(
-                        actual);
+        string msg = "Ordered calls received in wrong order: \n" ~ "After: " ~ previous.to!string
+                    ~ "\n" ~ "Expected: " ~ previous.NextCall().to!string ~ "\n" ~ "Actual: " ~ actual.to!string;
         throw new ExpectationViolationException(msg);
     }
 

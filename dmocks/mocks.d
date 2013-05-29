@@ -304,7 +304,7 @@ version (DMocksTest) {
         mixin(test!("lastCall"));
         Mocker m = new Mocker();
         Object o = m.mock!(Object);
-        o.print;
+        o.toString;
         auto e = m.lastCall;
 
         assert (e._call !is null);
@@ -372,11 +372,11 @@ version (DMocksTest) {
         Mocker r = new Mocker();
         auto o = r.mock!(Object);
 
-        o.print;
+        o.toString;
         r.lastCall().action({ calledPayload = true; });
         r.replay();
 
-        o.print;
+        o.toString;
         assert (calledPayload);
     }
 
@@ -387,12 +387,12 @@ version (DMocksTest) {
         auto o = r.mock!(Object);
 
         string msg = "divide by cucumber error";
-        o.print;
+        o.toString;
         r.lastCall().throws(new Exception(msg));
         r.replay();
 
         try {
-            o.print;
+            o.toString;
             assert (false, "expected exception not thrown");
         } catch (Exception e) {
             // Careful -- assertion errors derive from Exception
@@ -472,11 +472,11 @@ version (DMocksTest) {
         r.expect(o.toHash).returns(cast(hash_t)5);
         r.expect(o.toString).returns("mow!");
         r.unordered;
-        o.print;
+        o.toString;
 
         r.replay();
         o.toHash;
-        o.print;
+        o.toString;
         o.toString;
     }
 

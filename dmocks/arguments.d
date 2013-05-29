@@ -1,5 +1,6 @@
 module dmocks.arguments;
 
+import std.conv;
 
 interface IArguments
 {
@@ -60,7 +61,7 @@ template Arguments (U...)
                 string value = "(";
                 foreach (u; Arguments) 
                 {
-                    value ~= dmocks.util.toString(u) ~ ", ";
+                    value ~= u.to!string() ~ ", ";
                 }
 
                 return value[0..$-2] ~ ")";
