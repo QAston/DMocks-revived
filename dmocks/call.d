@@ -7,12 +7,6 @@ import dmocks.model;
 import dmocks.arguments;
 import dmocks.action;
 
-version (DMocksDebug)
-    import std.stdio;
-
-version (DMocksTest)
-    import std.stdio;
-
 /++
  An abstract representation of a method call.
  ++/
@@ -84,22 +78,17 @@ private
 
     override string toString ()
     {
-        version (DMocksDebug)
-            writefln("trying get arg string");
+        mixin(debugLog!"trying get arg string");
         string
                 args = (_arguments is null) ? "(<unknown>)" : _arguments.toString;
-        version (DMocksDebug)
-            writefln("trying get callcount string");
+        mixin(debugLog!"trying get callcount string");
         string callCount = _callCount.to!string;
-        version (DMocksDebug)
-            writefln("trying get repeat string");
+        mixin(debugLog!"trying get repeat string");
         string expected = _repeat.to!string;
-        version (DMocksDebug)
-            writefln("putting it together");
+        mixin(debugLog!"putting it together");
         string
                 ret = _name ~ args ~ " Expected: " ~ expected ~ " Actual: " ~ callCount;
-        version (DMocksDebug)
-            writefln("returning");
+        mixin(debugLog!"returning");
         return ret;
     }
 
@@ -131,30 +120,25 @@ private
         auto call = cast(typeof(this)) other;
         if (call is null)
         {
-            version (DMocksDebug)
-                writefln("Call.opEquals: wrong type");
+            mixin(debugLog!"Call.opEquals: wrong type");
             return false;
         }
 
         if (call._mocked !is _mocked)
         {
-            version (DMocksDebug)
-                writefln("Call.opEquals: wrong mock");
+            mixin(debugLog!"Call.opEquals: wrong mock");
             return false;
         }
 
         if (call._name != _name)
         {
-            version (DMocksDebug)
-                writefln("Call.opEquals: wrong method; expected %s; was %s",
-                        _name, call._name);
+            version (DMocksDebug) debugLog("Call.opEquals: wrong method; expected %s; was %s", _name, call._name);
             return false;
         }
 
         if ((!_ignoreArguments) && (_arguments != call._arguments))
         {
-            version (DMocksDebug)
-                writefln("Call.opEquals: wrong arguments");
+            mixin(debugLog!"Call.opEquals: wrong arguments");
             return false;
         }
         return true;
@@ -182,19 +166,15 @@ private
 
     void Called ()
     {
-        version (DMocksDebug)
-            writefln("call called");
+        mixin(debugLog!"call called");
         _callCount++;
-        version (DMocksDebug)
-            writefln("checking against repeat");
+        mixin(debugLog!"checking against repeat");
         if (_callCount > _repeat.Max)
         {
-            version (DMocksDebug)
-                writefln("repeat violated");
+            mixin(debugLog!"repeat violated");
             throw new ExpectationViolationException(toString);
         }
-        version (DMocksDebug)
-            writefln("repeat verified");
+        mixin(debugLog!"repeat verified");
     }
 
     ICall LastCall ()
@@ -204,8 +184,7 @@ private
 
     void LastCall (ICall call)
     {
-        version (DMocksDebug)
-            writefln("SETTING LASTCALL: ", dmocks.util.toString(call));
+        mixin(debugLog!("SETTING LASTCALL: ", call));
         _lastCall = call;
     }
 
@@ -216,8 +195,7 @@ private
 
     void NextCall (ICall call)
     {
-        version (DMocksDebug)
-            writefln("SETTING NEXTCALL: ", dmocks.util.toString(call));
+        mixin(debugLog!("SETTING NEXTCALL: ", call));
         _nextCall = call;
     }
 

@@ -8,9 +8,6 @@ import dmocks.call;
 import std.variant;
 import std.stdio;
 
-version (DMocksDebug) import std.stdio;
-version (DMocksTest) import std.stdio;
-
 /++
     A class through which one creates mock objects and manages expected calls. 
  ++/
@@ -550,10 +547,10 @@ version (DMocksTest) {
         mixin(test!("mock interface"));
         auto r = new Mocker;
         IFace o = r.mock!(IFace);
-        version(DMocksDebug) writefln("about to call once...");
+        mixin(debugLog!"about to call once...");
         o.foo("hallo");
         r.replay;
-        version(DMocksDebug) writefln("about to call twice...");
+        mixin(debugLog!"about to call twice...");
         o.foo("hallo");
         r.verify;
     }
@@ -563,10 +560,10 @@ version (DMocksTest) {
 
         auto r = new Mocker;
         IFace o = r.mock!(Smthng);
-        version(DMocksDebug) writefln("about to call once...");
+        mixin(debugLog!"about to call once...");
         o.foo("hallo");
         r.replay;
-        version(DMocksDebug) writefln("about to call twice...");
+        mixin(debugLog!"about to call twice...");
         o.foo("hallo");
         r.verify;
     }
@@ -576,10 +573,10 @@ version (DMocksTest) {
 
         auto r = new Mocker;
         IFace o = r.mock!(Smthng);
-        version(DMocksDebug) writefln("about to call once...");
+        mixin(debugLog!"about to call once...");
         o.foo("hallo");
         r.replay;
-        version(DMocksDebug) writefln("about to call twice...");
+        mixin(debugLog!"about to call twice...");
         o.foo("hallo");
         r.verify;
     }
@@ -597,11 +594,11 @@ version (DMocksTest) {
         auto r = new Mocker;
         auto o = r.mock!(IRM);
         auto im = r.mock!(IM);
-        version(DMocksDebug) writefln("about to call once...");
+        mixin(debugLog!"about to call once...");
         r.expect(o.get).returns(im);
         o.set(im);
         r.replay;
-        version(DMocksDebug) writefln("about to call twice...");
+        mixin(debugLog!"about to call twice...");
         assert (o.get is im, "returned the wrong value");
         o.set(im);
         r.verify;

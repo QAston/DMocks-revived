@@ -8,23 +8,22 @@ import std.traits;
 
 class Mocked (T) : T, IMocked 
 {
-    version (DMocksDebug) 
+    /+version (DMocksDebug) 
     {
         pragma (msg, T.stringof);
         pragma (msg, Body!(T));
-    }
+    }+/
+
+    public Caller _owner;
+    version (DMocksDebug)
+        public string _body = Body!(T);
     
     mixin ((Body!(T)));
 }
 
 template Body (T) 
 {
-    enum Body = 
-   ` 
-        public Caller _owner;
-        `
-            ~ Constructor!(T)()
-            ~  BodyPart!(T, 0); 
+    enum Body = Constructor!(T)() ~  BodyPart!(T, 0);
 }
 
 template BodyPart (T, int i)

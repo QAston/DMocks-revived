@@ -20,7 +20,8 @@
 				"targetType": "executable",
 				"versions": [
 					"DMocksTest",
-					"DMocksTestStandalone"
+					"DMocksTestStandalone",
+					"DMocksDebug"
 				],
 				"dflags": [
 					"-unittest"

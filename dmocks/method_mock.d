@@ -17,7 +17,7 @@ Returns a string containing the overrides for this method
 and all its overloads.
 ++/
 string Methods (T, string methodName) () {
-    version(DMocksDebug) pragma(msg, methodName);
+    //version(DMocksDebug) pragma(msg, methodName);
     string methodBodies = "";
 
     static if (is (typeof(__traits(getVirtualFunctions, T, methodName))))
@@ -66,13 +66,12 @@ string BuildMethodOverloads (string objectType, string methodName, int virtualMe
 
     string funBody = 
     `
-    version(DMocksDebug) writefln("checking _owner...");
+    mixin(debugLog!"checking _owner...");
     if (_owner is null) 
     {
         assert(false, "owner cannot be null! Contact the stupid mocks developer.");
     }
-    import dmocks.action;
-    ReturnOrPass!(` ~ ret ~ `) rope;`
+    dmocks.action.ReturnOrPass!(` ~ ret ~ `) rope;`
     ~ (isNothrowMethod ? `try { ` : ``) ~
     `
         rope = _owner.Call!(` ~ ret ~ `, ` ~ paramTypes ~ `)(this, "` ~ qualified ~ `", params);

@@ -2,14 +2,38 @@ module dmocks.util;
 
 import std.conv;
 import std.utf;
+import std.string;
 
-version(DMocksDebug) import std.stdio;
-version(DMocksTest) import std.stdio;
 
 string test(string name)() {
-    return `writeln("` ~ name ~ ` test");
-            scope(failure) writeln("failed");
-            scope(success) writeln("success");`;
+    return `std.stdio.writeln(__FILE__~ ": ` ~ name ~ ` test");
+            scope(failure) std.stdio.writeln("failed");
+            scope(success) std.stdio.writeln("success");`;
+}
+
+void debugLog(T...)(T args) @trusted nothrow
+{
+    try {
+        std.stdio.writefln(args);
+    }
+    catch (Exception ex) {
+        assert (false, "Could not write to error log");
+    }
+}
+
+string debugLog(alias t)()
+{
+    return `version (DMocksDebug) dmocks.util.debugLog(` ~t.stringof~ `);`;
+}
+
+string debugLog(alias t, alias t2)()
+{
+    return `version (DMocksDebug) dmocks.util.debugLog(` ~t.stringof~ `,` ~t2.stringof~`);`;
+}
+
+string debugLog(alias t, alias t2, alias t3)()
+{
+    return `version (DMocksDebug) dmocks.util.debugLog(` ~t.stringof~ `,` ~t2.stringof~`,` ~t3.stringof~`);`;
 }
 
 version (DMocksTest) {
@@ -42,12 +66,10 @@ struct Interval
         return std.conv.to!string(Min) ~ ".." ~ std.conv.to!string(Max);
     }
 
-    static Interval opCall (int min, int max) 
+    this (int min, int max) 
     {
-        Interval s;
-        s.Min = min;
-        s.Max = max;
-        return s;
+        this.Min = min;
+        this.Max = max;
     }
 }
 

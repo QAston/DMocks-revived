@@ -8,9 +8,6 @@ import std.variant;
 import std.stdio;
 import std.conv;
 
-version (DMocksDebug)
-    version = OrderDebug;
-
 public class MockRepository
 {
     // TODO: split this up somehow!
@@ -34,24 +31,18 @@ public class MockRepository
 
     private void CheckOrder (ICall current, ICall previous)
     {
-        version (OrderDebug)
-            writefln("CheckOrder: init");
-        version (OrderDebug)
-            writefln("CheckOrder: current: %s", dmocks.util.toString(current));
+        mixin(debugLog!"CheckOrder: init");
+        mixin(debugLog!("CheckOrder: current: %s", current));
         if (current !is null)
-            version (OrderDebug)
-                writefln("CheckOrder: current.Last: %s", dmocks.util.toString(
-                        current.LastCall));
-        version (OrderDebug)
-            writefln("CheckOrder: previous: %s", dmocks.util.toString(previous));
+            version (DMocksDebug)
+                debugLog("CheckOrder: current.Last: %s", current.LastCall.toString());
+        mixin(debugLog!("CheckOrder: previous: %s", previous));
         if (current !is null)
-            version (OrderDebug)
-                writefln("CheckOrder: previous.Next: %s", dmocks.util.toString(
-                        current.NextCall));
+            version (DMocksDebug)
+                debugLog("CheckOrder: previous.Next: %s", current.NextCall.toString());
         if (current is null || (current.LastCall is null && previous !is null && previous.NextCall is null))
         {
-            version (OrderDebug)
-                writefln("CheckOrder: nothing to do, returning");
+            mixin(debugLog!("CheckOrder: nothing to do, returning"));
             return; // nothing to do
         }
 
@@ -70,8 +61,7 @@ public class MockRepository
         auto last = previous;
         while (last !is null && last.NextCall !is null)
         {
-            version (OrderDebug)
-                writefln("CheckOrder: checking forward");
+            mixin(debugLog!("CheckOrder: checking forward"));
             if (last.NextCall == cast(Object) current)
             {
                 break;
@@ -79,8 +69,7 @@ public class MockRepository
             if (last.Repeat().Min > 0)
             {
                 // We expected this to be called between _lastCall and icall.
-                version (OrderDebug)
-                    writefln("CheckOrder: got one");
+                mixin(debugLog!("CheckOrder: got one"));
                 ThrowForwardOrderException(previous, current);
             }
 
@@ -90,8 +79,7 @@ public class MockRepository
         last = current;
         while (last !is null && last.LastCall !is null)
         {
-            version (OrderDebug)
-                writefln("CheckOrder: checking backward");
+            mixin(debugLog!("CheckOrder: checking backward"));
             if (last.LastCall == cast(Object) previous)
             {
                 break;
@@ -99,8 +87,7 @@ public class MockRepository
             if (last.Repeat().Min > 0)
             {
                 // We expected this to be called between _lastCall and icall.
-                version (OrderDebug)
-                    writefln("CheckOrder: got one");
+                mixin(debugLog!("CheckOrder: got one"));
                 ThrowBackwardOrderException(previous, current);
             }
 
@@ -155,8 +142,7 @@ public
 
     void Ordered (bool value)
     {
-        version (DMocksDebug)
-            writefln("SETTING ORDERED: %s", value);
+        mixin(debugLog!("SETTING ORDERED: %s", value));
         _ordered = value;
     }
 
@@ -197,23 +183,18 @@ public
 
     ICall Match (U...) (IMocked mocked, string name, U args)
     {
-        version (DMocksDebug)
-            writefln("about to match");
+        mixin(debugLog!"about to match");
         auto match = new Call(mocked, name, new Arguments!(U)(args));
-        version (DMocksDebug)
-            writefln("created call");
+        mixin(debugLog!"created call");
 
         foreach (icall; _calls)
         {
-            version (DMocksDebug)
-                writefln("checking call");
+            mixin(debugLog!"checking call");
             if (icall == match)
             {
-                version (DMocksDebug)
-                    writefln("found a match");
+                mixin(debugLog!"found a match");
                 icall.Called();
-                version (DMocksDebug)
-                    writefln("called the match");
+                mixin(debugLog!"called the match");
                 if (icall.Ordered)
                 {
                     CheckOrder(icall, _lastOrdered);

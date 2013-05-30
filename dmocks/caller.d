@@ -6,8 +6,6 @@ import dmocks.model;
 import dmocks.util;
 import dmocks.action;
 
-version (DMocksDebug)
-    import std.stdio;
 
 class Caller
 {
@@ -22,28 +20,24 @@ class Caller
             string name, U args)
     {
         ReturnOrPass!(TReturn) rope;
-        version (DMocksDebug)
-            writefln("checking _owner.Recording...");
+        mixin(debugLog!"checking _owner.Recording...");
         if (_owner.Recording)
         {
             _owner.Record!(U)(mocked, name, args, !is (TReturn == void));
             return rope;
         }
 
-        version (DMocksDebug)
-            writefln("checking for matching call...");
+        mixin(debugLog!"checking for matching call...");
         ICall call = _owner.Match!(U)(mocked, name, args);
 
-        version (DMocksDebug)
-            writefln("checking if call is null...");
+        mixin(debugLog!"checking if call is null...");
         if (call is null)
         {
             throw new ExpectationViolationException();
         }
 
         rope = call.Action.getActor().act!(TReturn, U)(args);
-        version (DMocksDebug)
-            writefln("returning...");
+        mixin(debugLog!"returning...");
         return rope;
     }
 }
