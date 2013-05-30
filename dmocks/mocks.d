@@ -269,6 +269,13 @@ version (DMocksTest) {
         this (int i) {}
     }
 
+    class SimpleObject {
+        void print()
+        {
+            writeln(toString());
+        }
+    }
+
     unittest {
         mixin(test!("nontemplated mock"));
         (new Mocker()).mock!(Object);
@@ -303,8 +310,8 @@ version (DMocksTest) {
     unittest {
         mixin(test!("lastCall"));
         Mocker m = new Mocker();
-        Object o = m.mock!(Object);
-        o.toString;
+        SimpleObject o = m.mock!(SimpleObject);
+        o.print;
         auto e = m.lastCall;
 
         assert (e._call !is null);
@@ -370,13 +377,13 @@ version (DMocksTest) {
 
         bool calledPayload = false;
         Mocker r = new Mocker();
-        auto o = r.mock!(Object);
+        auto o = r.mock!(SimpleObject);
 
-        o.toString;
+        o.print;
         r.lastCall().action({ calledPayload = true; });
         r.replay();
 
-        o.toString;
+        o.print;
         assert (calledPayload);
     }
 
@@ -384,15 +391,15 @@ version (DMocksTest) {
         mixin(test!("exception payload"));
 
         Mocker r = new Mocker();
-        auto o = r.mock!(Object);
+        auto o = r.mock!(SimpleObject);
 
         string msg = "divide by cucumber error";
-        o.toString;
+        o.print;
         r.lastCall().throws(new Exception(msg));
         r.replay();
 
         try {
-            o.toString;
+            o.print;
             assert (false, "expected exception not thrown");
         } catch (Exception e) {
             // Careful -- assertion errors derive from Exception
@@ -467,16 +474,16 @@ version (DMocksTest) {
         mixin(test!("ordering interposed"));
 
         Mocker r = new Mocker();
-        auto o = r.mock!(Object);
+        auto o = r.mock!(SimpleObject);
         r.ordered;
         r.expect(o.toHash).returns(cast(hash_t)5);
         r.expect(o.toString).returns("mow!");
         r.unordered;
-        o.toString;
+        o.print;
 
         r.replay();
         o.toHash;
-        o.toString;
+        o.print;
         o.toString;
     }
 
