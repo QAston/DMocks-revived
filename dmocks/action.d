@@ -1,4 +1,4 @@
-module dmocks.Action;
+module dmocks.action;
 
 import std.variant;
 import dmocks.util;

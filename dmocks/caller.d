@@ -4,7 +4,7 @@ import dmocks.call;
 import dmocks.repository;
 import dmocks.model;
 import dmocks.util;
-import dmocks.Action;
+import dmocks.action;
 
 version (DMocksDebug)
     import std.stdio;

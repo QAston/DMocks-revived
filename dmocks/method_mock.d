@@ -16,18 +16,18 @@ The only method we care about externally.
 Returns a string containing the overrides for this method
 and all its overloads.
 ++/
-string Methods (T, string name) () {
-    version(DMocksDebug) pragma(msg, name);
+string Methods (T, string methodName) () {
+    version(DMocksDebug) pragma(msg, methodName);
     string methodBodies = "";
 
-    static if (is (typeof(__traits(getVirtualFunctions, T, name))))
+    static if (is (typeof(__traits(getVirtualFunctions, T, methodName))))
     {
-        foreach (i, method; __traits(getVirtualFunctions, T, name)) 
+        foreach (virtualMethodIndex, method; __traits(getVirtualFunctions, T, methodName)) 
         {
             static if (!__traits(isFinalFunction, method))
             {
                 alias typeof(method) func;
-                methodBodies ~= ReturningMethod!(T.stringof, name, i, !is (ReturnType!(func) == void));
+                methodBodies ~= BuildMethodOverloads!(T.stringof, methodName, virtualMethodIndex, func);
             }
         }
     }
@@ -51,31 +51,42 @@ string Constructor (T) ()
 Returns a string containing the overload for a single function.
 This function has a return value.
 ++/
-string ReturningMethod (string type, string name, int index, bool returns)() 
+string BuildMethodOverloads (string objectType, string methodName, int virtualMethodIndex, METHOD_TYPE)() 
 {
-    string indexstr = index.to!string;
-    string self = `typeof(__traits(getVirtualFunctions, T, "` ~ name ~ `")[` ~ index.to!string ~ `])`;
+    bool returns = !is (ReturnType!(METHOD_TYPE) == void);
+    auto attributes = functionAttributes!METHOD_TYPE;
+    bool isNothrowMethod = (attributes & FunctionAttribute.nothrow_) != 0;
+
+    string self = `typeof(__traits(getVirtualFunctions, T, "` ~ methodName ~ `")[` ~ virtualMethodIndex.to!string ~ `])`;
     string ret = returns ? `ReturnType!(` ~ self ~ `)` : `void`;
     string paramTypes = `ParameterTypeTuple!(` ~ self ~ `)`;
-    string qualified = type ~ `.` ~ name;
-    return `override ` ~ ret ~ ` ` ~ name ~ `
-    (` ~ paramTypes ~ ` params)` ~
-    `{
+    string qualified = objectType ~ `.` ~ methodName;
+    string header = `override ` ~ ret ~ ` ` ~ methodName ~ `
+        (` ~ paramTypes ~ ` params)`;
+
+    string funBody = 
+    `
     version(DMocksDebug) writefln("checking _owner...");
     if (_owner is null) 
     {
-        throw new Exception("owner cannot be null! Contact the stupid mocks developer.");
+        assert(false, "owner cannot be null! Contact the stupid mocks developer.");
     }
-    auto rope = _owner.Call!(` ~ ret ~ `, ` ~ paramTypes ~ `)(this, "` ~ qualified ~ `", params);
+    import dmocks.action;
+    ReturnOrPass!(` ~ ret ~ `) rope;`
+    ~ (isNothrowMethod ? `try { ` : ``) ~
+    `
+        rope = _owner.Call!(` ~ ret ~ `, ` ~ paramTypes ~ `)(this, "` ~ qualified ~ `", params);
+    ` ~ (isNothrowMethod ? ` } catch (Exception ex) { assert(false, "Throwing in a mock of a nothrow method!"); }` : ``) ~
+    `
     if (rope.pass)
     {
-        static if (is (typeof (super.` ~ name ~ `)))
+        static if (is (typeof (super.` ~ methodName ~ `)))
         {
-            return super.` ~ name ~ `(params);
+            return super.` ~ methodName ~ `(params);
         }
         else
         {
-            throw new InvalidOperationException("I was supposed to pass this call through to an abstract class or interface -- I can't do that!");
+            assert(false, "Cannot pass the call through to an abstract class or interface -- there's no method in super class!");
         }
     }
     else
@@ -85,8 +96,9 @@ string ReturningMethod (string type, string name, int index, bool returns)()
             return rope.value;
         }
     }
-}
-`;
+    `;
+
+    return header ~'{'~ funBody ~'}';
 } 
 
 

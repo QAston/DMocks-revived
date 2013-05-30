@@ -1,6 +1,6 @@
 module dmocks.util;
 
-static import std.conv;
+import std.conv;
 import std.utf;
 
 version(DMocksDebug) import std.stdio;

@@ -5,7 +5,7 @@ import std.conv;
 import dmocks.util;
 import dmocks.model;
 import dmocks.arguments;
-import dmocks.Action;
+import dmocks.action;
 
 version (DMocksDebug)
     import std.stdio;
@@ -239,7 +239,7 @@ private
         _repeat = Interval(1, 1);
         // dmd apparently complains if you have a module, property, and type
         // all with the same name.
-        _action = new dmocks.Action.Action();
+        _action = new dmocks.action.Action();
     }
 }
 

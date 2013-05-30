@@ -4,6 +4,7 @@
 # Libraries
 *.lib
 *.a
+*.exe
 
 # project files
 .dub
