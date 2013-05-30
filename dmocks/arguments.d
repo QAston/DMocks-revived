@@ -2,10 +2,10 @@ module dmocks.arguments;
 
 import std.conv;
 
+import dmocks.util;
+
 interface IArguments
 {
-    bool opEquals(IArguments other);
-    string toString();
 }
 
 /++
@@ -19,7 +19,7 @@ template Arguments (U...)
         public class Arguments : IArguments
         {
             this () {}
-            bool opEquals (IArguments other) 
+            override bool opEquals (Object other) 
             {
                 return cast(typeof(this)) other !is null;
             }
@@ -41,7 +41,7 @@ template Arguments (U...)
             
             public U Arguments;
             
-            bool opEquals (IArguments other) 
+            override bool opEquals (Object other) 
             {
                 auto args = cast(typeof(this)) other;
                 if (args is null) return false;
@@ -56,7 +56,7 @@ template Arguments (U...)
                 return true;
             }
 
-            override string toString () 
+            override string toString ()
             { 
                 string value = "(";
                 foreach (u; Arguments) 

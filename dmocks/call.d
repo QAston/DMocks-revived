@@ -78,17 +78,15 @@ private
 
     override string toString ()
     {
-        mixin(debugLog!"trying get arg string");
-        string
-                args = (_arguments is null) ? "(<unknown>)" : _arguments.toString;
-        mixin(debugLog!"trying get callcount string");
+        mixin(debugLog!"Call.toString");
+        string args = (_arguments is null) ? "(<unknown>)" : _arguments.to!string;
+        mixin(debugLog!("got args: %s", args));
         string callCount = _callCount.to!string;
-        mixin(debugLog!"trying get repeat string");
+        mixin(debugLog!("got callcount: %s", callCount));
         string expected = _repeat.to!string;
-        mixin(debugLog!"putting it together");
-        string
-                ret = _name ~ args ~ " Expected: " ~ expected ~ " Actual: " ~ callCount;
-        mixin(debugLog!"returning");
+        mixin(debugLog!("got expected: %s", expected));
+        string ret = _name ~ args ~ " Expected: " ~ expected ~ " Actual: " ~ callCount;
+        mixin(debugLog!("returning: %s", ret));
         return ret;
     }
 
