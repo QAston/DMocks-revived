@@ -11,6 +11,13 @@ string test(string name)() {
             scope(success) std.stdio.writeln("success");`;
 }
 
+string nullableToString(T)(T obj)
+{
+    if (obj is null)
+        return "<null>";
+    return obj.to!string;
+}
+
 void debugLog(T...)(T args) @trusted nothrow
 {
     try {

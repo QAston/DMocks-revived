@@ -35,11 +35,11 @@ public class MockRepository
         mixin(debugLog!("CheckOrder: current: %s", current));
         if (current !is null)
             version (DMocksDebug)
-                debugLog("CheckOrder: current.Last: %s", current.LastCall.toString());
+                debugLog("CheckOrder: current.Last: %s", current.LastCall.nullableToString());
         mixin(debugLog!("CheckOrder: previous: %s", previous));
         if (current !is null)
             version (DMocksDebug)
-                debugLog("CheckOrder: previous.Next: %s", current.NextCall.toString());
+                debugLog("CheckOrder: previous.Next: %s", current.NextCall.nullableToString());
         if (current is null || (current.LastCall is null && previous !is null && previous.NextCall is null))
         {
             mixin(debugLog!("CheckOrder: nothing to do, returning"));
