@@ -47,7 +47,7 @@ template Arguments (U...)
                 if (args is null) return false;
                 foreach (i, arg; Arguments) 
                 {
-                    if (args.Arguments[i] !is arg) 
+                    if (args.Arguments[i] != arg) 
                     {
                         return false;
                     }

@@ -2,7 +2,6 @@ module dmocks.action;
 
 import std.variant;
 import dmocks.util;
-version (DMocksTest) import std.stdio;
 
 interface IAction
 {
@@ -50,6 +49,8 @@ struct Actor
 
     ReturnOrPass!(TReturn) act (TReturn, ArgTypes...) (ArgTypes args)
     {
+        mixin(debugLog!"Actor:act");
+
         ReturnOrPass!(TReturn) rope;
         if (self.passThrough)
         {
@@ -64,10 +65,8 @@ struct Actor
         {
             if (self.action.hasValue)
             {
-                alias typeof(delegate (ArgTypes a)
-                {
-                } ) action_type;
-                auto funcptr = self.action().peek!(action_type);
+                version (DMocksDebug) debugLog("action found, type: %s", self.action().type);
+                auto funcptr = self.action().peek!(void delegate(ArgTypes));
                 if (funcptr)
                 {
                     (*funcptr)(args);
@@ -86,11 +85,8 @@ struct Actor
             }
             else if (self.action.hasValue)
             {
-                alias typeof(delegate (ArgTypes a)
-                {
-                    return TReturn.init;
-                } ) action_type;
-                auto funcptr = self.action().peek!(action_type);
+                version (DMocksDebug) debugLog("action found, type: %s", self.action().type);
+                auto funcptr = self.action().peek!(TReturn delegate (ArgTypes a));
                 if (funcptr)
                 {
                     rope.value = (*funcptr)(args);
