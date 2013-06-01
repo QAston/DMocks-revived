@@ -29,7 +29,7 @@ DMocks uses dub (github.com/rejectedsoftware/dub) as a build system. Dub was cho
 
 Build using dub:
 	-install dub (github.com/rejectedsoftware/dub)
-	-in root directory of DMocks run using your shell (or cmd.exe on windows): `dub build` or `dub build --config=[build configuration, see below]
+	-in root directory of DMocks run using your shell (or cmd.exe on windows): `dub build` or `dub build --config=[build configuration, see below]`
 	-more info about using dub is available on their git repository
 	
 Available dub build configurations:
@@ -46,18 +46,18 @@ Capabilities
 dmocks can mock any class, interface, templated class, or templated interface. It uses inheritance, so it cannot mock structs. It cannot mock templated methods; that is, in the following example, the method bar will not be mocked:
 
 `
-class Foo {
-    void bar (T) (T value) {}
-}
+class Foo {<br />
+    void bar (T) (T value) {}<br />
+}<br />
 `
 
 At the same time, using that method will not result in an error. So take care in that situation.
 dmocks supports repetition intervals:
 
 `
-// This call can be repeated anywhere from five to nine times.
-// It must take the same arguments and will return the same value.
-m.expect(obj.method(args)).returns(value).repeat(5, 9);
+// This call can be repeated anywhere from five to nine times. <br />
+// It must take the same arguments and will return the same value. <br />
+m.expect(obj.method(args)).returns(value).repeat(5, 9); <br />
 `
 
 dmocks supports unordered and ordered expectations.
@@ -65,16 +65,16 @@ dmocks supports unordered and ordered expectations.
 dmocks supports expectations on void methods, of course; unfortunately, the syntax is different (I'm looking for ways around this):
 
 `
-mocked.method(args);
-mocker.lastCall.repeat(3, 4);
+mocked.method(args); <br />
+mocker.lastCall.repeat(3, 4); <br />
 `
 
 You can use that syntax with methods that have return values, too.
 
 Currently, dmocks intercepts method calls on methods in Object that are not overridden, such as opEquals and opHash. This can make Bad Things happen with associative arrays. One future point is to allow the methods that are inherited from Object and not overridden to pass through. In the meantime, though, you can do the following:
 `
-// Allow storage in associative arrays
-// This is only necessary when mocking a concrete class, not with interfaces
-mocker.expect(mocked.toHash).passThrough.repeatAny;
+// Allow storage in associative arrays <br />
+// This is only necessary when mocking a concrete class, not with interfaces <br />
+mocker.expect(mocked.toHash).passThrough.repeatAny; <br />
 mocker.expect(mocked.opEquals).ignoreArgs.passThrough.repeatAny;
 `
