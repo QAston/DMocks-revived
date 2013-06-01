@@ -1,0 +1,13 @@
+{
+	"name": "with-source",
+	"description": "This is an example how to include dmocks in your project by including the library source directly. Build this using `dub build --build=unittest` inside dir with this file (this will include tests on startup of your app). sourcePaths entries should point to dmocks-revived-root/dmocks and to your source dirs.",
+	"targetType": "executable",
+	"authors": [
+		"You"
+	],
+	"sourcePaths" : [
+		"../../dmocks",
+		"source"
+	],
+	"buildRequirements" : ["relaxProperties"]
+}
