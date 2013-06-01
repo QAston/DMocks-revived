@@ -1,13 +1,17 @@
 # Object files
 *.o
+obj
 
-# Libraries
+# Executables
 *.lib
 *.a
 *.exe
+*.exe_cv
+*.pdb
 
 # project files
 .dub
 *.suo
 *.sln
 *.visualdproj
+*.dproj
