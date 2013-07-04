@@ -1,0 +1,11 @@
+{
+	"name": "basic",
+	"description": "This is an example how to use dmocks-revived in your project by using dub dependency system. Dependencies->dmocks-revived->path is the path to the dmocks-revived project.",
+	"targetType": "executable",
+	"authors": [
+		"You"
+	],
+	"dependencies": {
+		"dmocks-revived": {"version": "~master", "path": "../.."}
+	}
+}

@@ -9,7 +9,6 @@
         "sourcePaths": [
                 "dmocks"
         ],
-		"buildRequirements" : ["relaxProperties"],
 		"configurations": [
 			{
 				"name": "library",

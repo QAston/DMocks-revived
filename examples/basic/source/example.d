@@ -24,6 +24,8 @@ class Foo {
     unittest {
 		// import only for test builds
 		import dmocks.mocks;
+
+        std.stdio.writeln("Running tests...");
 		
         Mocker m = new Mocker();
 		// create mock object
@@ -45,10 +47,13 @@ class Foo {
 		assert(result == 12);
 		// verify that calls were made as expected (you can verify order of calls, that all required calls were done etc)
         m.verify();
+
+        std.stdio.writeln("All tests passed successfuly");
     }
 }
 
 void main()
 {
-	// if all tests went fine you should see no output when running this program
+    // run the tests by using dub build --build=unittest, you should get "All tests passed successfuly" message
+	// the program is silent when tests are disabled
 }
