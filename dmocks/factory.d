@@ -16,11 +16,11 @@ public class MockFactory
             static assert (is(T == class) || is(T == interface), 
                     "only classes and interfaces can be mocked");
             
-            mixin(debugLog!"factory: about to build");
+            debugLog("factory: about to build");
             Mocked!(T) ret = new Mocked!(T);
-            mixin(debugLog!"factory: about to set owner");
+            debugLog("factory: about to set owner");
             ret._owner = new Caller(rep);
-            mixin(debugLog!"factory: returning the mocked object");
+            debugLog("factory: returning the mocked object");
             return ret;
         }
     }

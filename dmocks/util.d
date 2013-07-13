@@ -6,7 +6,7 @@ import std.string;
 
 
 string test(string name)() {
-    return `std.stdio.writeln(__FILE__~ ": ` ~ name ~ ` test");
+    return `std.stdio.writefln(__FILE__~" line: %d"~": ` ~ name ~ ` test", __LINE__);
             scope(failure) std.stdio.writeln("failed");
             scope(success) std.stdio.writeln("success");`;
 }
@@ -18,29 +18,16 @@ string nullableToString(T)(T obj)
     return obj.to!string;
 }
 
-void debugLog(T...)(T args) @trusted nothrow
+void debugLog(T...)(lazy T args) @trusted nothrow
 {
-    try {
-        std.stdio.writefln(args);
+    version (DMocksDebug) {
+        try {
+            std.stdio.writefln(args);
+        }
+        catch (Exception ex) {
+            assert (false, "Could not write to error log");
+        }
     }
-    catch (Exception ex) {
-        assert (false, "Could not write to error log");
-    }
-}
-
-string debugLog(alias t)()
-{
-    return `version (DMocksDebug) dmocks.util.debugLog(` ~t.stringof~ `);`;
-}
-
-string debugLog(alias t, alias t2)()
-{
-    return `version (DMocksDebug) dmocks.util.debugLog(` ~t.stringof~ `,` ~t2.stringof~`);`;
-}
-
-string debugLog(alias t, alias t2, alias t3)()
-{
-    return `version (DMocksDebug) dmocks.util.debugLog(` ~t.stringof~ `,` ~t2.stringof~`,` ~t3.stringof~`);`;
 }
 
 version (DMocksTest) {

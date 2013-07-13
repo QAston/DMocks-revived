@@ -78,15 +78,15 @@ private
 
     override string toString ()
     {
-        mixin(debugLog!"Call.toString");
+        debugLog("Call.toString");
         string args = (_arguments is null) ? "(<unknown>)" : _arguments.to!string;
-        mixin(debugLog!("got args: %s", args));
+        debugLog("got args: %s", args);
         string callCount = _callCount.to!string;
-        mixin(debugLog!("got callcount: %s", callCount));
+        debugLog("got callcount: %s", callCount);
         string expected = _repeat.to!string;
-        mixin(debugLog!("got expected: %s", expected));
+        debugLog("got expected: %s", expected);
         string ret = _name ~ args ~ " Expected: " ~ expected ~ " Actual: " ~ callCount;
-        mixin(debugLog!("returning: %s", ret));
+        debugLog("returning: %s", ret);
         return ret;
     }
 
@@ -118,25 +118,25 @@ private
         auto call = cast(typeof(this)) other;
         if (call is null)
         {
-            mixin(debugLog!"Call.opEquals: wrong type");
+            debugLog("Call.opEquals: wrong type");
             return false;
         }
 
         if (call._mocked !is _mocked)
         {
-            mixin(debugLog!"Call.opEquals: wrong mock");
+            debugLog("Call.opEquals: wrong mock");
             return false;
         }
 
         if (call._name != _name)
         {
-            version (DMocksDebug) debugLog("Call.opEquals: wrong method; expected %s; was %s", _name, call._name);
+            debugLog("Call.opEquals: wrong method; expected %s; was %s", _name, call._name);
             return false;
         }
 
         if ((!_ignoreArguments) && (_arguments != call._arguments))
         {
-            mixin(debugLog!"Call.opEquals: wrong arguments");
+            debugLog("Call.opEquals: wrong arguments");
             return false;
         }
         return true;
@@ -164,15 +164,15 @@ private
 
     void Called ()
     {
-        mixin(debugLog!"call called");
+        debugLog("call called");
         _callCount++;
-        mixin(debugLog!"checking against repeat");
+        debugLog("checking against repeat");
         if (_callCount > _repeat.Max)
         {
-            mixin(debugLog!"repeat violated");
+            debugLog("repeat violated");
             throw new ExpectationViolationException(toString);
         }
-        mixin(debugLog!"repeat verified");
+        debugLog("repeat verified");
     }
 
     ICall LastCall ()
@@ -182,7 +182,7 @@ private
 
     void LastCall (ICall call)
     {
-        mixin(debugLog!("SETTING LASTCALL: ", call));
+        debugLog("SETTING LASTCALL: ", call);
         _lastCall = call;
     }
 
@@ -193,7 +193,7 @@ private
 
     void NextCall (ICall call)
     {
-        mixin(debugLog!("SETTING NEXTCALL: ", call));
+        debugLog("SETTING NEXTCALL: ", call);
         _nextCall = call;
     }
 

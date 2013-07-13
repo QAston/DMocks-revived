@@ -20,24 +20,24 @@ class Caller
             string name, U args)
     {
         ReturnOrPass!(TReturn) rope;
-        mixin(debugLog!"checking _owner.Recording...");
+        debugLog("checking _owner.Recording...");
         if (_owner.Recording)
         {
             _owner.Record!(U)(mocked, name, args, !is (TReturn == void));
             return rope;
         }
 
-        mixin(debugLog!"checking for matching call...");
+        debugLog("checking for matching call...");
         ICall call = _owner.Match!(U)(mocked, name, args);
 
-        mixin(debugLog!"checking if call is null...");
+        debugLog("checking if call is null...");
         if (call is null)
         {
             throw new ExpectationViolationException();
         }
 
         rope = call.Action.getActor().act!(TReturn, U)(args);
-        mixin(debugLog!"returning...");
+        debugLog("returning...");
         return rope;
     }
 }

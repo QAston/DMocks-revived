@@ -49,7 +49,7 @@ struct Actor
 
     ReturnOrPass!(TReturn) act (TReturn, ArgTypes...) (ArgTypes args)
     {
-        mixin(debugLog!"Actor:act");
+        debugLog("Actor:act");
 
         ReturnOrPass!(TReturn) rope;
         if (self.passThrough)
@@ -65,7 +65,7 @@ struct Actor
         {
             if (self.action.hasValue)
             {
-                version (DMocksDebug) debugLog("action found, type: %s", self.action().type);
+                debugLog("action found, type: %s", self.action().type);
                 auto funcptr = self.action().peek!(void delegate(ArgTypes));
                 if (funcptr)
                 {
@@ -85,7 +85,7 @@ struct Actor
             }
             else if (self.action.hasValue)
             {
-                version (DMocksDebug) debugLog("action found, type: %s", self.action().type);
+                debugLog("action found, type: %s", self.action().type);
                 auto funcptr = self.action().peek!(TReturn delegate (ArgTypes a));
                 if (funcptr)
                 {

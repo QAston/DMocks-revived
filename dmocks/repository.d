@@ -31,18 +31,16 @@ public class MockRepository
 
     private void CheckOrder (ICall current, ICall previous)
     {
-        mixin(debugLog!"CheckOrder: init");
-        mixin(debugLog!("CheckOrder: current: %s", current));
+        debugLog("CheckOrder: init");
+        debugLog("CheckOrder: current: %s", current);
         if (current !is null)
-            version (DMocksDebug)
-                debugLog("CheckOrder: current.Last: %s", current.LastCall.nullableToString());
-        mixin(debugLog!("CheckOrder: previous: %s", previous));
+            debugLog("CheckOrder: current.Last: %s", current.LastCall.nullableToString());
+        debugLog("CheckOrder: previous: %s", previous);
         if (current !is null)
-            version (DMocksDebug)
-                debugLog("CheckOrder: previous.Next: %s", current.NextCall.nullableToString());
+            debugLog("CheckOrder: previous.Next: %s", current.NextCall.nullableToString());
         if (current is null || (current.LastCall is null && previous !is null && previous.NextCall is null))
         {
-            mixin(debugLog!("CheckOrder: nothing to do, returning"));
+            debugLog("CheckOrder: nothing to do, returning");
             return; // nothing to do
         }
 
@@ -61,7 +59,7 @@ public class MockRepository
         auto last = previous;
         while (last !is null && last.NextCall !is null)
         {
-            mixin(debugLog!("CheckOrder: checking forward"));
+            debugLog("CheckOrder: checking forward");
             if (last.NextCall == cast(Object) current)
             {
                 break;
@@ -69,7 +67,7 @@ public class MockRepository
             if (last.Repeat().Min > 0)
             {
                 // We expected this to be called between _lastCall and icall.
-                mixin(debugLog!("CheckOrder: got one"));
+                debugLog("CheckOrder: got one");
                 ThrowForwardOrderException(previous, current);
             }
 
@@ -79,7 +77,7 @@ public class MockRepository
         last = current;
         while (last !is null && last.LastCall !is null)
         {
-            mixin(debugLog!("CheckOrder: checking backward"));
+            debugLog("CheckOrder: checking backward");
             if (last.LastCall == cast(Object) previous)
             {
                 break;
@@ -87,7 +85,7 @@ public class MockRepository
             if (last.Repeat().Min > 0)
             {
                 // We expected this to be called between _lastCall and icall.
-                mixin(debugLog!("CheckOrder: got one"));
+                debugLog("CheckOrder: got one");
                 ThrowBackwardOrderException(previous, current);
             }
 
@@ -142,7 +140,7 @@ public
 
     void Ordered (bool value)
     {
-        mixin(debugLog!("SETTING ORDERED: %s", value));
+        debugLog("SETTING ORDERED: %s", value);
         _ordered = value;
     }
 
@@ -183,18 +181,18 @@ public
 
     ICall Match (U...) (IMocked mocked, string name, U args)
     {
-        mixin(debugLog!"about to match");
+        debugLog("about to match");
         auto match = new Call(mocked, name, new Arguments!(U)(args));
-        mixin(debugLog!"created call");
+        debugLog("created call");
 
         foreach (icall; _calls)
         {
-            mixin(debugLog!"checking call");
+            debugLog("checking call");
             if (icall == match)
             {
-                mixin(debugLog!"found a match");
+                debugLog("found a match");
                 icall.Called();
-                mixin(debugLog!"called the match");
+                debugLog("called the match");
                 if (icall.Ordered)
                 {
                     CheckOrder(icall, _lastOrdered);

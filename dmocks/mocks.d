@@ -547,10 +547,10 @@ version (DMocksTest) {
         mixin(test!("mock interface"));
         auto r = new Mocker;
         IFace o = r.mock!(IFace);
-        mixin(debugLog!"about to call once...");
+        debugLog("about to call once...");
         o.foo("hallo");
         r.replay;
-        mixin(debugLog!"about to call twice...");
+        debugLog("about to call twice...");
         o.foo("hallo");
         r.verify;
     }
@@ -560,10 +560,10 @@ version (DMocksTest) {
 
         auto r = new Mocker;
         IFace o = r.mock!(Smthng);
-        mixin(debugLog!"about to call once...");
+        debugLog("about to call once...");
         o.foo("hallo");
         r.replay;
-        mixin(debugLog!"about to call twice...");
+        debugLog("about to call twice...");
         o.foo("hallo");
         r.verify;
     }
@@ -573,10 +573,10 @@ version (DMocksTest) {
 
         auto r = new Mocker;
         IFace o = r.mock!(Smthng);
-        mixin(debugLog!"about to call once...");
+        debugLog("about to call once...");
         o.foo("hallo");
         r.replay;
-        mixin(debugLog!"about to call twice...");
+        debugLog("about to call twice...");
         o.foo("hallo");
         r.verify;
     }
@@ -594,11 +594,11 @@ version (DMocksTest) {
         auto r = new Mocker;
         auto o = r.mock!(IRM);
         auto im = r.mock!(IM);
-        mixin(debugLog!"about to call once...");
+        debugLog("about to call once...");
         r.expect(o.get).returns(im);
         o.set(im);
         r.replay;
-        mixin(debugLog!"about to call twice...");
+        debugLog("about to call twice...");
         assert (o.get is im, "returned the wrong value");
         o.set(im);
         r.verify;

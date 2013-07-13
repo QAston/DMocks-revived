@@ -66,7 +66,7 @@ string BuildMethodOverloads (string objectType, string methodName, int virtualMe
 
     string funBody = 
     `
-    mixin(debugLog!"checking _owner...");
+    debugLog("checking _owner...");
     if (_owner is null) 
     {
         assert(false, "owner cannot be null! Contact the stupid mocks developer.");
