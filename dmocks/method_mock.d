@@ -34,19 +34,6 @@ string Methods (T, string methodName) () {
     return methodBodies;
 }
 
-string Constructor (T) () 
-{
-    static if (!is (typeof(T._ctor)))
-    {
-        return ``;
-    } 
-    else 
-    {
-        static assert (false, "Mocking types with constructors is not currently supported");
-    }
-}
-
-
 /++
 Returns a string containing the overload for a single function.
 This function has a return value.

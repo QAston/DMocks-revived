@@ -14,6 +14,12 @@ class Mocked (T) : T, IMocked
         pragma (msg, Body!(T));
     }+/
 
+    static if(__traits(hasMember, T,"__ctor"))
+        this(ARGS...)(ARGS args)
+        {
+            super(args);
+        }
+
     public Caller _owner;
     version (DMocksDebug)
         public string _body = Body!(T);
@@ -23,7 +29,7 @@ class Mocked (T) : T, IMocked
 
 template Body (T) 
 {
-    enum Body = Constructor!(T)() ~  BodyPart!(T, 0);
+    enum Body = BodyPart!(T, 0);
 }
 
 template BodyPart (T, int i)

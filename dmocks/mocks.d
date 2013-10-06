@@ -72,9 +72,9 @@ public class Mocker
         }
 
         /** Get a mock object of the given type. */
-        T mock (T) () 
+        T mock (T, CONSTRUCTOR_ARGS...) (CONSTRUCTOR_ARGS args) 
         {
-            return MockFactory.Mock!(T)(_repository);
+            return MockFactory.Mock!(T)(_repository, args);
         }
 
         /**
@@ -263,7 +263,12 @@ version (DMocksTest) {
     }
 
     class ConstructorArg {
-        this (int i) {}
+        this (int i) { a = i;}
+        int a;
+        int getA()
+        {
+            return a;
+        }
     }
 
     class SimpleObject {
@@ -296,11 +301,11 @@ version (DMocksTest) {
         assert (r.lastCall()._call !is null);
     }
 
-//    unittest {
-//		  mixin(test!("constructor argument"));
-//        auto r = new Mocker();
-//        r.mock!(ConstructorArg);
-//    }
+    unittest {
+		mixin(test!("constructor argument"));
+        auto r = new Mocker();
+        auto o = r.mock!(ConstructorArg)(4);
+    }
 
     unittest {
         mixin(test!("lastCall"));
@@ -417,6 +422,16 @@ version (DMocksTest) {
         r.replay();
         string str = o.toString;
         assert (str == "dmocks.object_mock.Mocked!(Object).Mocked", str);
+    }
+
+    unittest {
+		mixin(test!("class with constructor init check"));
+        auto r = new Mocker();
+        auto o = r.mock!(ConstructorArg)(4);
+        o.getA();
+        r.lastCall().passThrough();
+        r.replay();
+        assert (4 == o.getA());
     }
 
     unittest {
