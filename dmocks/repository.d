@@ -152,16 +152,7 @@ public
     void Record (U...) (IMocked mocked, string name, U args, bool returns)
     {
         CheckLastCallSetup();
-        ICall call;
-        // I hate having to check for an empty tuple.
-        static if (U.length)
-        {
-            call = new Call(mocked, name, new Arguments!(U)(args));
-        }
-        else
-        {
-            call = new Call(mocked, name, new Arguments!(U)());
-        }
+        ICall call = new Call(mocked, name, new Arguments!(U)(args));
         call.Void(!returns);
 
         if (_ordered)
