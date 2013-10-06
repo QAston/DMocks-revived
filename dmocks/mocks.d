@@ -290,8 +290,6 @@ version (DMocksTest) {
 
     unittest {
         mixin(test!("execute mock method"));
-        scope(failure) writefln("failed");
-        scope(success) writefln("success");
         auto r = new Mocker();
         auto o = r.mock!(Object);
         o.toString();
