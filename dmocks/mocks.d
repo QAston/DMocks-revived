@@ -272,6 +272,9 @@ version (DMocksTest) {
     }
 
     class SimpleObject {
+        this()
+        {
+        }
         void print()
         {
             writeln(toString());
