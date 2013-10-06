@@ -302,7 +302,7 @@ version (DMocksTest) {
     }
 
     unittest {
-		mixin(test!("constructor argument"));
+        mixin(test!("constructor argument"));
         auto r = new Mocker();
         auto o = r.mock!(ConstructorArg)(4);
     }
@@ -425,7 +425,7 @@ version (DMocksTest) {
     }
 
     unittest {
-		mixin(test!("class with constructor init check"));
+        mixin(test!("class with constructor init check"));
         auto r = new Mocker();
         auto o = r.mock!(ConstructorArg)(4);
         o.getA();
