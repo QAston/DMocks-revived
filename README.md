@@ -59,16 +59,9 @@ dmocks supports repetition intervals:
 
 dmocks supports unordered and ordered expectations.
 
-dmocks supports expectations on void methods, of course; unfortunately, the syntax is different (I'm looking for ways around this):
-
-	mocked.method(args);
-	mocker.lastCall.repeat(3, 4);
-
-You can use that syntax with methods that have return values, too.
-
 Currently, dmocks intercepts method calls on methods in Object that are not overridden, such as opEquals and opHash. This can make Bad Things happen with associative arrays. One future point is to allow the methods that are inherited from Object and not overridden to pass through. In the meantime, though, you can do the following:
 
-	// Allow storage in associative arrays <br />
+	// Allow storage in associative arrays
 	// This is only necessary when mocking a concrete class, not with interfaces 
 	mocker.expect(mocked.toHash).passThrough.repeatAny;
 	mocker.expect(mocked.opEquals).ignoreArgs.passThrough.repeatAny;
