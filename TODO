@@ -16,10 +16,6 @@ Maybe:
 
 When I figure out something clever:
     - Mock templated methods
-    - Expect(obj.voidmethod);
-
-
-What do I need for a 1.0 release?
-    - Everything in 'soon'.
+	- Mock structures
 
 

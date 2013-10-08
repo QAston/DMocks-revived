@@ -78,7 +78,7 @@ public class Mocker
         }
 
         /**
-         * Only for non-void methods. Start an expected call; this returns
+         * Start an expected call; this returns
          * an object that allows you to set various properties on the call,
          * such as return value and number of repetitions.
          *
@@ -89,7 +89,12 @@ public class Mocker
          * m.expect(o.toString).returns("hello?");
          * ---
          */
-        ExternalCall expect (T) (T ignored) {
+        ExternalCall expect (T) (lazy T ignored) {
+            auto pre = _repository.LastCall();
+            ignored();
+            auto post = _repository.LastCall();
+            if (pre is post)
+                throw new InvalidOperationException("mocks.Mocker.expect: you did not call a method mocked by the mocker!");
             return lastCall();
         }
 
@@ -382,8 +387,8 @@ version (DMocksTest) {
         Mocker r = new Mocker();
         auto o = r.mock!(SimpleObject);
 
-        o.print;
-        r.lastCall().action({ calledPayload = true; });
+        //o.print;
+        r.expect(o.print).action({ calledPayload = true; });
         r.replay();
 
         o.print;
