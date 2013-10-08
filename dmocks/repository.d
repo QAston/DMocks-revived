@@ -149,10 +149,10 @@ public
         return _ordered;
     }
 
-    void Record (U...) (IMocked mocked, string name, U args, bool returns)
+    void Record (U...) (IMocked mocked, string name, string qualifiers, U args, bool returns)
     {
         CheckLastCallSetup();
-        ICall call = new Call(mocked, name, new Arguments!(U)(args));
+        ICall call = new Call(mocked, name, new Arguments!(U)(args), qualifiers);
         call.Void(!returns);
 
         if (_ordered)
@@ -170,10 +170,10 @@ public
         _lastCall = call;
     }
 
-    ICall Match (U...) (IMocked mocked, string name, U args)
+    ICall Match (U...) (IMocked mocked, string name, string qualifiers, U args)
     {
         debugLog("about to match");
-        auto match = new Call(mocked, name, new Arguments!(U)(args));
+        auto match = new Call(mocked, name, new Arguments!(U)(args), qualifiers);
         debugLog("created call");
 
         foreach (icall; _calls)
@@ -227,7 +227,7 @@ public
             mixin(test!("match object with no expectations"));
 
             MockRepository r = new MockRepository();
-            r.Match!()(new FakeMocked, "toString");
+            r.Match!()(new FakeMocked, "toString", "");
         }
 
         unittest {
@@ -238,11 +238,11 @@ public
             int args = 3;
 
             MockRepository r = new MockRepository();
-            r.Record!(int)(m, name, args, false);
-            r.Record!(int)(m, name, args, false);
-            ICall call = r.Match!(int)(m, name, args);
+            r.Record!(int)(m, name, "", args, false);
+            r.Record!(int)(m, name, "", args, false);
+            ICall call = r.Match!(int)(m, name, "", args);
             assert (call !is null);
-            call = r.Match!(int)(m, name, args + 5);
+            call = r.Match!(int)(m, name, "", args + 5);
             assert (call is null);
         }
 
@@ -254,12 +254,12 @@ public
             int args = 3;
 
             MockRepository r = new MockRepository();
-            r.Record!(int)(m, name, args, false);
-            r.Record!(int)(m, name, args, false);
+            r.Record!(int)(m, name, "", args, false);
+            r.Record!(int)(m, name, "", args, false);
             r._lastCall.IgnoreArguments = true;
-            ICall call = r.Match!(int)(m, name, args);
+            ICall call = r.Match!(int)(m, name, "", args);
             assert (call !is null);
-            call = r.Match!(int)(m, name, args + 5);
+            call = r.Match!(int)(m, name, "", args + 5);
             assert (call !is null);
         }
 
@@ -271,12 +271,12 @@ public
             int args = 3;
 
             MockRepository r = new MockRepository();
-            r.Record!(int)(m, name, args, false);
-            ICall call = r.Match!(int)(m, name, args);
+            r.Record!(int)(m, name, "", args, false);
+            ICall call = r.Match!(int)(m, name, "", args);
             assert (call !is null);
             try
             {
-                call = r.Match!(int)(m, name, args);
+                call = r.Match!(int)(m, name, "", args);
                 assert (false, "expected exception not called");
             }
             catch (ExpectationViolationException e)

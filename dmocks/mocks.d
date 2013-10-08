@@ -652,6 +652,71 @@ version (DMocksTest) {
         o.foo;
         r.verify;
     }
+
+    class Qualifiers {
+        int make() shared
+        {
+            return 0;
+        }
+
+        int make() const
+        {
+            return 1;
+        }
+
+        int make() shared const
+        {
+            return 2;
+        }
+
+        int make()
+        {
+            return 3;
+        }
+
+        int make() immutable
+        {
+            return 4;
+        }
+    }
+
+    unittest
+    {
+        mixin(test!("overloaded method qualifiers"));
+
+        {
+            auto r = new Mocker;
+            auto s = r.mock!(shared(Qualifiers));
+            auto sc = cast(shared const) s;
+
+            r.expect(s.make).passThrough;
+            r.expect(sc.make).passThrough; 
+            r.replay;
+
+            assert(s.make == 0);
+            assert(sc.make == 2);
+
+            r.verify;
+        }
+
+        {
+            auto r = new Mocker;
+            auto m = r.mock!(Qualifiers);
+            auto c = cast(const) m;
+            auto i = cast(immutable) m;
+
+            r.expect(i.make).passThrough;
+            r.expect(m.make).passThrough; 
+            r.expect(c.make).passThrough; 
+            r.replay;
+
+            assert(i.make == 4);
+            assert(m.make == 3);
+            assert(c.make == 1);
+
+            r.verify;
+        }
+    }
     
     version (DMocksTestStandalone)
     {

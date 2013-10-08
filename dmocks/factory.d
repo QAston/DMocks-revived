@@ -21,7 +21,7 @@ public class MockFactory
             debugLog("factory: about to set owner");
             ret._owner = new Caller(rep);
             debugLog("factory: returning the mocked object");
-            return ret;
+            return cast(T)ret;
         }
     }
 }

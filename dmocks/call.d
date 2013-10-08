@@ -58,12 +58,13 @@ private
     bool _void;
     bool _ordered;
     IArguments _arguments;
-    IMocked _mocked;
+    const(IMocked) _mocked;
     string _name = "unknown";
     Interval _repeat;
     int _callCount;
     ICall _lastCall = null;
     ICall _nextCall = null;
+    string _qualifiers = "";
 }
 
     bool HasAction ()
@@ -139,6 +140,12 @@ private
             debugLog("Call.opEquals: wrong arguments");
             return false;
         }
+
+        if (call._qualifiers != _qualifiers)
+        {
+            debugLog("Call.opEquals: mismatching qualifiers '%s' vs '%s'", _qualifiers, call._qualifiers);
+            return false;
+        }
         return true;
     }
 
@@ -207,7 +214,7 @@ private
         return _ordered;
     }
 
-    this (IMocked mocked, string name, IArguments arguments)
+    this(IMocked mocked, string name, IArguments arguments, string qualifiers = "")
     {
         _mocked = mocked;
         _name = name;
@@ -216,6 +223,7 @@ private
         // dmd apparently complains if you have a module, property, and type
         // all with the same name.
         _action = new dmocks.action.Action();
+        _qualifiers = qualifiers;
     }
 }
 

@@ -17,7 +17,11 @@ Returns a string containing the overrides for this method
 and all its overloads.
 ++/
 string Methods (T, string methodName) () {
-    //version(DMocksDebug) pragma(msg, methodName);
+    /+version(DMocksDebug)
+    {
+        pragma(msg, methodName);
+        pragma(msg, T);
+    }+/
     string methodBodies = "";
 
     static if (is (typeof(__traits(getVirtualFunctions, T, methodName))))
@@ -49,7 +53,7 @@ string BuildMethodOverloads (string objectType, string methodName, int virtualMe
     string paramTypes = `ParameterTypeTuple!(` ~ self ~ `)`;
     string qualified = objectType ~ `.` ~ methodName;
     string header = `override ` ~ ret ~ ` ` ~ methodName ~ `
-        (` ~ paramTypes ~ ` params)`;
+        (` ~ paramTypes ~ ` params)` ~ formatQualifiers!(METHOD_TYPE);
 
     string funBody = 
     `
@@ -60,8 +64,9 @@ string BuildMethodOverloads (string objectType, string methodName, int virtualMe
     }
     dmocks.action.ReturnOrPass!(` ~ ret ~ `) rope;`
     ~ (isNothrowMethod ? `try { ` : ``) ~
+        // CAST CHEATS here - can't operate on const/shared refs without cheating on typesystem. this makes these calls threadunsafe
     `
-        rope = _owner.Call!(` ~ ret ~ `, ` ~ paramTypes ~ `)(this, "` ~ qualified ~ `", params);
+        rope = (cast(Caller)_owner).Call!(` ~ ret ~ `, ` ~ paramTypes ~ `)(cast(IMocked)this, "` ~ qualified ~ `", "` ~ formatQualifiers!(METHOD_TYPE) ~ `", params);
     ` ~ (isNothrowMethod ? ` } catch (Exception ex) { assert(false, "Throwing in a mock of a nothrow method!"); }` : ``) ~
     `
     if (rope.pass)
@@ -85,4 +90,34 @@ string BuildMethodOverloads (string objectType, string methodName, int virtualMe
     `;
 
     return header ~'{'~ funBody ~'}';
+}
+
+string formatQualifiers(T)()
+{
+    import std.array;
+    auto ret = appender!(string[]);
+    static if (is(T == const))
+    {
+        ret.put("const");
+    }
+    static if (is(T == immutable))
+    {
+        ret.put("immutable");
+    }
+    static if (is(T == shared))
+    {
+        ret.put("shared");
+    }
+    return ret.data.join(" ");
+}
+
+unittest {
+    class A
+    {
+        void make() const shared
+        {
+        }
+    }
+
+    static assert(formatQualifiers!(typeof(A.make)) == "const shared");
 }

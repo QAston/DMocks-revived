@@ -17,18 +17,18 @@ class Caller
     }
 
     @trusted public ReturnOrPass!(TReturn) Call (TReturn, U...) (IMocked mocked,
-            string name, U args)
+            string name, string qualifiers, U args)
     {
         ReturnOrPass!(TReturn) rope;
         debugLog("checking _owner.Recording...");
         if (_owner.Recording)
         {
-            _owner.Record!(U)(mocked, name, args, !is (TReturn == void));
+            _owner.Record!(U)(mocked, name, qualifiers, args, !is (TReturn == void));
             return rope;
         }
 
         debugLog("checking for matching call...");
-        ICall call = _owner.Match!(U)(mocked, name, args);
+        ICall call = _owner.Match!(U)(mocked, name, qualifiers, args);
 
         debugLog("checking if call is null...");
         if (call is null)
