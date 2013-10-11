@@ -15,7 +15,6 @@ Maybe:
     - Don't mock opEquals, toHash if they're the same as the ones in Object. Maybe not anything that's the same as in Object.
 
 When I figure out something clever:
-    - Mock templated methods
 	- Mock structures
 
 

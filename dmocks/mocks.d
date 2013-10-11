@@ -1,12 +1,13 @@
 module dmocks.mocks;
 
-import dmocks.object_mock;
+public import dmocks.object_mock;
 import dmocks.factory;
 import dmocks.repository; 
 import dmocks.util;
 import dmocks.call;
 import std.variant;
 import std.stdio;
+import std.typecons;
 
 /++
     A class through which one creates mock objects and manages expected calls. 
@@ -71,10 +72,31 @@ public class Mocker
             _repository.Ordered(false);
         }
 
-        /** Get a mock object of the given type. */
+        /** 
+         * Creates a mock object for a given type.
+         *
+         * Type returned is compatibile with given type
+         * All virtual calls made to the object will be mocked
+         * Final and template calls will not be mocked
+         *
+         * Use this type of mock to substitute interface/class objects
+         */
         T mock (T, CONSTRUCTOR_ARGS...) (CONSTRUCTOR_ARGS args) 
         {
-            return MockFactory.Mock!(T)(_repository, args);
+            return dmocks.factory.mock!(T)(_repository, args);
+        }
+
+        /** 
+         * Creates a mock object for a given type.
+         *
+         * Type of the mock is incompatibile with given type
+         * Final, template and virtual methods will be mocked
+         *
+         * Use this type of mock to substitute template parameters
+         */
+        auto mockFinal(T, CONSTRUCTOR_ARGS...) (CONSTRUCTOR_ARGS args)
+        {
+            return dmocks.factory.mockFinal!(T)(_repository, args);
         }
 
         /**
@@ -721,6 +743,124 @@ version (DMocksTest) {
 
             r.verify;
         }
+    }
+
+    interface VirtualFinal
+    {
+        int makeVir();
+    }
+
+    unittest {
+        import std.exception;
+        mixin(test!("final mock of virtual methods"));
+
+        auto r = new Mocker;
+        auto o = r.mockFinal!(VirtualFinal);  
+        r.expect(o.makeVir()).returns(5);
+        r.replay;
+        assert(o.makeVir == 5);
+    }
+
+    class MakeAbstract
+    {
+        int con;
+        this(int con)
+        {
+            this.con = con;
+        }
+        abstract int abs();
+
+        int concrete()
+        {
+            return con;
+        }
+    }
+
+    unittest {
+        mixin(test!("final mock of abstract methods"));
+
+        auto r = new Mocker;
+        auto o = r.mockFinal!(MakeAbstract)(6);
+        r.expect(o.concrete()).passThrough;
+        r.replay;
+        assert(o.concrete == 6);
+        r.verify;
+    }
+
+    class FinalMethods : VirtualFinal {
+        final int make()
+        {
+            return 0;
+        }
+        final int make(int i)
+        {
+            return 2;
+        }
+        int makeVir()
+        {
+            return 5;
+        }
+    }
+
+    unittest {
+        mixin(test!("final methods"));
+
+        auto r = new Mocker;
+        auto o = r.mockFinal!(FinalMethods);  
+        r.expect(o.make()).passThrough;
+        r.expect(o.make(1)).passThrough; 
+        r.replay;
+        static assert(!is(typeof(o)==FinalMethods));
+        assert(o.make == 0);
+        assert(o.make(1) == 2);
+        r.verify;
+    }
+
+    final class FinalClass
+    {
+        int fortyTwo()
+        {
+            return 42;
+        }
+    }
+
+    unittest {
+        mixin(test!("final class"));
+
+        auto r = new Mocker;
+        auto o = r.mockFinal!(FinalClass);  
+        r.expect(o.fortyTwo()).passThrough;
+        r.replay;
+        assert(o.fortyTwo == 42);
+        r.verify;
+    }
+
+    class TemplateMethods
+    {
+        string get(T)(T t)
+        {
+            import std.traits;
+            return fullyQualifiedName!T;
+        }
+
+        int getSomethings(T...)(T t)
+        {
+            return T.length;
+        }
+    }
+
+    unittest {
+        mixin(test!("template methods"));
+
+        auto r = new Mocker;
+        auto o = r.mockFinal!(TemplateMethods);  
+        r.expect(o.get(1)).passThrough;
+        r.expect(o.getSomethings(1, 2, 3)).passThrough;
+        r.replay;
+        assert(o.get(1) == "int");
+        auto tm = new TemplateMethods();
+        assert(o.getSomethings(1, 2, 3) == 3);
+        r.verify;
     }
     
     version (DMocksTestStandalone)

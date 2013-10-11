@@ -16,7 +16,7 @@ The only method we care about externally.
 Returns a string containing the overrides for this method
 and all its overloads.
 ++/
-string Methods (T, string methodName) () {
+string Methods (T, bool INHERITANCE, string methodName) () {
     /+version(DMocksDebug)
     {
         pragma(msg, methodName);
@@ -24,15 +24,13 @@ string Methods (T, string methodName) () {
     }+/
     string methodBodies = "";
 
-    static if (is (typeof(__traits(getVirtualFunctions, T, methodName))))
+    static if (is (typeof(__traits(getOverloads, T, methodName))))
     {
-        foreach (virtualMethodIndex, method; __traits(getVirtualFunctions, T, methodName)) 
+        foreach (overloadIndex, method; __traits(getOverloads, T, methodName)) 
         {
-            static if (!__traits(isFinalFunction, method))
-            {
-                alias typeof(method) func;
-                methodBodies ~= BuildMethodOverloads!(T.stringof, methodName, virtualMethodIndex, func);
-            }
+            static if (!__traits(isStaticFunction, method) && !(methodName[0..2] == "__") && 
+                       !(INHERITANCE && __traits(isFinalFunction, method)))
+                methodBodies ~= BuildMethodOverloads!(T.stringof, methodName, overloadIndex, method, INHERITANCE);
         }
     }
     return methodBodies;
@@ -42,57 +40,79 @@ string Methods (T, string methodName) () {
 Returns a string containing the overload for a single function.
 This function has a return value.
 ++/
-string BuildMethodOverloads (string objectType, string methodName, int virtualMethodIndex, METHOD_TYPE)() 
+string BuildMethodOverloads (string objectType, string methodName, int overloadIndex, alias method, bool inheritance)() 
 {
-    bool returns = !is (ReturnType!(METHOD_TYPE) == void);
-    auto attributes = functionAttributes!METHOD_TYPE;
-    bool isNothrowMethod = (attributes & FunctionAttribute.nothrow_) != 0;
+    alias typeof(method) METHOD_TYPE;
+    enum returns = !is (ReturnType!(METHOD_TYPE) == void);
 
-    string self = `typeof(__traits(getVirtualFunctions, T, "` ~ methodName ~ `")[` ~ virtualMethodIndex.to!string ~ `])`;
-    string ret = returns ? `ReturnType!(` ~ self ~ `)` : `void`;
-    string paramTypes = `ParameterTypeTuple!(` ~ self ~ `)`;
-    string qualified = objectType ~ `.` ~ methodName;
-    string header = `override ` ~ ret ~ ` ` ~ methodName ~ `
-        (` ~ paramTypes ~ ` params)` ~ formatQualifiers!(METHOD_TYPE);
+    enum self = `__traits(getOverloads, T, "` ~ methodName ~ `")[` ~ overloadIndex.to!string ~ `]`;
+    enum selfType = "typeof("~self~")";
+    enum ret = returns ? `ReturnType!(` ~ selfType ~ `)` : `void`;
+    enum paramTypes = `ParameterTypeTuple!(` ~ selfType ~ `)`;
+    enum qualified = objectType ~ `.` ~ methodName;
+    enum bool override_ = is(typeof(mixin (`Object.` ~ methodName))) && !__traits(isFinalFunction, method);
+    enum header = ((inheritance || override_) ? `override ` : `final `) ~ ret ~ ` ` ~ methodName ~ `
+        (` ~ paramTypes ~ ` params) ` ~ formatAllAttributes!(METHOD_TYPE);
 
-    string funBody = 
-    `
-    debugLog("checking _owner...");
-    if (_owner is null) 
-    {
-        assert(false, "owner cannot be null! Contact the stupid mocks developer.");
-    }
-    dmocks.action.ReturnOrPass!(` ~ ret ~ `) rope;`
-    ~ (isNothrowMethod ? `try { ` : ``) ~
-        // CAST CHEATS here - can't operate on const/shared refs without cheating on typesystem. this makes these calls threadunsafe
-    `
-        rope = (cast(Caller)_owner).Call!(` ~ ret ~ `, ` ~ paramTypes ~ `)(cast(IMocked)this, "` ~ qualified ~ `", "` ~ formatQualifiers!(METHOD_TYPE) ~ `", params);
-    ` ~ (isNothrowMethod ? ` } catch (Exception ex) { assert(false, "Throwing in a mock of a nothrow method!"); }` : ``) ~
-    `
-    if (rope.pass)
-    {
-        static if (is (typeof (super.` ~ methodName ~ `)))
-        {
-            return super.` ~ methodName ~ `(params);
-        }
-        else
-        {
-            assert(false, "Cannot pass the call through to an abstract class or interface -- there's no method in super class!");
-        }
-    }
-    else
-    {
-        static if (!is (` ~ ret ~ ` == void))
-        {
-            return rope.value;
-        }
-    }
-    `;
+    string delegate_ = `delegate `~ret~` (`~paramTypes~` args){ ` ~ BuildForwardCall!("super", methodName) ~ `}`;
 
-    return header ~'{'~ funBody ~'}';
+    return header ~` {  return mockMethodCall!(`~self~`, "`~methodName~`", T)(this, _owner, ` ~ delegate_ ~ `, params); `~`} `;
 }
 
-string formatQualifiers(T)()
+string BuildForwardCall(string mockedObject, string methodName)()
+{
+    return `static if (is (typeof (mocked___.` ~ methodName~`)))
+            {
+                return (mocked___.` ~ methodName ~`(args));
+            }
+            else static if (is (typeof (super.` ~ methodName~`)))
+            {
+                return (super.` ~ methodName ~`(args));
+            }
+            else
+            {
+                assert(false, "Cannot pass the call through - there's no implementation in base object!");
+            }`;
+}
+
+string formatAllAttributes(T)()
+{
+    return formatFunctionAttributes!T ~ ` ` ~ formatMethodAttributes!T;
+}
+
+string formatFunctionAttributes(T)()
+{
+    import std.array;
+    enum attributes = functionAttributes!T;
+    auto ret = appender!(string[]);
+    static if ((attributes & FunctionAttribute.nothrow_) != 0)
+    {
+        ret.put("nothrow");
+    }
+    static if ((attributes & FunctionAttribute.pure_) != 0)
+    {
+        ret.put("pure");
+    }
+    static if ((attributes & FunctionAttribute.ref_) != 0)
+    {
+        ret.put("ref");
+    }
+    static if ((attributes & FunctionAttribute.property) != 0)
+    {
+        ret.put("@property");
+    }
+    static if ((attributes & FunctionAttribute.trusted) != 0)
+    {
+        ret.put("@trusted");
+    }
+    static if ((attributes & FunctionAttribute.safe) != 0)
+    {
+        ret.put("@safe");
+    }
+    return ret.data.join(" ");
+}
+
+string formatMethodAttributes(T)()
 {
     import std.array;
     auto ret = appender!(string[]);
@@ -119,5 +139,5 @@ unittest {
         }
     }
 
-    static assert(formatQualifiers!(typeof(A.make)) == "const shared");
+    static assert(formatMethodAttributes!(typeof(A.make)) == "const shared");
 }
