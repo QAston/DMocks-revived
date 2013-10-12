@@ -9,6 +9,9 @@
         "sourcePaths": [
                 "dmocks"
         ],
+        "importPaths": [
+                "dmocks"
+        ],
 		"configurations": [
 			{
 				"name": "library",
