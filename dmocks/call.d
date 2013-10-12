@@ -58,7 +58,7 @@ private
     bool _void;
     bool _ordered;
     IArguments _arguments;
-    const(IMocked) _mocked;
+    MockId _mocked;
     string _name = "unknown";
     Interval _repeat;
     int _callCount;
@@ -214,7 +214,7 @@ private
         return _ordered;
     }
 
-    this(IMocked mocked, string name, IArguments arguments, string qualifiers = "")
+    this(MockId mocked, string name, IArguments arguments, string qualifiers = "")
     {
         _mocked = mocked;
         _name = name;

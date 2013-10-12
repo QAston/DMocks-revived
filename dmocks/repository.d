@@ -149,7 +149,7 @@ public
         return _ordered;
     }
 
-    void Record (U...) (IMocked mocked, string name, string qualifiers, U args, bool returns)
+    void Record (U...) (MockId mocked, string name, string qualifiers, U args, bool returns)
     {
         CheckLastCallSetup();
         ICall call = new Call(mocked, name, new Arguments!(U)(args), qualifiers);
@@ -170,7 +170,7 @@ public
         _lastCall = call;
     }
 
-    ICall Match (U...) (IMocked mocked, string name, string qualifiers, U args)
+    ICall Match (U...) (MockId mocked, string name, string qualifiers, U args)
     {
         debugLog("about to match");
         auto match = new Call(mocked, name, new Arguments!(U)(args), qualifiers);

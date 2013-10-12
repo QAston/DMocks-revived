@@ -83,6 +83,8 @@ public class Mocker
          */
         T mock (T, CONSTRUCTOR_ARGS...) (CONSTRUCTOR_ARGS args) 
         {
+            static assert (is(T == class) || is(T == interface), 
+                           "only classes and interfaces can be mocked using this type of mock");
             return dmocks.factory.mock!(T)(_repository, args);
         }
 
@@ -96,7 +98,24 @@ public class Mocker
          */
         auto mockFinal(T, CONSTRUCTOR_ARGS...) (CONSTRUCTOR_ARGS args)
         {
+            static assert (is(T == class) || is(T == interface), 
+                           "only classes and interfaces can be mocked using this type of mock");
             return dmocks.factory.mockFinal!(T)(_repository, args);
+        }
+
+        /** 
+         * Creates a mock object for a given type.
+         *
+         * Type of the mock is incompatibile with given type
+         * Final, template and virtual methods will be mocked
+         *
+         * Use this type of mock to substitute template parameters
+         */
+        auto mockStruct(T, CONSTRUCTOR_ARGS...) (CONSTRUCTOR_ARGS args)
+        {
+            static assert (is(T == struct), 
+                           "only structs can be mocked using this type of mock");
+            return dmocks.factory.mockStruct!(T)(_repository, args);
         }
 
         /**
@@ -862,7 +881,67 @@ version (DMocksTest) {
         assert(o.getSomethings(1, 2, 3) == 3);
         r.verify;
     }
-    
+
+    struct Struct {
+        int get()
+        {
+            return 1;
+        }
+    }
+
+    unittest {
+        mixin(test!("struct"));
+
+        auto r = new Mocker;
+        auto o = r.mockStruct!(Struct);  
+        r.expect(o.get).passThrough;
+        r.replay;
+        assert(o.get() == 1);
+        r.verify;
+    }
+
+    struct StructWithFields {
+        int field;
+        int get()
+        {
+            return field;
+        }
+    }
+
+    unittest {
+        mixin(test!("struct with fields"));
+
+        auto r = new Mocker;
+        auto o = r.mockStruct!(StructWithFields)(5);  
+        r.expect(o.get).passThrough;
+        r.replay;
+        assert(o.get() == 5);
+        r.verify;
+    }
+
+    struct StructWithConstructor {
+        int field;
+        this(int i)
+        {
+            field = i;
+        }
+        int get()
+        {
+            return field;
+        }
+    }
+
+    unittest {
+        mixin(test!("struct with fields"));
+
+        auto r = new Mocker;
+        auto o = r.mockStruct!(StructWithConstructor)(5);  
+        r.expect(o.get).passThrough;
+        r.replay;
+        assert(o.get() == 5);
+        r.verify;
+    }
+
     version (DMocksTestStandalone)
     {
         void main () {

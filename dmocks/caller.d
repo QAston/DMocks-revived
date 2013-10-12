@@ -16,7 +16,7 @@ class Caller
         _owner = owner;
     }
 
-    @trusted public ReturnOrPass!(TReturn) Call (TReturn, U...) (IMocked mocked,
+    @trusted public ReturnOrPass!(TReturn) Call (TReturn, U...) (MockId mocked,
             string name, string qualifiers, U args)
     {
         ReturnOrPass!(TReturn) rope;

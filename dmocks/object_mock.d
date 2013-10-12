@@ -7,7 +7,7 @@ import dmocks.model;
 import std.traits;
 import std.typecons;
 
-class Mocked (T) : T, IMocked 
+class Mocked (T) : T 
 {
     /+version (DMocksDebug) 
     {
@@ -21,16 +21,18 @@ class Mocked (T) : T, IMocked
             super(args);
         }
 
-    public Caller _owner;
+    package Caller _owner;
+    package MockId mockId___ = new MockId;
     version (DMocksDebug)
         public string _body = Body!(T, true);
     mixin ((Body!(T, true)));
 }
 
-class MockedFinal(T) : IMocked
+class MockedFinal(T)
 {
-    public T mocked___;
-    public Caller _owner;
+    package T mocked___;
+    package Caller _owner;
+    package MockId mockId___ = new MockId;
 
     static if (__traits(isFinalClass, T))
         alias T MOCKED_TYPE;
@@ -54,7 +56,28 @@ class MockedFinal(T) : IMocked
     {
         mixin("alias mocked___."~name~"!Args self;");
         auto del = delegate ReturnType!(self) (Args args){ mixin(BuildForwardCall!("mocked___", name ~ "!Args")()); };
-        return mockMethodCall!(self, name, T)(mocked___, _owner, del, params);
+        return mockMethodCall!(self, name, T)(this, _owner, del, params);
+    }
+
+    mixin ((Body!(T, false)));
+}
+
+class MockedStruct(T)
+{
+    package T mocked___;
+    package Caller _owner;
+    package MockId mockId___ = new MockId;
+
+    this(ARGS...)(ARGS args)
+    {
+        mocked___ = T(args);
+    }
+
+    auto ref opDispatch(string name, Args...)(auto ref Args params)
+    {
+        mixin("alias mocked___."~name~"!Args self;");
+        auto del = delegate ReturnType!(self) (Args args){ mixin(BuildForwardCall!("mocked___", name ~ "!Args")()); };
+        return mockMethodCall!(self, name, T)(this, _owner, del, params);
     }
 
     mixin ((Body!(T, false)));
@@ -71,7 +94,7 @@ auto ref mockMethodCall(alias self, string name, T, OBJ, CALLER, FORWARD, Args..
     void setRope()
     {
         // CAST CHEATS here - can't operate on const/shared refs without cheating on typesystem. this makes these calls threadunsafe
-        rope = (cast(Caller)_owner).Call!(ReturnType!(typeof(self)), ParameterTypeTuple!(self))(cast(IMocked)obj, __traits(identifier, T) ~ "." ~ name, formatAllAttributes!(typeof(self)), params);
+        rope = (cast(Caller)_owner).Call!(ReturnType!(typeof(self)), ParameterTypeTuple!(self))(cast(MockId)(obj.mockId___), __traits(identifier, T) ~ "." ~ name, formatAllAttributes!(typeof(self)), params);
     }
     static if (functionAttributes!(typeof(self)) & FunctionAttribute.nothrow_)
     {
