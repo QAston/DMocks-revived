@@ -45,7 +45,7 @@ MockedFinal!(T) mockFinalPassTo (T, CONSTRUCTOR_ARGS...) (MockRepository rep, T 
 MockedStruct!(T) mockStruct (T, CONSTRUCTOR_ARGS...) (MockRepository rep, CONSTRUCTOR_ARGS t) 
 {
     debugLog("factory: about to build");
-    MockedStruct!(T) ret = new MockedStruct!(T)(T(t));
+    MockedStruct!(T) ret = MockedStruct!(T)(T(t));
     debugLog("factory: about to set owner");
     ret._owner = new Caller(rep);
     debugLog("factory: returning the mocked object");
@@ -55,7 +55,7 @@ MockedStruct!(T) mockStruct (T, CONSTRUCTOR_ARGS...) (MockRepository rep, CONSTR
 MockedStruct!(T) mockStructPassTo (T, CONSTRUCTOR_ARGS...) (MockRepository rep, T obj) 
 {
     debugLog("factory: about to build");
-    MockedStruct!(T) ret = new MockedStruct!(T)(obj);
+    MockedStruct!(T) ret = MockedStruct!(T)(obj);
     debugLog("factory: about to set owner");
     ret._owner = new Caller(rep);
     debugLog("factory: returning the mocked object");

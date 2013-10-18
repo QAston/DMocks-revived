@@ -49,7 +49,7 @@ class MockedFinal(T)
     mixin ((Body!(T, false)));
 }
 
-class MockedStruct(T)
+struct MockedStruct(T)
 {
     package T mocked___;
     package Caller _owner;
