@@ -5,6 +5,7 @@ import dmocks.repository;
 import dmocks.util;
 import dmocks.caller;
 import std.stdio;
+import std.typecons;
 
 /** Get a mock object of the given type. */
 T mock (T, CONSTRUCTOR_ARGS...) (MockRepository rep, CONSTRUCTOR_ARGS cargs) 
@@ -17,20 +18,44 @@ T mock (T, CONSTRUCTOR_ARGS...) (MockRepository rep, CONSTRUCTOR_ARGS cargs)
     return cast(T)ret;
 }
 
-MockedFinal!(T) mockFinal (T, CONSTRUCTOR_ARGS...) (MockRepository rep, CONSTRUCTOR_ARGS cargs) 
+MockedFinal!(T) mockFinal (T, CONSTRUCTOR_ARGS...) (MockRepository rep, CONSTRUCTOR_ARGS t) 
 {
     debugLog("factory: about to build");
-    MockedFinal!(T) ret = new MockedFinal!(T)(cargs);
+    static if (__traits(isFinalClass, T))
+        T obj = new T(t);
+    else
+        T obj = new WhiteHole!T(t);
+    MockedFinal!(T) ret = new MockedFinal!(T)(obj);
     debugLog("factory: about to set owner");
     ret._owner = new Caller(rep);
     debugLog("factory: returning the mocked object");
     return ret;
 }
 
-MockedStruct!(T) mockStruct (T, CONSTRUCTOR_ARGS...) (MockRepository rep, CONSTRUCTOR_ARGS cargs) 
+MockedFinal!(T) mockFinalPassTo (T, CONSTRUCTOR_ARGS...) (MockRepository rep, T obj) 
 {
     debugLog("factory: about to build");
-    MockedStruct!(T) ret = new MockedStruct!(T)(cargs);
+    MockedFinal!(T) ret = new MockedFinal!(T)(obj);
+    debugLog("factory: about to set owner");
+    ret._owner = new Caller(rep);
+    debugLog("factory: returning the mocked object");
+    return ret;
+}
+
+MockedStruct!(T) mockStruct (T, CONSTRUCTOR_ARGS...) (MockRepository rep, CONSTRUCTOR_ARGS t) 
+{
+    debugLog("factory: about to build");
+    MockedStruct!(T) ret = new MockedStruct!(T)(T(t));
+    debugLog("factory: about to set owner");
+    ret._owner = new Caller(rep);
+    debugLog("factory: returning the mocked object");
+    return ret;
+}
+
+MockedStruct!(T) mockStructPassTo (T, CONSTRUCTOR_ARGS...) (MockRepository rep, T obj) 
+{
+    debugLog("factory: about to build");
+    MockedStruct!(T) ret = new MockedStruct!(T)(obj);
     debugLog("factory: about to set owner");
     ret._owner = new Caller(rep);
     debugLog("factory: returning the mocked object");

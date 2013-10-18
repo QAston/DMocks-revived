@@ -74,6 +74,7 @@ public class Mocker
 
         /** 
          * Creates a mock object for a given type.
+         * Calls constructor for the type with given args
          *
          * Type returned is compatibile with given type
          * All virtual calls made to the object will be mocked
@@ -90,13 +91,14 @@ public class Mocker
 
         /** 
          * Creates a mock object for a given type.
+         * Calls with passThrough enabled will be passing to object constructed with args
          *
          * Type of the mock is incompatibile with given type
          * Final, template and virtual methods will be mocked
          *
          * Use this type of mock to substitute template parameters
          */
-        auto mockFinal(T, CONSTRUCTOR_ARGS...) (CONSTRUCTOR_ARGS args)
+        MockedFinal!T mockFinal(T, CONSTRUCTOR_ARGS...) (CONSTRUCTOR_ARGS args)
         {
             static assert (is(T == class) || is(T == interface), 
                            "only classes and interfaces can be mocked using this type of mock");
@@ -105,17 +107,50 @@ public class Mocker
 
         /** 
          * Creates a mock object for a given type.
+         * Calls with passThrough enabled will be passing to "to" argument
          *
          * Type of the mock is incompatibile with given type
          * Final, template and virtual methods will be mocked
          *
          * Use this type of mock to substitute template parameters
          */
-        auto mockStruct(T, CONSTRUCTOR_ARGS...) (CONSTRUCTOR_ARGS args)
+        MockedFinal!T mockFinalPassTo(T) (T to)
+        {
+            static assert (is(T == class) || is(T == interface), 
+                           "only classes and interfaces can be mocked using this type of mock");
+            return dmocks.factory.mockFinalPassTo!(T)(_repository, to);
+        }
+
+        /** 
+         * Creates a mock object for a given type.
+         * Calls with passThrough enabled will be passing to object constructed with args
+         *
+         * Type of the mock is incompatibile with given type
+         * Final, template and virtual methods will be mocked
+         *
+         * Use this type of mock to substitute template parameters
+         */
+        MockedStruct!T mockStruct(T, CONSTRUCTOR_ARGS...) (CONSTRUCTOR_ARGS args)
         {
             static assert (is(T == struct), 
                            "only structs can be mocked using this type of mock");
             return dmocks.factory.mockStruct!(T)(_repository, args);
+        }
+
+        /** 
+         * Creates a mock object for a given type.
+         * Calls with passThrough enabled will be passing to "to" argument
+         *
+         * Type of the mock is incompatibile with given type
+         * Final, template and virtual methods will be mocked
+         *
+         * Use this type of mock to substitute template parameters
+         */
+        MockedStruct!T mockStructPassTo(T) (T to)
+        {
+            static assert (is(T == struct), 
+                           "only structs can be mocked using this type of mock");
+            return dmocks.factory.mockStructPassTo!(T)(_repository, to);
         }
 
         /**
@@ -854,6 +889,17 @@ version (DMocksTest) {
         r.verify;
     }
 
+    unittest {
+        mixin(test!("final class with no underlying object"));
+
+        auto r = new Mocker;
+        auto o = r.mockFinalPassTo!(FinalClass)(null);  
+        r.expect(o.fortyTwo()).returns(43);
+        r.replay;
+        assert(o.fortyTwo == 43);
+        r.verify;
+    }
+
     class TemplateMethods
     {
         string get(T)(T t)
@@ -939,6 +985,17 @@ version (DMocksTest) {
         r.expect(o.get).passThrough;
         r.replay;
         assert(o.get() == 5);
+        r.verify;
+    }
+
+    unittest {
+        mixin(test!("struct with no underlying object"));
+
+        auto r = new Mocker;
+        auto o = r.mockStructPassTo(StructWithConstructor.init);  
+        r.expect(o.get).returns(6);
+        r.replay;
+        assert(o.get() == 6);
         r.verify;
     }
 

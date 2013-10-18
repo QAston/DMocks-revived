@@ -34,22 +34,9 @@ class MockedFinal(T)
     package Caller _owner;
     package MockId mockId___ = new MockId;
 
-    static if (__traits(isFinalClass, T))
-        alias T MOCKED_TYPE;
-    else
-        alias WhiteHole!T MOCKED_TYPE;
-
-    static if(__traits(hasMember, T,"__ctor"))
-        this(ARGS...)(ARGS args)
-        {
-            mocked___ = new MOCKED_TYPE(args);
-        }
-    else
+    package this(T t)
     {
-        this()
-        {
-            mocked___ = new MOCKED_TYPE;
-        }
+        mocked___ = t;
     }
 
     auto ref opDispatch(string name, Args...)(auto ref Args params)
@@ -66,11 +53,12 @@ class MockedStruct(T)
 {
     package T mocked___;
     package Caller _owner;
-    package MockId mockId___ = new MockId;
+    package MockId mockId___;
 
-    this(ARGS...)(ARGS args)
+    package this(T t)
     {
-        mocked___ = T(args);
+        mockId___ = new MockId;
+        mocked___ = t;
     }
 
     auto ref opDispatch(string name, Args...)(auto ref Args params)
