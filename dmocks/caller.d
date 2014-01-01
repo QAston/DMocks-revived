@@ -5,6 +5,7 @@ import dmocks.repository;
 import dmocks.model;
 import dmocks.util;
 import dmocks.action;
+import dmocks.arguments;
 
 
 class Caller
@@ -33,7 +34,7 @@ class Caller
         debugLog("checking if call is null...");
         if (call is null)
         {
-            throw new ExpectationViolationException();
+            throw new ExpectationViolationException("Unexpected call to method: " ~name~ " " ~ new Arguments!(U)(args).toString() ~ " " ~ qualifiers);
         }
 
         rope = call.Action.getActor().act!(TReturn, U)(args);

@@ -77,12 +77,6 @@ class InvalidOperationException : Exception
 
 public class ExpectationViolationException : Exception 
 {
-    private static string _defaultMessage = "An unexpected call has occurred."; 
-    this () 
-    { 
-        super(typeof(this).stringof ~ ": " ~  _defaultMessage); 
-    }
-    
     this (string msg) 
     { 
         super(msg);

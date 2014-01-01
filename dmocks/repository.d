@@ -26,7 +26,7 @@ public class MockRepository
         }
 
         throw new MocksSetupException(
-                "Last call: if you do not specify the AllowDefaults option, you need to return a value, throw an exception, execute a delegate, or pass through to base function. The call is: " ~ _lastCall.toString);
+                "Last call: if you do not specify the AllowDefaults option, you need to return a value, throw an exception, execute a delegate, or pass through to base function. The call is: " ~ _lastCall.toString());
     }
 
     private void CheckOrder (ICall current, ICall previous)

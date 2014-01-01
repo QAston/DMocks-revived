@@ -165,9 +165,9 @@ public class Mocker
          * m.expect(o.toString).returns("hello?");
          * ---
          */
-        ExternalCall expect (T) (lazy T ignored) {
+        ExternalCall expect (T) (lazy T methodCall) {
             auto pre = _repository.LastCall();
-            ignored();
+            methodCall();
             auto post = _repository.LastCall();
             if (pre is post)
                 throw new InvalidOperationException("mocks.Mocker.expect: you did not call a method mocked by the mocker!");
@@ -411,6 +411,18 @@ version (DMocksTest) {
 
         assert (e._call !is null);
         e.returns("frobnitz");
+    }
+
+    unittest {
+        mixin(test!("unexpected call"));
+
+        Mocker m = new Mocker();
+        Object o = m.mock!(Object);
+        m.replay();
+        try {
+            o.toString;
+            assert (false, "expected exception not thrown");
+        } catch (ExpectationViolationException) {}
     }
 
     unittest {
