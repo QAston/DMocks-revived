@@ -10,7 +10,7 @@
                 "dmocks"
         ],
         "importPaths": [
-                "dmocks"
+                "."
         ],
 		"configurations": [
 			{

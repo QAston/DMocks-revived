@@ -175,7 +175,7 @@ public class Mocker
         }
 
         /**
-         * For void and non-void methods. Start an expected call; this returns
+         * Start an expected call; this returns
          * an object that allows you to set various properties on the call,
          * such as return value and number of repetitions.
          *
