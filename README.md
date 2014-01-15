@@ -58,38 +58,36 @@ That fact has several consequences:
 
 Example:
 
-`
-// class mock
-class Dependency
-{
-    //string call(TYPE)();  wouldn't be mocked as it's a template
-
-    string call()
+    // class mock
+    class Dependency
     {
-        return "Call on me, baby!";
+        //string call(TYPE)();  wouldn't be mocked as it's a template
+
+        string call()
+        {
+            return "Call on me, baby!";
+        }
     }
-}
 
-void funcToTest(Dependency dep)
-{
-    writeln(dep.call());
-}
+    void funcToTest(Dependency dep)
+    {
+        writeln(dep.call());
+    }
 
-unittest
-{
-    auto mocker = new Mocker();
-    Object mock = mocker.mock!(Object)(); // will construct Dependency with given args
-    mocker.expect(mock.call());
-    mocker.replay;
-    funcToTest(mock);
-    mocker.verify;
-}
+    unittest
+    {
+        auto mocker = new Mocker();
+        Object mock = mocker.mock!(Object)(); // will construct Dependency with given args
+        mocker.expect(mock.call());
+        mocker.replay;
+        funcToTest(mock);
+        mocker.verify;
+    }
 
-void main()
-{
-    funcToTest(new Dependency());
-}
-`
+    void main()
+    {
+        funcToTest(new Dependency());
+    }
 
 ###Mocking using templates (compile-time polymorphism)
 
@@ -106,36 +104,35 @@ That fact has several consequences:
 
 Example:
 
-`
-// final class mock, could be not final (but calls won't be virtual), could be struct
-final class Dependency
-{
-    string call(TYPE)() {
-        return "Call on me, baby!";
+    // final class mock, could be not final (but calls won't be virtual), could be struct
+    final class Dependency
+    {
+        string call(TYPE)() {
+            return "Call on me, baby!";
+        }
     }
-}
 
-void funcToTest(DEPENDENCY)(DEPENDENCY dep)
-{
-    writeln(dep.call(int)());
-}
+    void funcToTest(DEPENDENCY)(DEPENDENCY dep)
+    {
+        writeln(dep.call(int)());
+    }
 
-unittest
-{
-    auto mocker = new Mocker();
-    Object mock = mocker.mockFinal!(Object)(); // will construct Dependency with given args
-    // Object mock = mocker.mockFinalPassTo!(Object)(new Dependency()); - alternative - will use provided object for passThrough type of calls
-    mocker.expect(mock.call!(int)());
-    mocker.replay;
-    funcToTest(mock);
-    mocker.verify;
-}
+    unittest
+    {
+        auto mocker = new Mocker();
+        Object mock = mocker.mockFinal!(Object)(); // will construct Dependency with given args
+        // Object mock = mocker.mockFinalPassTo!(Object)(new Dependency()); - alternative - will use provided object for passThrough type of calls
+        mocker.expect(mock.call!(int)());
+        mocker.replay;
+        funcToTest(mock);
+        mocker.verify;
+    }
 
-void main()
-{
-    funcToTest(new Dependency());
-}
-`
+    void main()
+    {
+        funcToTest(new Dependency());
+    }
+
 
 ###Other features
 
