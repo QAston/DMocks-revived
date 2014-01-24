@@ -32,6 +32,8 @@ public interface ICall
 
     bool HasAction ();
 
+    bool CanHaveMoreRepeats();
+
     bool Satisfied ();
 
     IAction Action ();
@@ -89,6 +91,11 @@ private
         string ret = _name ~ args ~ " Expected: " ~ expected ~ " Actual: " ~ callCount;
         debugLog("returning: %s", ret);
         return ret;
+    }
+
+    bool CanHaveMoreRepeats()
+    {
+        return _callCount < _repeat.Max;
     }
 
     bool Satisfied ()

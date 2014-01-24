@@ -1011,6 +1011,27 @@ version (DMocksTest) {
         r.verify;
     }
 
+    class Dependency
+    {
+        private int[] arr = [1, 2];
+        private int index = 0;
+        public int foo() { return arr[index++]; }
+    }
+
+    unittest
+    {
+        auto mocker = new Mocker;
+        auto dependency = mocker.mock!Dependency;
+
+        //mocker.ordered;
+        mocker.expect(dependency.foo).returns(1);
+        mocker.expect(dependency.foo).returns(2);
+        mocker.replay;
+        assert(dependency.foo == 1);
+        assert(dependency.foo == 2);
+        mocker.verify;
+    }
+
     version (DMocksTestStandalone)
     {
         void main () {

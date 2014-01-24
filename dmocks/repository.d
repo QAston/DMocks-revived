@@ -181,6 +181,10 @@ public
             debugLog("checking call");
             if (icall == match)
             {
+                // issue #3 skip calls which are matching by type if max repeat interval reached
+                // so next call with the same signature will be used instead
+                if (!icall.CanHaveMoreRepeats())
+                    continue;
                 debugLog("found a match");
                 icall.Called();
                 debugLog("called the match");
@@ -274,14 +278,8 @@ public
             r.Record!(int)(m, name, "", args, false);
             ICall call = r.Match!(int)(m, name, "", args);
             assert (call !is null);
-            try
-            {
-                call = r.Match!(int)(m, name, "", args);
-                assert (false, "expected exception not called");
-            }
-            catch (ExpectationViolationException e)
-            {
-            }
+            call = r.Match!(int)(m, name, "", args);
+            assert (call is null, "expected exception not called");
         }
     }
 }
