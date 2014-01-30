@@ -1,6 +1,5 @@
 module dmocks.method_mock;
 
-
 import std.stdio;
 import std.traits;
 import std.metastrings;
@@ -8,6 +7,9 @@ import std.conv;
 
 import dmocks.util;
 import dmocks.repository;
+import dmocks.qualifiers;
+
+package:
 
 //These are too complicated for decent unittests. Can't mock templates!
 
@@ -52,7 +54,7 @@ string BuildMethodOverloads (string objectType, string methodName, int overloadI
     enum qualified = objectType ~ `.` ~ methodName;
     enum bool override_ = is(typeof(mixin (`Object.` ~ methodName))) && !__traits(isFinalFunction, method);
     enum header = ((inheritance || override_) ? `override ` : `final `) ~ ret ~ ` ` ~ methodName ~ `
-        (` ~ paramTypes ~ ` params) ` ~ formatAllAttributes!(METHOD_TYPE);
+        (` ~ paramTypes ~ ` params) ` ~ formatQualifiers!(method);
 
     string delegate_ = `delegate `~ret~` (`~paramTypes~` args){ ` ~ BuildForwardCall!("super", methodName) ~ `}`;
 
@@ -73,71 +75,4 @@ string BuildForwardCall(string mockedObject, string methodName)()
             {
                 assert(false, "Cannot pass the call through - there's no implementation in base object!");
             }`;
-}
-
-string formatAllAttributes(T)()
-{
-    return formatFunctionAttributes!T ~ ` ` ~ formatMethodAttributes!T;
-}
-
-string formatFunctionAttributes(T)()
-{
-    import std.array;
-    enum attributes = functionAttributes!T;
-    auto ret = appender!(string[]);
-    static if ((attributes & FunctionAttribute.nothrow_) != 0)
-    {
-        ret.put("nothrow");
-    }
-    static if ((attributes & FunctionAttribute.pure_) != 0)
-    {
-        ret.put("pure");
-    }
-    static if ((attributes & FunctionAttribute.ref_) != 0)
-    {
-        ret.put("ref");
-    }
-    static if ((attributes & FunctionAttribute.property) != 0)
-    {
-        ret.put("@property");
-    }
-    static if ((attributes & FunctionAttribute.trusted) != 0)
-    {
-        ret.put("@trusted");
-    }
-    static if ((attributes & FunctionAttribute.safe) != 0)
-    {
-        ret.put("@safe");
-    }
-    return ret.data.join(" ");
-}
-
-string formatMethodAttributes(T)()
-{
-    import std.array;
-    auto ret = appender!(string[]);
-    static if (is(T == const))
-    {
-        ret.put("const");
-    }
-    static if (is(T == immutable))
-    {
-        ret.put("immutable");
-    }
-    static if (is(T == shared))
-    {
-        ret.put("shared");
-    }
-    return ret.data.join(" ");
-}
-
-unittest {
-    class A
-    {
-        void make() const shared
-        {
-        }
-    }
-
-    static assert(formatMethodAttributes!(typeof(A.make)) == "const shared");
 }

@@ -3,6 +3,7 @@ module dmocks.util;
 import std.conv;
 import std.utf;
 import std.string;
+public import dmocks.interval;
 
 
 string test(string name)() {
@@ -30,13 +31,6 @@ void debugLog(T...)(lazy T args) @trusted nothrow
     }
 }
 
-version (DMocksTest) {
-    unittest {
-        Interval t = Interval(1, 2);
-        assert (to!string(t) == "1..2");
-    }
-}
-
 template IsConcreteClass(T)
 {
     static if ((is (T == class)) && (!__traits(isAbstractClass, T)))
@@ -46,24 +40,6 @@ template IsConcreteClass(T)
     else 
     {
         const bool IsConcreteClass = false;
-    }
-}
-
-struct Interval 
-{
-    bool Valid () { return Min <= Max; }
-    int Min;
-    int Max;
-
-    string toString () const
-    {
-        return std.conv.to!string(Min) ~ ".." ~ std.conv.to!string(Max);
-    }
-
-    this (int min, int max) 
-    {
-        this.Min = min;
-        this.Max = max;
     }
 }
 
@@ -77,14 +53,14 @@ class InvalidOperationException : Exception
 
 public class ExpectationViolationException : Exception 
 {
-    this (string msg) 
+    this (string msg, string file = __FILE__, size_t line = __LINE__) 
     { 
         super(msg);
     }
 }
 
 public class MocksSetupException : Exception {
-    this (string msg) {
+    this (string msg, string file = __FILE__, size_t line = __LINE__) {
         super (typeof(this).stringof ~ ": " ~ msg);
     }
 }

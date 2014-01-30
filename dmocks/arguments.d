@@ -4,19 +4,59 @@ import std.conv;
 
 import dmocks.util;
 
-interface IArguments
+package:
+
+interface ArgumentsMatch
 {
+    bool matches(IArguments args);
+    string toString();
 }
 
-/++
-    There used to be a LOT of code duplication because D doesn't like
-    a variable whose type is an empty type tuple. This is all that remains.
- ++/
+ //TODO: allow richer specification of arguments
+class StrictArgumentsMatch : ArgumentsMatch
+{
+    private IArguments _arguments;
+    this(IArguments args)
+    {
+        _arguments = args;
+    }
+
+    override bool matches(IArguments args)
+    {
+        return _arguments == args;
+    }
+
+    override string toString()
+    {
+        return _arguments.toString();
+    }
+}
+
+class AnyArgumentsMatch : ArgumentsMatch
+{
+    override bool matches(IArguments args)
+    {
+        return true;
+    }
+
+    override string toString()
+    {
+        return "(<any arguments>)";
+    }
+}
+
+interface IArguments
+{
+    string toString();
+    bool opEquals (Object other);
+}
+
+//TODO: this type must be replaced with something not relying on templates
 template Arguments (U...) 
 {
     static if (U.length == 0) 
     {
-        public class Arguments : IArguments
+        class Arguments : IArguments
         {
             this () {}
             override bool opEquals (Object other) 
@@ -24,7 +64,7 @@ template Arguments (U...)
                 return cast(typeof(this)) other !is null;
             }
 
-            override string toString () 
+            override string toString ()
             { 
                 return "()"; 
             }
@@ -67,5 +107,28 @@ template Arguments (U...)
                 return value[0..$-2] ~ ")";
             }
         }
+    }
+}
+
+version (DMocksTest)
+{
+    unittest {
+        mixin(test!("argument equality"));
+
+        auto a = new Arguments!(int, real)(5, 9.7);
+        auto b = new Arguments!(int, real)(5, 9.7);
+        auto c = new Arguments!(int, real)(9, 1.1);
+        auto d = new Arguments!(int, float)(5, 9.7f);
+
+        assert (a == b);
+        assert (a != c);
+        assert (a != d);
+    }
+
+    unittest {
+        mixin(test!("argument toString"));
+
+        auto a = new Arguments!(int, real)(5, 9.7);
+        a.toString();
     }
 }

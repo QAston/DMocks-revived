@@ -4,7 +4,6 @@ public import dmocks.object_mock;
 import dmocks.factory;
 import dmocks.repository; 
 import dmocks.util;
-import dmocks.call;
 import std.variant;
 import std.stdio;
 import std.typecons;
@@ -56,11 +55,6 @@ public class Mocker
          * one call happen immediately after another, I call Mocker.ordered, make
          * those expectations, and call Mocker.unordered to avoid requiring a
          * particular order afterward.
-         *
-         * Currently, the support for ordered expectations is rather poor. It works
-         * well enough for expectations with a constant number of repetitions, but
-         * with a range, it tends to fail: once you call one method the minimum number
-         * of times, you can omit that method in subsequent invocations of the set.
          */
         void ordered () 
         {
@@ -166,9 +160,9 @@ public class Mocker
          * ---
          */
         ExternalCall expect (T) (lazy T methodCall) {
-            auto pre = _repository.LastCall();
+            auto pre = _repository.LastExpectation();
             methodCall();
-            auto post = _repository.LastCall();
+            auto post = _repository.LastExpectation();
             if (pre is post)
                 throw new InvalidOperationException("mocks.Mocker.expect: you did not call a method mocked by the mocker!");
             return lastCall();
@@ -188,7 +182,7 @@ public class Mocker
          * ---
          */
         ExternalCall lastCall () {
-            return new ExternalCall(_repository.LastCall());
+            return new ExternalCall(_repository.LastExpectation());
         }
 
         /**
@@ -230,12 +224,15 @@ public class Mocker
 ++/
 public class ExternalCall 
 {
-   private ICall _call;
+    import dmocks.arguments;
+    import dmocks.expectation;
 
-   this (ICall call) 
+    private EventExpectation _expectation;
+
+   this (EventExpectation expectation) 
    {
-       assert (call !is null, "can't create an ExternalCall if ICall is null");
-       _call = call;
+       assert (expectation !is null, "can't create an ExternalCall if expectation is null");
+       _expectation = expectation;
    }
 
    // TODO: how can I get validation here that the type you're
@@ -249,7 +246,7 @@ public class ExternalCall
     */
    ExternalCall returns (T)(T value) 
    {
-       _call.Action.returnValue(Variant(value));
+       _expectation.action.returnValue(Variant(value));
        return this;
    }
 
@@ -258,7 +255,7 @@ public class ExternalCall
     */
    ExternalCall ignoreArgs () 
    {
-       _call.IgnoreArguments = true;
+       _expectation.arguments = new AnyArgumentsMatch();
        return this;
    }
 
@@ -272,7 +269,7 @@ public class ExternalCall
        {
            throw new InvalidOperationException("The specified range is invalid.");
        }
-       _call.Repeat(Interval(min, max));
+        _expectation.repeatInterval = Interval(min, max);
        return this;
    }
 
@@ -281,7 +278,7 @@ public class ExternalCall
     */
    ExternalCall repeat (int i) 
    {
-       _call.Repeat(Interval(i, i));
+       repeat(i,i);
        return this;
    }
 
@@ -308,7 +305,7 @@ public class ExternalCall
    ExternalCall action (T, U...)(T delegate(U) action) 
    {
        Variant a = Variant(action);
-       _call.Action.action = a;
+       _expectation.action.action = a;
        return this;
    }
 
@@ -318,7 +315,7 @@ public class ExternalCall
     */
    ExternalCall throws (Exception e) 
    {
-       _call.Action.toThrow = e;
+       _expectation.action.toThrow = e;
        return this;
    }
 
@@ -331,7 +328,7 @@ public class ExternalCall
     */
    ExternalCall passThrough () 
    {
-       _call.Action.passThrough = true;
+       _expectation.action.passThrough = true;
        return this;
    }
 }
@@ -382,7 +379,6 @@ version (DMocksTest) {
         auto r = new Mocker();
         auto o = r.mock!(Object);
         o.toString();
-        assert (r.lastCall()._call !is null);
     }
 
     unittest {
@@ -398,7 +394,7 @@ version (DMocksTest) {
         o.print;
         auto e = m.lastCall;
 
-        assert (e._call !is null);
+        assert (e !is null);
     }
 
     unittest {
@@ -409,7 +405,7 @@ version (DMocksTest) {
         o.toString;
         auto e = m.lastCall;
 
-        assert (e._call !is null);
+        assert (e !is null);
         e.returns("frobnitz");
     }
 

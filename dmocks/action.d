@@ -3,6 +3,8 @@ module dmocks.action;
 import std.variant;
 import dmocks.util;
 
+package:
+
 interface IAction
 {
     bool passThrough ();
@@ -102,6 +104,8 @@ struct Actor
     }
 }
 
+//TODO: make action parameters orthogonal or disallow certain combinations of them
+//TODO use something different than variant for storing values
 class Action : IAction
 {
 private
@@ -110,13 +114,17 @@ private
     Variant _returnValue;
     Variant _action;
     Exception _toThrow;
+    TypeInfo _returnType;
 }
 
-public
-{
+    this(TypeInfo returnType)
+    {
+        this._returnType = returnType;
+    }
+
     bool hasAction ()
     {
-        return (_passThrough) || (_returnValue.hasValue) || (_action.hasValue) || (_toThrow !is null);
+        return (_returnType is typeid(void)) || (_passThrough) || (_returnValue.hasValue) || (_action.hasValue) || (_toThrow !is null);
     }
 
     bool passThrough ()
@@ -166,7 +174,6 @@ public
         return act;
     }
 }
-}
 
 version (DMocksTest)
 {
@@ -174,7 +181,7 @@ version (DMocksTest)
     {
         mixin(test!("action returnValue"));
         Variant v = 5;
-        Action act = new Action;
+        Action act = new Action(typeid(int));
         assert (!act.returnValue.hasValue);
         act.returnValue = v;
         assert (act.returnValue() == 5);
@@ -184,7 +191,7 @@ version (DMocksTest)
     {
         mixin(test!("action action"));
         Variant v = 5;
-        Action act = new Action;
+        Action act = new Action(typeid(int));
         assert (!act.action.hasValue);
         act.action = v;
         assert (act.action() == v);
@@ -194,7 +201,7 @@ version (DMocksTest)
     {
         mixin(test!("action exception"));
         Exception ex = new Exception("boogah");
-        Action act = new Action;
+        Action act = new Action(typeid(int));
         assert (act.toThrow is null);
         act.toThrow = ex;
         assert (act.toThrow is ex);
@@ -203,10 +210,18 @@ version (DMocksTest)
     unittest 
     {
         mixin(test!("action passthrough"));
-        Action act = new Action();
+        Action act = new Action(typeid(int));
         act.passThrough = true;
         assert (act.passThrough());
         act.passThrough = false;
         assert (!act.passThrough());
+    }
+
+    unittest
+    {
+        mixin(test!("action hasAction"));
+        Action act = new Action(typeid(int));
+        act.returnValue(Variant(5));
+        assert(act.hasAction);
     }
 }

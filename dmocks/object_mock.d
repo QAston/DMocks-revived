@@ -4,6 +4,8 @@ import dmocks.util;
 import dmocks.caller;
 import dmocks.method_mock;
 import dmocks.model;
+import dmocks.qualifiers;
+
 import std.traits;
 import std.typecons;
 
@@ -49,6 +51,18 @@ class MockedFinal(T)
     mixin ((Body!(T, false)));
 }
 
+unittest 
+{
+    class A
+    {
+        void asd(T)(int a)
+        {
+        }
+    }
+    auto f = new MockedFinal!A(new A);
+    static assert(__traits(compiles, f.opDispatch!("asd")(1)));
+}
+
 struct MockedStruct(T)
 {
     package T mocked___;
@@ -73,7 +87,6 @@ struct MockedStruct(T)
 
 auto ref mockMethodCall(alias self, string name, T, OBJ, CALLER, FORWARD, Args...)(OBJ obj, CALLER _owner, FORWARD forwardCall, auto ref Args params)
 {
-    debugLog("checking _owner...");
     if (_owner is null) 
     {
         assert(false, "owner cannot be null! Contact the stupid mocks developer.");
@@ -82,7 +95,8 @@ auto ref mockMethodCall(alias self, string name, T, OBJ, CALLER, FORWARD, Args..
     void setRope()
     {
         // CAST CHEATS here - can't operate on const/shared refs without cheating on typesystem. this makes these calls threadunsafe
-        rope = (cast(Caller)_owner).Call!(ReturnType!(typeof(self)), ParameterTypeTuple!(self))(cast(MockId)(obj.mockId___), __traits(identifier, T) ~ "." ~ name, formatAllAttributes!(typeof(self)), params);
+        // because of fullyQualifiedName bug we need to pass name to the function
+        rope = (cast(Caller)_owner).Call!(self, ParameterTypeTuple!self)(cast(MockId)(obj.mockId___), __traits(identifier, T) ~ "." ~ name, params);
     }
     static if (functionAttributes!(typeof(self)) & FunctionAttribute.nothrow_)
     {

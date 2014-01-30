@@ -1,12 +1,18 @@
 module dmocks.caller;
 
-import dmocks.call;
 import dmocks.repository;
 import dmocks.model;
 import dmocks.util;
 import dmocks.action;
 import dmocks.arguments;
 
+import dmocks.event;
+import std.array;
+import std.traits;
+import dmocks.expectation;
+import dmocks.qualifiers;
+
+package:
 
 class Caller
 {
@@ -17,28 +23,46 @@ class Caller
         _owner = owner;
     }
 
-    @trusted public ReturnOrPass!(TReturn) Call (TReturn, U...) (MockId mocked,
-            string name, string qualifiers, U args)
+    @trusted public auto Call (alias METHOD, ARGS...) (MockId mocked, string name, ARGS args)
     {
+        alias ReturnType!(typeof(METHOD)) TReturn;
+         
         ReturnOrPass!(TReturn) rope;
         debugLog("checking _owner.Recording...");
         if (_owner.Recording)
         {
-            _owner.Record!(U)(mocked, name, qualifiers, args, !is (TReturn == void));
+            auto expectation = createExpectation!(METHOD)(mocked, name, args);
+            _owner.Record(expectation);
             return rope;
         }
 
-        debugLog("checking for matching call...");
-        ICall call = _owner.Match!(U)(mocked, name, qualifiers, args);
+        debugLog("checking for matching expectation...");
+        auto event = createEvent!METHOD(mocked, name, args);
+        auto expectation = _owner.Match(event);
 
-        debugLog("checking if call is null...");
-        if (call is null)
+        debugLog("checking if expectation is null...");
+        if (expectation is null)
         {
-            throw new ExpectationViolationException("Unexpected call to method: " ~name~ " " ~ new Arguments!(U)(args).toString() ~ " " ~ qualifiers);
+            throw new ExpectationViolationException("Unexpected call to method: " ~ event.toString());
         }
 
-        rope = call.Action.getActor().act!(TReturn, U)(args);
+        rope = expectation.action.getActor().act!(TReturn, ARGS)(args);
         debugLog("returning...");
         return rope;
     }
+}
+
+// test for correctly formulated template
+unittest {
+    class A
+    {
+        public void a()
+        {
+        }
+    }
+    auto a = new A;
+    auto c = new Caller(null);
+    auto mid = new FakeMocked;
+    //c.Call!(a.a)(mid, "a");
+    static assert(__traits(compiles, c.Call!(a.a)(mid, "a")));
 }
