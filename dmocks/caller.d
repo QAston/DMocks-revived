@@ -43,6 +43,8 @@ class Caller
         debugLog("checking if expectation is null...");
         if (expectation is null)
         {
+            if (_owner.AllowUnexpected())
+                return rope;
             throw new ExpectationViolationException("Unexpected call to method: " ~ event.toString());
         }
 

@@ -19,8 +19,10 @@ class MockRepository
     private bool _allowDefaults = false;
     private bool _recording = true;
     private bool _ordered = false;
+    private bool _allowUnexpected = false;
 
     private Event[] _events = [];
+    private Event[] _unexpectedEvents = [];
     private GroupExpectation _rootGroupExpectation;
     private EventExpectation _lastEventExpectation; // stores last event added to _lastGroupExpectation
     private GroupExpectation _lastGroupExpectation; // stores last group added to _rootGroupExpectation
@@ -46,6 +48,16 @@ class MockRepository
     void AllowDefaults (bool value)
     {
         _allowDefaults = value;
+    }
+
+    void AllowUnexpected(bool value)
+    {
+        _allowUnexpected = value;
+    }
+
+    bool AllowUnexpected()
+    {
+        return _allowUnexpected;
     }
 
     bool Recording ()
@@ -87,7 +99,10 @@ class MockRepository
     EventExpectation Match(Event event)
     {
         _events ~= event;
-        return _rootGroupExpectation.match(event);
+        auto exp = _rootGroupExpectation.match(event);
+        if (exp is null)
+            _unexpectedEvents ~= _events;
+        return exp;
     }
 
     EventExpectation LastExpectation ()
@@ -95,10 +110,29 @@ class MockRepository
         return _lastEventExpectation;
     }
 
-    void Verify ()
+    void Verify (bool checkUnmatchedExpectations, bool checkUnexpectedCalls)
     {
-        if (!_rootGroupExpectation.satisfied)
-            throw new ExpectationViolationException("\n" ~ _rootGroupExpectation.toString());
+        string expectationError = "";
+        if (checkUnmatchedExpectations && !_rootGroupExpectation.satisfied)
+            expectationError~="\n" ~ _rootGroupExpectation.toString();
+                
+        if (checkUnexpectedCalls && _unexpectedEvents.length > 0)
+            expectationError~="\n" ~ UnexpectedEventsReport;
+        if (expectationError != "")
+            throw new ExpectationViolationException(expectationError);
+    }
+
+    string UnexpectedEventsReport()
+    {
+        import std.array;
+        auto apndr = appender!(string);
+        apndr.put("Unexpected events(calls):\n");
+        foreach(Event ev; _unexpectedEvents)
+        {
+            apndr.put(ev.toString());
+            apndr.put("\n");
+        }
+        return apndr.data;
     }
 
     version (DMocksTest)

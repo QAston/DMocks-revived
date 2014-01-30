@@ -41,13 +41,17 @@ public class Mocker
         }
 
         /**
-         * Check to see if there are any expected calls that haven't been
-         * matched with a real call. Throws an ExpectationViolationException
-         * if there are any outstanding expectations.
+         * checkUnmatchedExpectations - Check to see if there are any expected calls that haven't been
+         * matched with a real call. 
+         *
+         * checkUnexpectedCalls - Check to see if there are any calls that there were no
+         * expectation set up for.
+         *
+         * Throws an ExpectationViolationException if those occur.
          */
-        void verify () 
+        void verify (bool checkUnmatchedExpectations = true, bool checkUnexpectedCalls = true) 
         {
-            _repository.Verify();
+            _repository.Verify(checkUnmatchedExpectations, checkUnexpectedCalls);
         }
 
         /**
@@ -64,6 +68,20 @@ public class Mocker
         void unordered () 
         {
             _repository.Ordered(false);
+        }
+
+        /** 
+         * Disables exceptions thrown on unexpected casts while in Replay phase
+         * Unexpected methods called will return default value of their type
+         *
+         * Useful when using mocks as stubs or when you don't want exceptions 
+         * to change flow of execution of your tests, for example when using nothrow functions
+         *
+         * Default: false
+         */
+        void allowUnexpectedCalls(bool allow)
+        {
+            _repository.AllowUnexpected(allow);
         }
 
         /** 
@@ -587,6 +605,27 @@ version (DMocksTest) {
         o.toHash;
         o.print;
         o.toString;
+    }
+
+    unittest {
+        mixin(test!("allow unexpected"));
+
+        Mocker r = new Mocker();
+        auto o = r.mock!(Object);
+        r.ordered;
+        r.allowUnexpectedCalls(true);
+        r.expect(o.toString).returns("mow!");
+        r.replay();
+        o.toHash; // unexpected tohash calls
+        o.toString;
+        o.toHash;
+        try {
+            r.verify(false, true);
+            assert (false, "expected a mocks setup exception");
+        } catch (ExpectationViolationException e) {
+        }
+
+        r.verify(true, false);
     }
 
     unittest {
