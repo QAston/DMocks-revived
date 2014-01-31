@@ -59,6 +59,7 @@ class EventExpectation : Expectation
         return apndr.data;
     }
 
+ 
     override string toString()
     {
         return toString("");
@@ -199,6 +200,6 @@ interface Expectation
 EventExpectation createExpectation(alias METHOD, ARGS...)(MockId object, string name, ARGS args)
 {
     auto ret = new EventExpectation(object, new NameMatchText(name), qualifierMatch!METHOD,
-                                    new StrictArgumentsMatch(new Arguments!ARGS(args)), typeid(ReturnType!(typeof(METHOD))));
+                                    new StrictArgumentsMatch(arguments(args)), typeid(ReturnType!(typeof(METHOD))));
     return ret;
 }

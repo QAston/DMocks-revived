@@ -1,7 +1,7 @@
 module dmocks.action;
 
-import std.variant;
 import dmocks.util;
+import dmocks.dynamic;
 
 package:
 
@@ -11,13 +11,13 @@ interface IAction
 
     void passThrough (bool value);
 
-    Variant returnValue ();
+    Dynamic returnValue ();
 
-    void returnValue (Variant value);
+    void returnValue (Dynamic value);
 
-    void action (Variant value);
+    void action (Dynamic value);
 
-    Variant action ();
+    Dynamic action ();
 
     Exception toThrow ();
 
@@ -65,13 +65,13 @@ struct Actor
         }
         static if (is (TReturn == void))
         {
-            if (self.action.hasValue)
+            if (self.action !is null)
             {
                 debugLog("action found, type: %s", self.action().type);
-                auto funcptr = self.action().peek!(void delegate(ArgTypes));
-                if (funcptr)
+                
+                if (self.action().type == typeid(void delegate(ArgTypes)))
                 {
-                    (*funcptr)(args);
+                    self.action().get!(void delegate(ArgTypes))()(args);
                 }
                 else
                 {
@@ -81,17 +81,16 @@ struct Actor
         }
         else
         {
-            if (self.returnValue.hasValue)
+            if (self.returnValue !is null)
             {
-                rope.value = *self.returnValue().peek!(TReturn);
+                rope.value = self.returnValue().get!(TReturn);
             }
-            else if (self.action.hasValue)
+            else if (self.action !is null)
             {
                 debugLog("action found, type: %s", self.action().type);
-                auto funcptr = self.action().peek!(TReturn delegate (ArgTypes a));
-                if (funcptr)
+                if (self.action().type == typeid(TReturn delegate(ArgTypes)))
                 {
-                    rope.value = (*funcptr)(args);
+                    rope.value = self.action().get!(TReturn delegate(ArgTypes))()(args);
                 }
                 else
                 {
@@ -105,14 +104,13 @@ struct Actor
 }
 
 //TODO: make action parameters orthogonal or disallow certain combinations of them
-//TODO use something different than variant for storing values
 class Action : IAction
 {
 private
 {
     bool _passThrough;
-    Variant _returnValue;
-    Variant _action;
+    Dynamic _returnValue;
+    Dynamic _action;
     Exception _toThrow;
     TypeInfo _returnType;
 }
@@ -124,7 +122,7 @@ private
 
     bool hasAction ()
     {
-        return (_returnType is typeid(void)) || (_passThrough) || (_returnValue.hasValue) || (_action.hasValue) || (_toThrow !is null);
+        return (_returnType is typeid(void)) || (_passThrough) || (_returnValue !is null) || (_action !is null) || (_toThrow !is null);
     }
 
     bool passThrough ()
@@ -137,22 +135,22 @@ private
         _passThrough = value;
     }
 
-    Variant returnValue ()
+    Dynamic returnValue ()
     {
         return _returnValue;
     }
 
-    void returnValue (Variant value)
+    void returnValue (Dynamic value)
     {
         _returnValue = value;
     }
     
-    void action (Variant value)
+    void action (Dynamic value)
     {
         _action = value;
     }
 
-    Variant action ()
+    Dynamic action ()
     {
         return _action;
     }
@@ -180,19 +178,19 @@ version (DMocksTest)
     unittest
     {
         mixin(test!("action returnValue"));
-        Variant v = 5;
+        Dynamic v = dynamic(5);
         Action act = new Action(typeid(int));
-        assert (!act.returnValue.hasValue);
+        assert (act.returnValue is null);
         act.returnValue = v;
-        assert (act.returnValue() == 5);
+        assert (act.returnValue() == dynamic(5));
     }
     
     unittest
     {
         mixin(test!("action action"));
-        Variant v = 5;
+        Dynamic v = dynamic(5);
         Action act = new Action(typeid(int));
-        assert (!act.action.hasValue);
+        assert (act.action is null);
         act.action = v;
         assert (act.action() == v);
     }
@@ -221,7 +219,7 @@ version (DMocksTest)
     {
         mixin(test!("action hasAction"));
         Action act = new Action(typeid(int));
-        act.returnValue(Variant(5));
+        act.returnValue(dynamic(5));
         assert(act.hasAction);
     }
 }

@@ -1,40 +1,43 @@
 module dmocks.arguments;
 
 import std.conv;
+import std.algorithm;
+import std.array;
 
 import dmocks.util;
+import dmocks.dynamic;
 
 package:
 
 interface ArgumentsMatch
 {
-    bool matches(IArguments args);
+    bool matches(Dynamic[] args);
     string toString();
 }
 
  //TODO: allow richer specification of arguments
 class StrictArgumentsMatch : ArgumentsMatch
 {
-    private IArguments _arguments;
-    this(IArguments args)
+    private Dynamic[] _arguments;
+    this(Dynamic[] args)
     {
         _arguments = args;
     }
 
-    override bool matches(IArguments args)
+    override bool matches(Dynamic[] args)
     {
         return _arguments == args;
     }
 
     override string toString()
     {
-        return _arguments.toString();
+        return _arguments.formatArguments();
     }
 }
 
 class AnyArgumentsMatch : ArgumentsMatch
 {
-    override bool matches(IArguments args)
+    override bool matches(Dynamic[] args)
     {
         return true;
     }
@@ -51,63 +54,19 @@ interface IArguments
     bool opEquals (Object other);
 }
 
-//TODO: this type must be replaced with something not relying on templates
-template Arguments (U...) 
+auto arguments(ARGS...)(ARGS args)
 {
-    static if (U.length == 0) 
+    Dynamic[] res = new Dynamic[](ARGS.length);
+    foreach(i, arg; args)
     {
-        class Arguments : IArguments
-        {
-            this () {}
-            override bool opEquals (Object other) 
-            {
-                return cast(typeof(this)) other !is null;
-            }
-
-            override string toString ()
-            { 
-                return "()"; 
-            }
-        }
-    } 
-    else 
-    {
-        class Arguments : IArguments
-        {
-            this (U args) 
-            { 
-                Arguments = args; 
-            }
-            
-            public U Arguments;
-            
-            override bool opEquals (Object other) 
-            {
-                auto args = cast(typeof(this)) other;
-                if (args is null) return false;
-                foreach (i, arg; Arguments) 
-                {
-                    if (args.Arguments[i] != arg) 
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-
-            override string toString ()
-            { 
-                string value = "(";
-                foreach (u; Arguments) 
-                {
-                    value ~= u.to!string() ~ ", ";
-                }
-
-                return value[0..$-2] ~ ")";
-            }
-        }
+        res[i] = dynamic(arg);
     }
+    return res;
+}
+
+auto formatArguments(Dynamic[] _arguments)
+{
+    return "(" ~ _arguments.map!(a=>a.type.toString ~ " " ~ a.toString()).join(", ") ~")";
 }
 
 version (DMocksTest)
@@ -115,10 +74,10 @@ version (DMocksTest)
     unittest {
         mixin(test!("argument equality"));
 
-        auto a = new Arguments!(int, real)(5, 9.7);
-        auto b = new Arguments!(int, real)(5, 9.7);
-        auto c = new Arguments!(int, real)(9, 1.1);
-        auto d = new Arguments!(int, float)(5, 9.7f);
+        auto a = arguments!(int, real)(5, 9.7);
+        auto b = arguments!(int, real)(5, 9.7);
+        auto c = arguments!(int, real)(9, 1.1);
+        auto d = arguments!(int, float)(5, 9.7f);
 
         assert (a == b);
         assert (a != c);
@@ -128,7 +87,7 @@ version (DMocksTest)
     unittest {
         mixin(test!("argument toString"));
 
-        auto a = new Arguments!(int, real)(5, 9.7);
-        a.toString();
+        auto a = arguments!(int, real)(5, 9.7);
+        a.formatArguments();
     }
 }

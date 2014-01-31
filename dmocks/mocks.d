@@ -4,7 +4,6 @@ public import dmocks.object_mock;
 import dmocks.factory;
 import dmocks.repository; 
 import dmocks.util;
-import std.variant;
 import std.stdio;
 import std.typecons;
 
@@ -244,6 +243,7 @@ public class ExternalCall
 {
     import dmocks.arguments;
     import dmocks.expectation;
+    import dmocks.dynamic;
 
     private EventExpectation _expectation;
 
@@ -264,7 +264,7 @@ public class ExternalCall
     */
    ExternalCall returns (T)(T value) 
    {
-       _expectation.action.returnValue(Variant(value));
+       _expectation.action.returnValue(dynamic(value));
        return this;
    }
 
@@ -322,8 +322,7 @@ public class ExternalCall
     */
    ExternalCall action (T, U...)(T delegate(U) action) 
    {
-       Variant a = Variant(action);
-       _expectation.action.action = a;
+       _expectation.action.action = dynamic(action);
        return this;
    }
 

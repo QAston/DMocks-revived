@@ -4,7 +4,6 @@ import dmocks.util;
 import dmocks.model;
 import dmocks.arguments;
 
-import std.variant;
 import std.stdio;
 import std.conv;
 
