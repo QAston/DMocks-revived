@@ -244,6 +244,7 @@ public class ExternalCall
     import dmocks.arguments;
     import dmocks.expectation;
     import dmocks.dynamic;
+    import dmocks.qualifiers;
 
     private EventExpectation _expectation;
 
@@ -276,6 +277,17 @@ public class ExternalCall
        _expectation.arguments = new AnyArgumentsMatch();
        return this;
    }
+
+   /**
+    * The method qualifiers (const, immutable, @system, etc) for this call will be ignored
+    */
+   ExternalCall ignoreQualifiers () 
+   {
+       bool[string] var;
+       _expectation.qualifiers = qualifierMatch(var);
+       return this;
+   }
+
 
    /**
     * This call must be repeated at least min times and can be repeated at
@@ -843,7 +855,51 @@ version (DMocksTest) {
 
             r.verify;
         }
+
+        {
+            auto r = new Mocker;
+            auto m = r.mock!(Qualifiers);
+            auto c = cast(const) m;
+            auto i = cast(immutable) m;
+
+            r.expect(i.make).passThrough;
+            r.expect(m.make).passThrough; 
+            r.expect(m.make).passThrough; 
+            r.replay;
+
+            assert(i.make == 4);
+            assert(m.make == 3);
+            try
+            {
+                assert(c.make == 1);
+                assert(false, "exception not thrown");
+            }
+            catch (ExpectationViolationException e) {
+            }
+
+        }
     }
+
+    unittest
+    {
+        mixin(test!("ignore qualifiers"));
+        auto r = new Mocker;
+        auto m = r.mock!(Qualifiers);
+        auto c = cast(const) m;
+        auto i = cast(immutable) m;
+
+        // that single expectation will match all 3 calls
+        r.expect(i.make).passThrough.ignoreQualifiers.repeat(3);
+        
+        r.replay;
+
+        assert(i.make == 4);
+        assert(m.make == 3);
+        assert(c.make == 1);
+
+        r.verify;
+    }
+
 
     interface VirtualFinal
     {
@@ -1054,6 +1110,7 @@ version (DMocksTest) {
 
     unittest
     {
+        mixin(test!("returning different values on the same expectation"));
         auto mocker = new Mocker;
         auto dependency = mocker.mock!Dependency;
 
