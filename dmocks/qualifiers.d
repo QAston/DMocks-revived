@@ -231,7 +231,7 @@ struct QualifierMatch
             (opt.length != 0 ? " (optional: " ~ opt ~")" : "");
     }
 
-    /// returns true if all required qualifiers are present in against and are absent in against array
+    /// returns true if all required qualifiers are present and all forbidden are absent in against array
     bool matches(string[] against) const
     {
         debugLog("QualifierMatch: match against: "~ against.join(" "));

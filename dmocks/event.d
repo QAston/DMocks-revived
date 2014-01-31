@@ -1,15 +1,17 @@
 module dmocks.event;
 
-import dmocks.model;
+public import dmocks.model;
+public import dmocks.dynamic;
+
 import dmocks.arguments;
 import dmocks.qualifiers;
-import dmocks.dynamic;
 
 import std.array;
-import std.conv;
 
-package:
-
+/++
++ This class represents a single method call on a mock object while in replay phase
++ All information about the call is stored here
++/
 class Event
 {
     MockId object;
