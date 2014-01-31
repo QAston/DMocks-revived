@@ -7,7 +7,7 @@ import dmocks.arguments;
 import std.stdio;
 import std.conv;
 
-import dmocks.event;
+import dmocks.call;
 import dmocks.expectation;
 
 package:
@@ -20,21 +20,21 @@ class MockRepository
     private bool _ordered = false;
     private bool _allowUnexpected = false;
 
-    private Event[] _events = [];
-    private Event[] _unexpectedEvents = [];
+    private Call[] _calls = [];
+    private Call[] _unexpectedCalls = [];
     private GroupExpectation _rootGroupExpectation;
-    private EventExpectation _lastEventExpectation; // stores last event added to _lastGroupExpectation
+    private CallExpectation _lastCallExpectation; // stores last call added to _lastGroupExpectation
     private GroupExpectation _lastGroupExpectation; // stores last group added to _rootGroupExpectation
 
     private void CheckLastCallSetup ()
     {
-        if (_allowDefaults || _lastEventExpectation is null || _lastEventExpectation.action.hasAction)
+        if (_allowDefaults || _lastCallExpectation is null || _lastCallExpectation.action.hasAction)
         {
             return;
         }
 
         throw new MocksSetupException(
-                "Last expectation: if you do not specify the AllowDefaults option, you need to return a value, throw an exception, execute a delegate, or pass through to base function. The expectation is: " ~ _lastEventExpectation.toString());
+                "Last expectation: if you do not specify the AllowDefaults option, you need to return a value, throw an exception, execute a delegate, or pass through to base function. The expectation is: " ~ _lastCallExpectation.toString());
     }
 
     this()
@@ -88,25 +88,25 @@ class MockRepository
         _rootGroupExpectation.addExpectation(_lastGroupExpectation);
     }
 
-    void Record(EventExpectation expectation)
+    void Record(CallExpectation expectation)
     {
         CheckLastCallSetup();
         _lastGroupExpectation.addExpectation(expectation);
-        _lastEventExpectation = expectation;
+        _lastCallExpectation = expectation;
     }
 
-    EventExpectation Match(Event event)
+    CallExpectation Match(Call call)
     {
-        _events ~= event;
-        auto exp = _rootGroupExpectation.match(event);
+        _calls ~= call;
+        auto exp = _rootGroupExpectation.match(call);
         if (exp is null)
-            _unexpectedEvents ~= _events;
+            _unexpectedCalls ~= _calls;
         return exp;
     }
 
-    EventExpectation LastExpectation ()
+    CallExpectation LastExpectation ()
     {
-        return _lastEventExpectation;
+        return _lastCallExpectation;
     }
 
     void Verify (bool checkUnmatchedExpectations, bool checkUnexpectedCalls)
@@ -115,18 +115,18 @@ class MockRepository
         if (checkUnmatchedExpectations && !_rootGroupExpectation.satisfied)
             expectationError~="\n" ~ _rootGroupExpectation.toString();
                 
-        if (checkUnexpectedCalls && _unexpectedEvents.length > 0)
-            expectationError~="\n" ~ UnexpectedEventsReport;
+        if (checkUnexpectedCalls && _unexpectedCalls.length > 0)
+            expectationError~="\n" ~ UnexpectedCallsReport;
         if (expectationError != "")
             throw new ExpectationViolationException(expectationError);
     }
 
-    string UnexpectedEventsReport()
+    string UnexpectedCallsReport()
     {
         import std.array;
         auto apndr = appender!(string);
-        apndr.put("Unexpected events(calls):\n");
-        foreach(Event ev; _unexpectedEvents)
+        apndr.put("Unexpected calls(calls):\n");
+        foreach(Call ev; _unexpectedCalls)
         {
             apndr.put(ev.toString());
             apndr.put("\n");

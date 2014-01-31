@@ -8,8 +8,6 @@ import std.array;
 
 import dmocks.util;
 
-package:
-
 /// Factory for qualifier matches
 /// specifies match that exactly matches passed method T
 QualifierMatch qualifierMatch(alias T)()

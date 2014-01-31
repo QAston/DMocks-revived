@@ -11,12 +11,12 @@ import dmocks.arguments;
 import dmocks.util;
 import dmocks.action;
 import dmocks.model;
-import dmocks.event;
+import dmocks.call;
 
 
 package:
 
-class EventExpectation : Expectation
+class CallExpectation : Expectation
 {
     this(MockId object, NameMatch name, QualifierMatch qualifiers, ArgumentsMatch args, TypeInfo returnType)
     {
@@ -26,13 +26,13 @@ class EventExpectation : Expectation
         this.arguments = args;
         this.qualifiers = qualifiers;
         this.action = new Action(returnType);
-        _matchedEvents = [];
+        _matchedCalls = [];
     }
     MockId object;
     NameMatch name;
     QualifierMatch qualifiers;
     ArgumentsMatch arguments;
-    private Event[] _matchedEvents;
+    private Call[] _matchedCalls;
     Interval repeatInterval;
 
     Action action;
@@ -52,10 +52,10 @@ class EventExpectation : Expectation
         apndr.put("Method: " ~ name.toString() ~ " " ~ arguments.toString() ~" "~ qualifiers.toString() ~ " ExpectedCalls: " ~ repeatInterval.toString());
         if (details)
         {
-            apndr.put("\n" ~ intendation ~ "Calls: " ~ _matchedEvents.length.to!string);
-            foreach(Event event; _matchedEvents)
+            apndr.put("\n" ~ intendation ~ "Calls: " ~ _matchedCalls.length.to!string);
+            foreach(Call call; _matchedCalls)
             {
-                apndr.put(intendation ~"  "~event.toString());
+                apndr.put(intendation ~"  "~call.toString());
             }
         }
         return apndr.data;
@@ -67,42 +67,42 @@ class EventExpectation : Expectation
         return toString("");
     }
 
-    EventExpectation match(Event event)
+    CallExpectation match(Call call)
     {
         debugLog("Expectation.match:");
-        if (object != event.object)
+        if (object != call.object)
         {
             debugLog("object doesn't match");
             return null;
         }
-        if (!name.matches(event.name))
+        if (!name.matches(call.name))
         {
             debugLog("name doesn't match");
             return null;
         }
-        if (!qualifiers.matches(event.qualifiers))
+        if (!qualifiers.matches(call.qualifiers))
         {
             debugLog("qualifiers don't match");
             return null;
         }
-        if (!arguments.matches(event.arguments))
+        if (!arguments.matches(call.arguments))
         {
             debugLog("arguments don't match");
             return null;
         }
-        if (_matchedEvents.length >= repeatInterval.Max)
+        if (_matchedCalls.length >= repeatInterval.Max)
         {
             debugLog("repeat interval desn't match");
             return null;
         }
         debugLog("full match");
-        _matchedEvents ~= event;
+        _matchedCalls ~= call;
         return this;
     }
 
     bool satisfied()
     {
-        return _matchedEvents.length <=  repeatInterval.Max && _matchedEvents.length >=  repeatInterval.Min;
+        return _matchedCalls.length <=  repeatInterval.Max && _matchedCalls.length >=  repeatInterval.Min;
     }
 }
 
@@ -117,12 +117,12 @@ class GroupExpectation : Expectation
     bool ordered;
     Interval repeatInterval;
 
-    EventExpectation match(Event event)
+    CallExpectation match(Call call)
     {
-        // match event to expectation
+        // match call to expectation
         foreach(Expectation expectation; expectations)
         {
-            EventExpectation e = expectation.match(event);
+            CallExpectation e = expectation.match(call);
             if (e !is null)
                 return e;
             if (ordered && !expectation.satisfied())
@@ -193,15 +193,15 @@ GroupExpectation createGroupExpectation(bool ordered)
 // composite design pattern
 interface Expectation
 {
-    EventExpectation match(Event event);
+    CallExpectation match(Call call);
     bool satisfied();
     string toString(string intendation);
     string toString();
 }
 
-EventExpectation createExpectation(alias METHOD, ARGS...)(MockId object, string name, ARGS args)
+CallExpectation createExpectation(alias METHOD, ARGS...)(MockId object, string name, ARGS args)
 {
-    auto ret = new EventExpectation(object, new NameMatchText(name), qualifierMatch!METHOD,
+    auto ret = new CallExpectation(object, new NameMatchText(name), qualifierMatch!METHOD,
                                     new StrictArgumentsMatch(arguments(args)), typeid(ReturnType!(typeof(METHOD))));
     return ret;
 }

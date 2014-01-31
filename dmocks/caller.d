@@ -6,7 +6,7 @@ import dmocks.util;
 import dmocks.action;
 import dmocks.arguments;
 
-import dmocks.event;
+import dmocks.call;
 import std.array;
 import std.traits;
 import dmocks.expectation;
@@ -37,15 +37,15 @@ class Caller
         }
 
         debugLog("checking for matching expectation...");
-        auto event = createEvent!METHOD(mocked, name, args);
-        auto expectation = _owner.Match(event);
+        auto call = createCall!METHOD(mocked, name, args);
+        auto expectation = _owner.Match(call);
 
         debugLog("checking if expectation is null...");
         if (expectation is null)
         {
             if (_owner.AllowUnexpected())
                 return rope;
-            throw new ExpectationViolationException("Unexpected call to method: " ~ event.toString());
+            throw new ExpectationViolationException("Unexpected call to method: " ~ call.toString());
         }
 
         rope = expectation.action.getActor().act!(TReturn, ARGS)(args);

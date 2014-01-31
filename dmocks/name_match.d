@@ -2,8 +2,6 @@ module dmocks.name_match;
 
 import std.regex;
 
-package:
-
 interface NameMatch
 {
     bool matches(string against);

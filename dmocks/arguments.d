@@ -7,8 +7,6 @@ import std.array;
 import dmocks.util;
 import dmocks.dynamic;
 
-package:
-
 interface ArgumentsMatch
 {
     bool matches(Dynamic[] args);

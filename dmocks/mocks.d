@@ -8,7 +8,7 @@ import std.stdio;
 import std.typecons;
 
 /++
-    A class through which one creates mock objects and manages expected calls. 
+    A class through which one creates mock objects and manages expectations about calls to their methods.
  ++/
 public class Mocker 
 {
@@ -21,9 +21,19 @@ public class Mocker
             _repository = new MockRepository();
         }
 
+        /**
+        * Start setting up expectations. Method calls on mock object will create (and record) new expectations. 
+        * You can just call methods directly or use Mocker.expect/lastCall to customize expectations.
+        */
+        void record () 
+        {
+            _repository.BackToRecord();
+        }
+
         /** 
-         * Stop setting up expected calls. Any calls after this point will
-         * be verified against the expectations set up before calling Replay.
+         * Stop setting up expectations. Any method calls after this point will
+         * be matched against the expectations set up before calling replay and
+         * expectations' actions will be executed.
          */
         void replay () 
         {
@@ -31,22 +41,15 @@ public class Mocker
         }
 
         /**
-         * Record method calls starting at this point. These calls are not
-         * checked against existing expectations; they create new expectations.
-         */
-        void record () 
-        {
-            _repository.BackToRecord();
-        }
-
-        /**
-         * checkUnmatchedExpectations - Check to see if there are any expected calls that haven't been
-         * matched with a real call. 
+         * Verifies that certain expectation requirements were satisfied during replay phase.
+         *
+         * checkUnmatchedExpectations - Check to see if there are any expectations that haven't been
+         * matched to a call. 
          *
          * checkUnexpectedCalls - Check to see if there are any calls that there were no
          * expectation set up for.
          *
-         * Throws an ExpectationViolationException if those occur.
+         * Throws an ExpectationViolationException if those issues occur.
          */
         void verify (bool checkUnmatchedExpectations = true, bool checkUnexpectedCalls = true) 
         {
@@ -70,7 +73,7 @@ public class Mocker
         }
 
         /** 
-         * Disables exceptions thrown on unexpected casts while in Replay phase
+         * Disables exceptions thrown on unexpected calls while in Replay phase
          * Unexpected methods called will return default value of their type
          *
          * Useful when using mocks as stubs or when you don't want exceptions 
@@ -85,9 +88,11 @@ public class Mocker
 
         /** 
          * Creates a mock object for a given type.
-         * Calls constructor for the type with given args
          *
-         * Type returned is compatibile with given type
+         * Calls matching expectations with passThrough enabled
+         * will call equivalent methods of T object constructed with args.
+         *
+         * Type returned is binarily compatibile with given type
          * All virtual calls made to the object will be mocked
          * Final and template calls will not be mocked
          *
@@ -102,7 +107,9 @@ public class Mocker
 
         /** 
          * Creates a mock object for a given type.
-         * Calls with passThrough enabled will be passing to object constructed with args
+         *
+         * Calls matching expectations with passThrough enabled
+         * will call equivalent methods of T object constructed with args.
          *
          * Type of the mock is incompatibile with given type
          * Final, template and virtual methods will be mocked
@@ -118,7 +125,9 @@ public class Mocker
 
         /** 
          * Creates a mock object for a given type.
-         * Calls with passThrough enabled will be passing to "to" argument
+         *
+         * Calls matching expectations with passThrough enabled
+         * will call equivalent methods of "to" object.
          *
          * Type of the mock is incompatibile with given type
          * Final, template and virtual methods will be mocked
@@ -134,7 +143,9 @@ public class Mocker
 
         /** 
          * Creates a mock object for a given type.
-         * Calls with passThrough enabled will be passing to object constructed with args
+         *
+         * Calls matching expectations with passThrough enabled
+         * will call equivalent methods of T object constructed with args.
          *
          * Type of the mock is incompatibile with given type
          * Final, template and virtual methods will be mocked
@@ -150,7 +161,9 @@ public class Mocker
 
         /** 
          * Creates a mock object for a given type.
-         * Calls with passThrough enabled will be passing to "to" argument
+         *
+         * Calls matching expectations with passThrough enabled
+         * will call equivalent methods of "to" object.
          *
          * Type of the mock is incompatibile with given type
          * Final, template and virtual methods will be mocked
@@ -165,9 +178,10 @@ public class Mocker
         }
 
         /**
-         * Start an expected call; this returns
-         * an object that allows you to set various properties on the call,
-         * such as return value and number of repetitions.
+         * Record new expectation that will exactly match method called in methodCall argument
+         *
+         * Returns an object that allows you to set various properties of the expectation,
+         * such as return value, number of repetitions or matching options.
          *
          * Examples:
          * ---
@@ -176,7 +190,7 @@ public class Mocker
          * m.expect(o.toString).returns("hello?");
          * ---
          */
-        ExternalCall expect (T) (lazy T methodCall) {
+        ExpectationSetup expect (T) (lazy T methodCall) {
             auto pre = _repository.LastExpectation();
             methodCall();
             auto post = _repository.LastExpectation();
@@ -186,9 +200,10 @@ public class Mocker
         }
 
         /**
-         * Start an expected call; this returns
-         * an object that allows you to set various properties on the call,
-         * such as return value and number of repetitions.
+         * Returns ExpectationSetup object for most recent call on a method of a mock object.
+         *
+         * This object allows you to set various properties of the expectation,
+         * such as return value, number of repetitions or matching options.
          *
          * Examples:
          * ---
@@ -198,8 +213,8 @@ public class Mocker
          * m.LastCall().returns("hello?");
          * ---
          */
-        ExternalCall lastCall () {
-            return new ExternalCall(_repository.LastExpectation());
+        ExpectationSetup lastCall () {
+            return new ExpectationSetup(_repository.LastExpectation());
         }
 
         /**
@@ -207,12 +222,12 @@ public class Mocker
          * Things where you want to allow this method to be called, but you aren't
          * currently testing for it.
          */
-        ExternalCall allowing (T) (T ignored) {
+        ExpectationSetup allowing (T) (T ignored) {
             return lastCall().repeatAny;
         }
 
         /** Ditto */
-        ExternalCall allowing (T = void) () {
+        ExpectationSetup allowing (T = void) () {
             return lastCall().repeatAny();
         }
 
@@ -229,8 +244,13 @@ public class Mocker
 }
 
 /++
-   An ExternalCall allows you to set up various options on a Call,
-   such as return value, number of repetitions, and so forth.
+   An ExpectationSetup object allows you to set various properties of the expectation,
+   such as: 
+    - which methods will match the expectation
+        - you can match by name, by qualifiers, by arguments...
+    - what action should be taken when method matching expectation is called
+        - return value, action to call, exception to throw, etc
+
    Examples:
    ---
    Mocker m = new Mocker;
@@ -239,61 +259,48 @@ public class Mocker
    m.LastCall().returns("Are you still there?").repeat(1, 12);
    ---
 ++/
-public class ExternalCall 
+public class ExpectationSetup 
 {
     import dmocks.arguments;
     import dmocks.expectation;
     import dmocks.dynamic;
     import dmocks.qualifiers;
 
-    private EventExpectation _expectation;
+    private CallExpectation _expectation;
 
-   this (EventExpectation expectation) 
+   this (CallExpectation expectation) 
    {
-       assert (expectation !is null, "can't create an ExternalCall if expectation is null");
+       assert (expectation !is null, "can't create an ExpectationSetup if expectation is null");
        _expectation = expectation;
    }
 
-   // TODO: how can I get validation here that the type you're
-   // inserting is the type expected before trying to execute it?
-   // Not really an issue, since it'd be revealed in the space
-   // of a single test.
    /**
-    * Set the return value of call.
-    * Params:
-    *     value = the value to return
+    * Ignore method arguments in matching calls to this expectation.
+    *
+    * Helpful for setting up many method overloads at once.
     */
-   ExternalCall returns (T)(T value) 
-   {
-       _expectation.action.returnValue(dynamic(value));
-       return this;
-   }
-
-   /**
-    * The arguments for this call will be ignored.
-    */
-   ExternalCall ignoreArgs () 
+   ExpectationSetup ignoreArgs () 
    {
        _expectation.arguments = new AnyArgumentsMatch();
        return this;
    }
 
    /**
-    * The method qualifiers (const, immutable, @system, etc) for this call will be ignored
+    * Ignore method qualifiers (const, immutable, @system, etc) in matching calls to this expectation.
+    *
+    * Helpful for setting up many method overloads at once.
     */
-   ExternalCall ignoreQualifiers () 
+   ExpectationSetup ignoreQualifiers () 
    {
        bool[string] var;
        _expectation.qualifiers = qualifierMatch(var);
        return this;
    }
 
-
    /**
-    * This call must be repeated at least min times and can be repeated at
-    * most max times.
+    * This expectation must match to at least min number of calls and at most to max number of calls.
     */
-   ExternalCall repeat (int min, int max) 
+   ExpectationSetup repeat (int min, int max) 
    {
        if (min > max) 
        {
@@ -304,24 +311,24 @@ public class ExternalCall
    }
 
    /**
-    * This call must be repeated exactly i times.
+    * This expectation will match exactly i times.
     */
-   ExternalCall repeat (int i) 
+   ExpectationSetup repeat (int i) 
    {
        repeat(i,i);
        return this;
    }
 
    /**
-    * This call can be repeated any number of times.
+    * This expectation will match to any number of calls.
     */
-   ExternalCall repeatAny () 
+   ExpectationSetup repeatAny () 
    {
        return repeat(0, int.max);
    }
 
    /**
-    * When the method is executed (with matching arguments), execute the
+    * When the method which matches this expectation is called execute the
     * given delegate. The delegate's signature must match the signature
     * of the called method. If it does not, an exception will be thrown.
     * The called method will return whatever the given delegate returns.
@@ -332,17 +339,33 @@ public class ExternalCall
     *     .action((int i, char[] s, Object o, char c) { return -1; });
     * ---
     */
-   ExternalCall action (T, U...)(T delegate(U) action) 
+   ExpectationSetup action (T, U...)(T delegate(U) action) 
    {
        _expectation.action.action = dynamic(action);
        return this;
    }
 
+   // TODO: how can I get validation here that the type you're
+   // inserting is the type expected before trying to execute it?
+   // Not really an issue, since it'd be revealed in the space
+   // of a single test.
    /**
-    * When the method is called, throw the given exception. If there are any
+    * Set the value to return when method matching this expectation is called on a mock object.
+    * Params:
+    *     value = the value to return
+    */
+   ExpectationSetup returns (T)(T value) 
+   {
+       _expectation.action.returnValue(dynamic(value));
+       return this;
+   }
+
+   /**
+    * When the method which matches this expectation is called,
+    * throw the given exception. If there are any
     * actions specified (via the action method), they will not be executed.
     */
-   ExternalCall throws (Exception e) 
+   ExpectationSetup throws (Exception e) 
    {
        _expectation.action.toThrow = e;
        return this;
@@ -350,17 +373,21 @@ public class ExternalCall
 
    /**
     * Instead of returning or throwing a given value, pass the call through to
-    * the base class. This is dangerous -- the private fields of the class may
-    * not be set up properly, so only use this when the function does not depend
-    * on these fields. Things such as using Object's toHash and opEquals when your
-    * class doesn't override them and you use associative arrays.
+    * the mocked type object. For mock***PassTo(obj) obj has to be valid for this to work.
+    * 
+    * This is useful for example for enabling use of mock object in hashmaps by enabling 
+    * toHash and opEquals of your class.
     */
-   ExternalCall passThrough () 
+   ExpectationSetup passThrough () 
    {
        _expectation.action.passThrough = true;
        return this;
    }
 }
+
+/// backward compatibility alias
+alias ExternalCall ExpectationSetup;
+alias ExpectationSetup ExternalCall;
 
 version (DMocksTest) {
     

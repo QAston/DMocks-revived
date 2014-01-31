@@ -1,4 +1,4 @@
-module dmocks.event;
+module dmocks.call;
 
 public import dmocks.model;
 public import dmocks.dynamic;
@@ -12,7 +12,7 @@ import std.array;
 + This class represents a single method call on a mock object while in replay phase
 + All information about the call is stored here
 +/
-class Event
+class Call
 {
     MockId object;
     string name;
@@ -26,9 +26,9 @@ class Event
     }
 }
 
-Event createEvent(alias METHOD, ARGS...)(MockId object, string name, ARGS args)
+Call createCall(alias METHOD, ARGS...)(MockId object, string name, ARGS args)
 {
-    auto ret = new Event;
+    auto ret = new Call;
     ret.object = object;
     ret.name = name;
     ret.qualifiers = qualifiers!METHOD;
