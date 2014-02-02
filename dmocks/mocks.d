@@ -247,8 +247,6 @@ public class Mocker
 /++
    An ExpectationSetup object allows you to set various properties of the expectation,
    such as: 
-    - which methods will match the expectation
-        - you can match by name, by qualifiers, by arguments...
     - what action should be taken when method matching expectation is called
         - return value, action to call, exception to throw, etc
 
@@ -285,7 +283,16 @@ public class ExpectationSetup
     */
    ExpectationSetup ignoreArgs () 
    {
-       _expectation.arguments = new ArgumentsTypeMatch(_setUpCall.arguments);
+       _expectation.arguments = new ArgumentsTypeMatch(_setUpCall.arguments, (Dynamic a, Dynamic b)=>true);
+       return this;
+   }
+
+   /**
+    * Allow providing custom argument comparator for matching calls to this expectation.
+    */
+   ExpectationSetup customArgsComparator (bool delegate(Dynamic expected, Dynamic provided) del) 
+   {
+       _expectation.arguments = new ArgumentsTypeMatch(_setUpCall.arguments, del);
        return this;
    }
 
@@ -1119,6 +1126,31 @@ version (DMocksTest) {
         assert(dependency.foo == 1);
         assert(dependency.foo == 2);
         mocker.verify;
+    }
+
+    class TakesFloat
+    {
+        public void foo(float a) {  }
+    }
+
+    unittest
+    {
+        import std.math;
+        mixin(test!("customArgsComparator"));
+        auto mocker = new Mocker;
+        auto dependency = mocker.mock!TakesFloat;
+        mocker.expect(dependency.foo(1.0f)).customArgsComparator(
+             (Dynamic a, Dynamic b) 
+             { 
+                 if (a.type == typeid(float))
+                    { return ( abs(a.get!float() - b.get!float()) < 0.1f); } 
+                 return true;
+             }).repeat(2);
+        mocker.replay;
+
+        // custom comparison example - treat similar floats as equals
+        dependency.foo(1.01);
+        dependency.foo(1.02);
     }
 
     version (DMocksTestStandalone)

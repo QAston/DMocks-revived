@@ -14,33 +14,6 @@ interface ArgumentsMatch
     string toString();
 }
 
-auto delegateArgumentsMatch(Dynamic[] expected, bool delegate(Dynamic[] expected, Dynamic[] called) del)
-{
-    return new DelegateArgumentsMatch(expected, del);
-}
-
-/++
-+ Compares expectated arguments with arguments from a call by user provided delegate
-++/
-class DelegateArgumentsMatch : ArgumentsMatch
-{
-    private Dynamic[] _arguments;
-    private bool delegate(Dynamic[], Dynamic[]) _delegate;
-    this(Dynamic[] args, bool delegate(Dynamic[], Dynamic[]) del)
-    {
-        _arguments = args;
-        _delegate = del;
-    }
-    override bool matches(Dynamic[] args)
-    {
-        return _delegate(_arguments, args);
-    }
-    override string toString()
-    {
-        return "(args checked by delegate)";
-    }
-}
-
  //TODO: allow richer specification of arguments
 class StrictArgumentsMatch : ArgumentsMatch
 {
@@ -64,9 +37,11 @@ class StrictArgumentsMatch : ArgumentsMatch
 class ArgumentsTypeMatch : ArgumentsMatch
 {
     private Dynamic[] _arguments;
-    this(Dynamic[] args)
+    private bool delegate(Dynamic, Dynamic) _del;
+    this(Dynamic[] args, bool delegate(Dynamic, Dynamic) del)
     {
         _arguments = args;
+        _del = del;
     }
     override bool matches(Dynamic[] args)
     {
@@ -74,9 +49,11 @@ class ArgumentsTypeMatch : ArgumentsMatch
         if (args.length != _arguments.length)
             return false;
 
-        foreach(e; zip(args, _arguments))
+        foreach(e; zip(_arguments, args))
         {
             if (e[0].type != e[1].type)
+                return false;
+            if (!_del(e[0], e[1]))
                 return false;
         }
         return true;
@@ -87,6 +64,7 @@ class ArgumentsTypeMatch : ArgumentsMatch
         return "("~_arguments.map!(a=>a.type.toString).join(", ")~")";
     }
 }
+
 
 interface IArguments
 {
