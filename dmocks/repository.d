@@ -6,9 +6,11 @@ import dmocks.arguments;
 
 import std.stdio;
 import std.conv;
+import std.traits;
 
 import dmocks.call;
 import dmocks.expectation;
+import dmocks.action;
 
 package:
 
@@ -23,18 +25,19 @@ class MockRepository
     private Call[] _calls = [];
     private Call[] _unexpectedCalls = [];
     private GroupExpectation _rootGroupExpectation;
-    private CallExpectation _lastCallExpectation; // stores last call added to _lastGroupExpectation
+    private CallExpectation _lastRecordedCallExpectation; // stores last call added to _lastGroupExpectation
+    private Call _lastRecordedCall; // stores last call with which _lastRecordedCallExpectation was created
     private GroupExpectation _lastGroupExpectation; // stores last group added to _rootGroupExpectation
 
     private void CheckLastCallSetup ()
     {
-        if (_allowDefaults || _lastCallExpectation is null || _lastCallExpectation.action.hasAction)
+        if (_allowDefaults || _lastRecordedCallExpectation is null || _lastRecordedCallExpectation.action.hasAction)
         {
             return;
         }
 
         throw new MocksSetupException(
-                "Last expectation: if you do not specify the AllowDefaults option, you need to return a value, throw an exception, execute a delegate, or pass through to base function. The expectation is: " ~ _lastCallExpectation.toString());
+                "Last expectation: if you do not specify the AllowDefaults option, you need to return a value, throw an exception, execute a delegate, or pass through to base function. The expectation is: " ~ _lastRecordedCallExpectation.toString());
     }
 
     this()
@@ -88,11 +91,42 @@ class MockRepository
         _rootGroupExpectation.addExpectation(_lastGroupExpectation);
     }
 
-    void Record(CallExpectation expectation)
+    void Record(CallExpectation expectation, Call call)
     {
         CheckLastCallSetup();
         _lastGroupExpectation.addExpectation(expectation);
-        _lastCallExpectation = expectation;
+        _lastRecordedCallExpectation = expectation;
+        _lastRecordedCall = call;
+    }
+
+    @trusted public auto MethodCall (alias METHOD, ARGS...) (MockId mocked, string name, ARGS args)
+    {
+        alias ReturnType!(typeof(METHOD)) TReturn;
+
+        ReturnOrPass!(TReturn) rope;
+        auto call = createCall!METHOD(mocked, name, args);
+        debugLog("checking Recording...");
+        if (Recording)
+        {
+            auto expectation = createExpectation!(METHOD)(mocked, name, args);
+            Record(expectation, call);
+            return rope;
+        }
+
+        debugLog("checking for matching expectation...");
+        auto expectation = Match(call);
+
+        debugLog("checking if expectation is null...");
+        if (expectation is null)
+        {
+            if (AllowUnexpected())
+                return rope;
+            throw new ExpectationViolationException("Unexpected call to method: " ~ call.toString());
+        }
+
+        rope = expectation.action.getActor().act!(TReturn, ARGS)(args);
+        debugLog("returning...");
+        return rope;
     }
 
     CallExpectation Match(Call call)
@@ -104,9 +138,14 @@ class MockRepository
         return exp;
     }
 
-    CallExpectation LastExpectation ()
+    CallExpectation LastRecordedCallExpectation ()
     {
-        return _lastCallExpectation;
+        return _lastRecordedCallExpectation;
+    }
+
+    Call LastRecordedCall ()
+    {
+        return _lastRecordedCall;
     }
 
     void Verify (bool checkUnmatchedExpectations, bool checkUnexpectedCalls)
@@ -145,6 +184,22 @@ class MockRepository
             assert (!r.Recording());
             r.BackToRecord();
             assert (r.Recording());
+        }
+
+        
+        // test for correctly formulated template
+        unittest {
+            class A
+            {
+                public void a()
+                {
+                }
+            }
+            auto a = new A;
+            auto c = new MockRepository();
+            auto mid = new MockId;
+            //c.Call!(a.a)(mid, "a");
+            static assert(__traits(compiles, c.MethodCall!(a.a)(mid, "a")));
         }
     }
 }

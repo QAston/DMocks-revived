@@ -191,9 +191,9 @@ public class Mocker
          * ---
          */
         ExpectationSetup expect (T) (lazy T methodCall) {
-            auto pre = _repository.LastExpectation();
+            auto pre = _repository.LastRecordedCallExpectation();
             methodCall();
-            auto post = _repository.LastExpectation();
+            auto post = _repository.LastRecordedCallExpectation();
             if (pre is post)
                 throw new InvalidOperationException("mocks.Mocker.expect: you did not call a method mocked by the mocker!");
             return lastCall();
@@ -214,7 +214,7 @@ public class Mocker
          * ---
          */
         ExpectationSetup lastCall () {
-            return new ExpectationSetup(_repository.LastExpectation());
+            return new ExpectationSetup(_repository.LastRecordedCallExpectation(), _repository.LastRecordedCall());
         }
 
         /**
@@ -265,13 +265,18 @@ public class ExpectationSetup
     import dmocks.expectation;
     import dmocks.dynamic;
     import dmocks.qualifiers;
+    import dmocks.call;
 
     private CallExpectation _expectation;
 
-   this (CallExpectation expectation) 
+    private Call _setUpCall;
+
+   this (CallExpectation expectation, Call setUpCall) 
    {
        assert (expectation !is null, "can't create an ExpectationSetup if expectation is null");
+       assert (setUpCall !is null, "can't create an ExpectationSetup if setUpCall is null");
        _expectation = expectation;
+       _setUpCall = setUpCall;
    }
 
    /**
@@ -294,6 +299,14 @@ public class ExpectationSetup
    {
        bool[string] var;
        _expectation.qualifiers = qualifierMatch(var);
+       return this;
+   }
+
+   /**
+   *
+   */
+   ExpectationSetup customArgumentsMatch(bool delegate(Dynamic[]))
+   {
        return this;
    }
 
@@ -386,7 +399,6 @@ public class ExpectationSetup
 }
 
 /// backward compatibility alias
-alias ExternalCall ExpectationSetup;
 alias ExpectationSetup ExternalCall;
 
 version (DMocksTest) {

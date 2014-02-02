@@ -3,7 +3,7 @@ module dmocks.factory;
 import dmocks.object_mock;
 import dmocks.repository; 
 import dmocks.util;
-import dmocks.caller;
+import dmocks.repository;
 import std.stdio;
 import std.typecons;
 
@@ -13,7 +13,7 @@ package:
 T mock (T, CONSTRUCTOR_ARGS...) (MockRepository rep, CONSTRUCTOR_ARGS cargs) 
 {
     Mocked!(T) ret = new Mocked!(T)(cargs);
-    ret._owner = new Caller(rep);
+    ret._owner = rep;
     return cast(T)ret;
 }
 
@@ -24,27 +24,27 @@ MockedFinal!(T) mockFinal (T, CONSTRUCTOR_ARGS...) (MockRepository rep, CONSTRUC
     else
         T obj = new WhiteHole!T(t);
     MockedFinal!(T) ret = new MockedFinal!(T)(obj);
-    ret._owner = new Caller(rep);
+    ret._owner = rep;
     return ret;
 }
 
 MockedFinal!(T) mockFinalPassTo (T, CONSTRUCTOR_ARGS...) (MockRepository rep, T obj) 
 {
     MockedFinal!(T) ret = new MockedFinal!(T)(obj);
-    ret._owner = new Caller(rep);
+    ret._owner = rep;
     return ret;
 }
 
 MockedStruct!(T) mockStruct (T, CONSTRUCTOR_ARGS...) (MockRepository rep, CONSTRUCTOR_ARGS t) 
 {
     MockedStruct!(T) ret = MockedStruct!(T)(T(t));
-    ret._owner = new Caller(rep);
+    ret._owner = rep;
     return ret;
 }
 
 MockedStruct!(T) mockStructPassTo (T, CONSTRUCTOR_ARGS...) (MockRepository rep, T obj) 
 {
     MockedStruct!(T) ret = MockedStruct!(T)(obj);
-    ret._owner = new Caller(rep);
+    ret._owner = rep;
     return ret;
 }

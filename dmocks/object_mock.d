@@ -1,7 +1,7 @@
 module dmocks.object_mock;
 
 import dmocks.util;
-import dmocks.caller;
+import dmocks.repository;
 import dmocks.method_mock;
 import dmocks.model;
 import dmocks.qualifiers;
@@ -23,7 +23,7 @@ class Mocked (T) : T
             super(args);
         }
 
-    package Caller _owner;
+    package MockRepository _owner;
     package MockId mockId___ = new MockId;
     version (DMocksDebug)
         public string _body = Body!(T, true);
@@ -33,7 +33,7 @@ class Mocked (T) : T
 class MockedFinal(T)
 {
     package T mocked___;
-    package Caller _owner;
+    package MockRepository _owner;
     package MockId mockId___ = new MockId;
 
     package this(T t)
@@ -66,7 +66,7 @@ unittest
 struct MockedStruct(T)
 {
     package T mocked___;
-    package Caller _owner;
+    package MockRepository _owner;
     package MockId mockId___;
 
     package this(T t)
@@ -96,7 +96,7 @@ auto ref mockMethodCall(alias self, string name, T, OBJ, CALLER, FORWARD, Args..
     {
         // CAST CHEATS here - can't operate on const/shared refs without cheating on typesystem. this makes these calls threadunsafe
         // because of fullyQualifiedName bug we need to pass name to the function
-        rope = (cast(Caller)_owner).Call!(self, ParameterTypeTuple!self)(cast(MockId)(obj.mockId___), __traits(identifier, T) ~ "." ~ name, params);
+        rope = (cast()_owner).MethodCall!(self, ParameterTypeTuple!self)(cast(MockId)(obj.mockId___), __traits(identifier, T) ~ "." ~ name, params);
     }
     static if (functionAttributes!(typeof(self)) & FunctionAttribute.nothrow_)
     {
