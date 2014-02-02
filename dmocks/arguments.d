@@ -13,6 +13,33 @@ interface ArgumentsMatch
     string toString();
 }
 
+auto delegateArgumentsMatch(Dynamic[] expected, bool delegate(Dynamic[] expected, Dynamic[] called) del)
+{
+    return new DelegateArgumentsMatch(expected, del);
+}
+
+/++
++ Compares expectated arguments with arguments from a call by user provided delegate
+++/
+class DelegateArgumentsMatch : ArgumentsMatch
+{
+    private Dynamic[] _arguments;
+    private bool delegate(Dynamic[], Dynamic[]) _delegate;
+    this(Dynamic[] args, bool delegate(Dynamic[], Dynamic[]) del)
+    {
+        _arguments = args;
+        _delegate = del;
+    }
+    override bool matches(Dynamic[] args)
+    {
+        return _delegate(_arguments, args);
+    }
+    override string toString()
+    {
+        return "(args checked by delegate)";
+    }
+}
+
  //TODO: allow richer specification of arguments
 class StrictArgumentsMatch : ArgumentsMatch
 {

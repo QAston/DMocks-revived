@@ -1,6 +1,7 @@
 module dmocks.mocks;
 
 public import dmocks.object_mock;
+public import dmocks.dynamic;
 import dmocks.factory;
 import dmocks.repository; 
 import dmocks.util;
@@ -303,10 +304,12 @@ public class ExpectationSetup
    }
 
    /**
-   *
+   * Override default matching based on call arguments by providing a delegate which will be used instead
+   * del should return true if "expected" arguments (from record phase) match "provided" arguments (from replay phase) 
    */
-   ExpectationSetup customArgumentsMatch(bool delegate(Dynamic[]))
+   ExpectationSetup customArgumentsMatch(bool delegate(Dynamic[] expected, Dynamic[] provided) del)
    {
+       _expectation.arguments = delegateArgumentsMatch(_setUpCall.arguments, del);
        return this;
    }
 
@@ -1160,6 +1163,40 @@ version (DMocksTest) {
         assert(dependency.foo == 1);
         assert(dependency.foo == 2);
         mocker.verify;
+    }
+
+    class OverloadedArguments
+    {
+        int get(int i)
+        {
+            return i;
+        }
+
+        int get(int i, int j)
+        {
+            return i;
+        }
+
+        int get(float i)
+        {
+            return cast(int)i;
+        }
+    }
+
+    unittest {
+        mixin(test!("customArgumentsMatch"));
+
+        auto mocker = new Mocker;
+        mocker.allowUnexpectedCalls(true);
+        auto dependency = mocker.mock!OverloadedArguments;
+        // we use custom arg match here to match overloads only to functions which first arg is of type integer
+        mocker.expect(dependency.get(1)).customArgumentsMatch(
+              (Dynamic[] expected, Dynamic[] provided) { return provided.length >= 1 && provided[0].type() == typeid(int);}).returns(1).repeat(2);
+        mocker.replay;
+        assert(dependency.get(5, 6) == 1);
+        assert(dependency.get(5) == 1);
+        // not integer so return value not set
+        assert(dependency.get(2.0f) == 0);
     }
 
     version (DMocksTestStandalone)
