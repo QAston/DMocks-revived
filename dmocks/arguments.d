@@ -3,6 +3,7 @@ module dmocks.arguments;
 import std.conv;
 import std.algorithm;
 import std.array;
+import std.range;
 
 import dmocks.util;
 import dmocks.dynamic;
@@ -60,16 +61,30 @@ class StrictArgumentsMatch : ArgumentsMatch
     }
 }
 
-class AnyArgumentsMatch : ArgumentsMatch
+class ArgumentsTypeMatch : ArgumentsMatch
 {
+    private Dynamic[] _arguments;
+    this(Dynamic[] args)
+    {
+        _arguments = args;
+    }
     override bool matches(Dynamic[] args)
     {
+        import std.range;
+        if (args.length != _arguments.length)
+            return false;
+
+        foreach(e; zip(args, _arguments))
+        {
+            if (e[0].type != e[1].type)
+                return false;
+        }
         return true;
     }
 
     override string toString()
     {
-        return "(<any arguments>)";
+        return "("~_arguments.map!(a=>a.type.toString).join(", ")~")";
     }
 }
 

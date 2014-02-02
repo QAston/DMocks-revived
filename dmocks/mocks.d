@@ -281,35 +281,11 @@ public class ExpectationSetup
    }
 
    /**
-    * Ignore method arguments in matching calls to this expectation.
-    *
-    * Helpful for setting up many method overloads at once.
+    * Ignore method argument values in matching calls to this expectation.
     */
    ExpectationSetup ignoreArgs () 
    {
-       _expectation.arguments = new AnyArgumentsMatch();
-       return this;
-   }
-
-   /**
-    * Ignore method qualifiers (const, immutable, @system, etc) in matching calls to this expectation.
-    *
-    * Helpful for setting up many method overloads at once.
-    */
-   ExpectationSetup ignoreQualifiers () 
-   {
-       bool[string] var;
-       _expectation.qualifiers = qualifierMatch(var);
-       return this;
-   }
-
-   /**
-   * Override default matching based on call arguments by providing a delegate which will be used instead
-   * del should return true if "expected" arguments (from record phase) match "provided" arguments (from replay phase) 
-   */
-   ExpectationSetup customArgumentsMatch(bool delegate(Dynamic[] expected, Dynamic[] provided) del)
-   {
-       _expectation.arguments = delegateArgumentsMatch(_setUpCall.arguments, del);
+       _expectation.arguments = new ArgumentsTypeMatch(_setUpCall.arguments);
        return this;
    }
 
@@ -922,26 +898,6 @@ version (DMocksTest) {
         }
     }
 
-    unittest
-    {
-        mixin(test!("ignore qualifiers"));
-        auto r = new Mocker;
-        auto m = r.mock!(Qualifiers);
-        auto c = cast(const) m;
-        auto i = cast(immutable) m;
-
-        // that single expectation will match all 3 calls
-        r.expect(i.make).passThrough.ignoreQualifiers.repeat(3);
-        
-        r.replay;
-
-        assert(i.make == 4);
-        assert(m.make == 3);
-        assert(c.make == 1);
-
-        r.verify;
-    }
-
 
     interface VirtualFinal
     {
@@ -1163,40 +1119,6 @@ version (DMocksTest) {
         assert(dependency.foo == 1);
         assert(dependency.foo == 2);
         mocker.verify;
-    }
-
-    class OverloadedArguments
-    {
-        int get(int i)
-        {
-            return i;
-        }
-
-        int get(int i, int j)
-        {
-            return i;
-        }
-
-        int get(float i)
-        {
-            return cast(int)i;
-        }
-    }
-
-    unittest {
-        mixin(test!("customArgumentsMatch"));
-
-        auto mocker = new Mocker;
-        mocker.allowUnexpectedCalls(true);
-        auto dependency = mocker.mock!OverloadedArguments;
-        // we use custom arg match here to match overloads only to functions which first arg is of type integer
-        mocker.expect(dependency.get(1)).customArgumentsMatch(
-              (Dynamic[] expected, Dynamic[] provided) { return provided.length >= 1 && provided[0].type() == typeid(int);}).returns(1).repeat(2);
-        mocker.replay;
-        assert(dependency.get(5, 6) == 1);
-        assert(dependency.get(5) == 1);
-        // not integer so return value not set
-        assert(dependency.get(2.0f) == 0);
     }
 
     version (DMocksTestStandalone)
