@@ -43,8 +43,9 @@ class MockedFinal(T)
 
     auto ref opDispatch(string name, Args...)(auto ref Args params)
     {
+        //TODO: how do i get an alias to a template overloaded on args?
         mixin("alias mocked___."~name~"!Args self;");
-        auto del = delegate ReturnType!(self) (Args args){ mixin(BuildForwardCall!("mocked___", name ~ "!Args")()); };
+        auto del = delegate ReturnType!(FunctionTypeOf!self) (Args args){ mixin(BuildForwardCall!("mocked___", name ~ "!Args")()); };
         return mockMethodCall!(self, name, T)(this, _owner, del, params);
     }
 
@@ -59,8 +60,34 @@ unittest
         {
         }
     }
+
+    class Overloads
+    {
+        private int _foo;
+
+        T foot(T)()
+        {
+            static if (is(T == int))
+            {
+                return _foo;
+            }
+            else
+                return T.init;
+        }
+
+        void foot(T)(T i)
+        {
+            static if (is(T == int))
+            {
+                _foo = i;
+            }
+        }
+    }
     auto f = new MockedFinal!A(new A);
     static assert(__traits(compiles, f.opDispatch!("asd")(1)));
+
+    //auto p = new MockedFinal!Overloads(new Overloads);
+    //p.opDispatch!("foot")(5);
 }
 
 struct MockedStruct(T)
@@ -78,7 +105,7 @@ struct MockedStruct(T)
     auto ref opDispatch(string name, Args...)(auto ref Args params)
     {
         mixin("alias mocked___."~name~"!Args self;");
-        auto del = delegate ReturnType!(self) (Args args){ mixin(BuildForwardCall!("mocked___", name ~ "!Args")()); };
+        auto del = delegate ReturnType!(FunctionTypeOf!self) (Args args){ mixin(BuildForwardCall!("mocked___", name ~ "!Args")()); };
         return mockMethodCall!(self, name, T)(this, _owner, del, params);
     }
 
@@ -91,14 +118,14 @@ auto ref mockMethodCall(alias self, string name, T, OBJ, CALLER, FORWARD, Args..
     {
         assert(false, "owner cannot be null! Contact the stupid mocks developer.");
     }
-    dmocks.action.ReturnOrPass!(ReturnType!(typeof(self))) rope;
+    dmocks.action.ReturnOrPass!(ReturnType!(FunctionTypeOf!(self))) rope;
     void setRope()
     {
         // CAST CHEATS here - can't operate on const/shared refs without cheating on typesystem. this makes these calls threadunsafe
         // because of fullyQualifiedName bug we need to pass name to the function
         rope = (cast()_owner).MethodCall!(self, ParameterTypeTuple!self)(cast(MockId)(obj.mockId___), __traits(identifier, T) ~ "." ~ name, params);
     }
-    static if (functionAttributes!(typeof(self)) & FunctionAttribute.nothrow_)
+    static if (functionAttributes!(FunctionTypeOf!(self)) & FunctionAttribute.nothrow_)
     {
         try {
             setRope();
@@ -118,7 +145,7 @@ auto ref mockMethodCall(alias self, string name, T, OBJ, CALLER, FORWARD, Args..
     }
     else
     {
-        static if (!is (ReturnType!(typeof(self)) == void))
+        static if (!is (ReturnType!(FunctionTypeOf!(self)) == void))
         {
             return rope.value;
         }

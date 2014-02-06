@@ -101,7 +101,7 @@ class MockRepository
 
     @trusted public auto MethodCall (alias METHOD, ARGS...) (MockId mocked, string name, ARGS args)
     {
-        alias ReturnType!(typeof(METHOD)) TReturn;
+        alias ReturnType!(FunctionTypeOf!(METHOD)) TReturn;
 
         ReturnOrPass!(TReturn) rope;
         auto call = createCall!METHOD(mocked, name, args);

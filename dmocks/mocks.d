@@ -1153,6 +1153,57 @@ version (DMocksTest) {
         dependency.foo(1.02);
     }
 
+    class Property
+    {
+        private int _foo;
+        @property int foo()
+        {
+            return _foo;
+        }
+
+        @property void foo(int i)
+        {
+            _foo = i;
+        }
+
+        @property T foot(T)()
+        {
+            static if (is(T == int))
+            {
+                return _foo;
+            }
+            else
+                return T.init;
+        }
+
+        @property void foot(T)(T i)
+        {
+            static if (is(T == int))
+            {
+                _foo = i;
+            }
+        }
+    }
+
+    unittest
+    {
+        auto mocker = new Mocker;
+        auto dependency = mocker.mockFinal!Property;
+        mocker.ordered;
+        mocker.expect(dependency.foo = 2).ignoreArgs.passThrough;
+        mocker.expect(dependency.foo).passThrough;
+        //TODO: these 2 don't work yet
+        //mocker.expect(dependency.foot!int = 5).passThrough;
+        //mocker.expect(dependency.foot!int).passThrough;
+        mocker.replay;
+
+        dependency.foo = 7;
+        assert(dependency.foo ==7);
+        //dependency.foot!int = 3;
+        //assert(dependency.foot!int == 3);
+        mocker.verify;
+    }
+
     version (DMocksTestStandalone)
     {
         void main () {

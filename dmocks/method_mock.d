@@ -44,11 +44,11 @@ This function has a return value.
 ++/
 string BuildMethodOverloads (string objectType, string methodName, int overloadIndex, alias method, bool inheritance)() 
 {
-    alias typeof(method) METHOD_TYPE;
+    alias FunctionTypeOf!(method) METHOD_TYPE;
     enum returns = !is (ReturnType!(METHOD_TYPE) == void);
 
     enum self = `__traits(getOverloads, T, "` ~ methodName ~ `")[` ~ overloadIndex.to!string ~ `]`;
-    enum selfType = "typeof("~self~")";
+    enum selfType = "FunctionTypeOf!("~self~")";
     enum ret = returns ? `ReturnType!(` ~ selfType ~ `)` : `void`;
     enum paramTypes = `ParameterTypeTuple!(` ~ selfType ~ `)`;
     enum qualified = objectType ~ `.` ~ methodName;
