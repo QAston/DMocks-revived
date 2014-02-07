@@ -1,6 +1,8 @@
 module dmocks.dynamic;
 
 import std.conv;
+import std.traits;
+import std.typecons;
 
 /++
 + This is a very very simple class for storing a variable regardless of it's size and type
@@ -12,17 +14,22 @@ abstract class Dynamic
 
     /// returns stored typeinfo
     abstract TypeInfo type();
-    /// returns stored value if type T is precisely the type of variable stored
-    T get(T)()
-    in
+    /// converts stored value to given "to" type and returns 1el array of target type vals or null when conversion failed
+    abstract void[] convertTo(TypeInfo to);
+}
+
+/// returns stored value if type T is precisely the type of variable stored, variable stored can be implicitly to that type
+T get(T)(Dynamic d)
+{
+    static if (is(typeof(T.init is null)))
     {
-        assert(typeid(T) == type);
+        if (d.type == typeid(typeof(null)))
+            return null;
     }
-    body
-    {
-        return (cast(DynamicT!T)this).data;
-    }
-    // possibly there'll be more operations available here in future
+    if (d.type == typeid(T))
+        return ((cast(DynamicT!T)d).data());
+    void[] convertResult = d.convertTo(typeid(T));
+    return (cast(T*)convertResult)[0];
 }
 
 /// a helper function for creating Dynamic obhects
@@ -74,13 +81,73 @@ class DynamicT(T) : Dynamic
     {
         return _data;
     }
+
+    ///
+    override void[] convertTo(TypeInfo to)
+    {
+        foreach(target;ImplicitConversionTargets!(T))
+        {
+            if (typeid(target) == to)
+            {
+                auto ret = new target[1];
+                ret[0] = _data;
+                return ret;
+            }
+        }
+        return null;
+    }
 }
 
-unittest {
-    auto d = dynamic(6);
-    assert(d.toString == "6");
-    assert(d.type.toString == "int");
-    auto e = dynamic(6);
-    assert(e == d);
-    assert(e.get!int == 6);
+version (DMocksTest) {
+
+    class A
+    {
+    }
+
+    class B : A
+    {
+    }
+
+
+    unittest
+    {
+        auto d = dynamic(6);
+        assert(d.toString == "6");
+        assert(d.type.toString == "int");
+        auto e = dynamic(6);
+        assert(e == d);
+        assert(e.get!int == 6);
+    }
+
+    unittest
+    {
+        auto d = dynamic(new B);
+        assert(d.get!A !is null);
+        assert(d.get!B !is null);
+    }
+
+    unittest
+    {
+        auto d = dynamic(null);
+        assert(d.get!A is null);
+    }
+
+    struct C
+    {
+    }
+
+    struct D
+    {
+        private C _c;
+        alias _c this;
+    }
+
+    /+ ImplicitConversionTargets doesn't include alias thises
+    unittest
+    {
+        auto d = dynamic(D());
+        d.get!C;
+        d.get!D;
+    }
+    +/
 }
