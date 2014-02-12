@@ -16,12 +16,19 @@ abstract class Dynamic
     abstract TypeInfo type();
     /// converts stored value to given "to" type and returns 1el array of target type vals or null when conversion failed
     abstract void[] convertTo(TypeInfo to);
+
+    /// returns true if variable held by dynamic is convertible to given type
+    bool canConvertTo(TypeInfo to)
+    {
+        return type==to || convertTo(to) !is null;
+    }
 }
 
 /// returns stored value if type T is precisely the type of variable stored, variable stored can be implicitly to that type
 T get(T)(Dynamic d)
 {
-    static if (is(typeof(T.init is null)))
+    // in addition to init property requirement disallow user defined value types which can have alias this to null-able type 
+    static if (!is(T==union) && !is(T==struct) && is(typeof(T.init is null)))
     {
         if (d.type == typeid(typeof(null)))
             return null;
@@ -140,6 +147,12 @@ version (DMocksTest) {
     {
         private C _c;
         alias _c this;
+    }
+
+    unittest {
+        int[5] a;
+        auto d = dynamic(a);
+        assert(d.get!(int[5]) == [0,0,0,0,0]);
     }
 
     /+ ImplicitConversionTargets doesn't include alias thises
