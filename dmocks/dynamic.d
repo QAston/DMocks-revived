@@ -97,7 +97,7 @@ class DynamicT(T) : Dynamic
             if (typeid(target) == to)
             {
                 auto ret = new target[1];
-                ret[0] = _data;
+                ret[0] = cast(target)_data;
                 return ret;
             }
         }

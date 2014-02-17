@@ -1204,6 +1204,61 @@ version (DMocksTest) {
         mocker.verify;
     }
 
+    class Foo {
+        int x;
+        string s;
+
+        this(int x, string s) {
+            this.x = x;
+            this.s = s;
+        }
+    }
+
+    class Varargs
+    {
+        import core.vararg;
+        
+        int varDyn(int first, ...)
+        {
+            return vvarDyn(first, _arguments, _argptr);
+        }
+
+        // idiom from C - for every dynamic vararg function there has to be vfunction(Args, TypeInfo[] arguments, va_list argptr)
+        // otherwise passThrough is impossible
+        int vvarDyn(int first, TypeInfo[] arguments, va_list argptr)
+        {
+            assert(arguments[0] == typeid(int));
+            int second = va_arg!int(argptr);
+            return first + second;
+        }
+
+        /*TODO - typesafe variadic methods do not work yet
+        int varArray(int first, int[] next...)
+        {
+            return first + next[0];
+        }
+
+        int varClass(int first, Foo f...)
+        {
+            return first + f.x;
+        }*/
+    }
+
+    unittest 
+    {
+        
+        import core.vararg;
+
+        auto mocker = new Mocker;
+        auto dependency = mocker.mock!Varargs;
+        mocker.record;
+        // we only specify non-vararg arguments in setup because typeunsafe varargs can't have meaningful operations on them (like comparision, etc)
+        mocker.expect(dependency.varDyn(42)).passThrough; // passThrough works with typeunsafe vararg functions only when v[funcname](Args, Typeinfo[], va_list) function variant is provided
+        mocker.replay;
+
+        assert(dependency.varDyn(42, 5) == 47);
+    }
+
     version (DMocksTestStandalone)
     {
         void main () {

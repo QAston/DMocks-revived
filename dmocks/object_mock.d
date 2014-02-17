@@ -44,9 +44,9 @@ class MockedFinal(T)
     auto ref opDispatch(string name, Args...)(auto ref Args params)
     {
         //TODO: how do i get an alias to a template overloaded on args?
-        mixin("alias mocked___."~name~"!Args self;");
-        auto del = delegate ReturnType!(FunctionTypeOf!self) (Args args){ mixin(BuildForwardCall!("mocked___", name ~ "!Args")()); };
-        return mockMethodCall!(self, name, T)(this, _owner, del, params);
+        mixin("alias this.mocked___."~name~"!Args METHOD;");
+        auto del = delegate ReturnType!(FunctionTypeOf!METHOD) (Args args, TypeInfo[] varArgsList, void* varArgsPtr){ mixin(BuildForwardCall!(name ~ "!Args", false)()); };
+        return mockMethodCall!(METHOD, name, typeof(mocked___))(this, this._owner, del, null, null, params);
     }
 
     mixin ((Body!(T, false)));
@@ -104,15 +104,16 @@ struct MockedStruct(T)
 
     auto ref opDispatch(string name, Args...)(auto ref Args params)
     {
-        mixin("alias mocked___."~name~"!Args self;");
-        auto del = delegate ReturnType!(FunctionTypeOf!self) (Args args){ mixin(BuildForwardCall!("mocked___", name ~ "!Args")()); };
-        return mockMethodCall!(self, name, T)(this, _owner, del, params);
+        //TODO: how do i get an alias to a template overloaded on args?
+        mixin("alias this.mocked___."~name~"!Args METHOD;");
+        auto del = delegate ReturnType!(FunctionTypeOf!METHOD) (Args args, TypeInfo[] varArgsList, void* varArgsPtr){ mixin(BuildForwardCall!(name ~ "!Args", false)()); };
+        return mockMethodCall!(METHOD, name, typeof(mocked___))(this, this._owner, del, null, null, params);
     }
 
     mixin ((Body!(T, false)));
 }
 
-auto ref mockMethodCall(alias self, string name, T, OBJ, CALLER, FORWARD, Args...)(OBJ obj, CALLER _owner, FORWARD forwardCall, auto ref Args params)
+auto ref mockMethodCall(alias self, string name, T, OBJ, CALLER, FORWARD, Args...)(OBJ obj, CALLER _owner, FORWARD forwardCall, TypeInfo[] varArgsList, void* varArgsPtr, auto ref Args params)
 {
     if (_owner is null) 
     {
@@ -141,7 +142,7 @@ auto ref mockMethodCall(alias self, string name, T, OBJ, CALLER, FORWARD, Args..
     }
     if (rope.pass)
     {
-        return forwardCall(params);
+        return forwardCall(params, varArgsList, varArgsPtr);
     }
     else
     {

@@ -51,28 +51,34 @@ string BuildMethodOverloads (string objectType, string methodName, int overloadI
     enum selfType = "FunctionTypeOf!("~self~")";
     enum ret = returns ? `ReturnType!(` ~ selfType ~ `)` : `void`;
     enum paramTypes = `ParameterTypeTuple!(` ~ selfType ~ `)`;
+    enum dynVarArgs = variadicFunctionStyle!method == Variadic.d;
+    enum varargsString = dynVarArgs ? ", ..." : "";
     enum qualified = objectType ~ `.` ~ methodName;
     enum bool override_ = is(typeof(mixin (`Object.` ~ methodName))) && !__traits(isFinalFunction, method);
     enum header = ((inheritance || override_) ? `override ` : `final `) ~ ret ~ ` ` ~ methodName ~ `
-        (` ~ paramTypes ~ ` params) ` ~ formatQualifiers!(method);
+        (` ~ paramTypes ~ ` params`~ varargsString ~`) ` ~ formatQualifiers!(method);
 
-    string delegate_ = `delegate `~ret~` (`~paramTypes~` args){ ` ~ BuildForwardCall!("super", methodName) ~ `}`;
+    string delegate_ = `delegate `~ret~` (`~paramTypes~` args, TypeInfo[] varArgsList, void* varArgsPtr){ ` ~ BuildForwardCall!(methodName, dynVarArgs) ~ `}`;
 
-    return header ~` {  return mockMethodCall!(`~self~`, "`~methodName~`", T)(this, _owner, ` ~ delegate_ ~ `, params); `~`} `;
+    enum varargsValueString = dynVarArgs ? ", _arguments, _argptr" : ", null, null";
+    return header ~` {  return mockMethodCall!(`~self~`, "`~methodName~`", T)(this, _owner, ` ~ delegate_ ~ varargsValueString ~`, params); `~`} `;
 }
 
-string BuildForwardCall(string mockedObject, string methodName)()
+string BuildForwardCall(string methodName, bool dynamicVarArgs)()
 {
-    return `static if (is (typeof (mocked___.` ~ methodName~`)))
+    enum methodString = dynamicVarArgs ? "v"~methodName : methodName;
+    enum argsPassed = dynamicVarArgs ? "(args, varArgsList, varArgsPtr)" : "(args)";
+
+    return `static if (is (typeof (mocked___.` ~ methodString~`)))
             {
-                return (mocked___.` ~ methodName ~`(args));
+                return (mocked___.` ~ methodString ~ argsPassed~`);
             }
-            else static if (is (typeof (super.` ~ methodName~`)))
+            else static if (is (typeof (super.` ~ methodString~`)))
             {
-                return (super.` ~ methodName ~`(args));
+                return (super.` ~ methodString ~ argsPassed~`);
             }
             else
             {
-                assert(false, "Cannot pass the call through - there's no implementation in base object!");
+                assert(false, "Cannot pass the call through - there's no `~methodString~` implementation in base object!");
             }`;
 }
