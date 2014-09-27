@@ -2,7 +2,6 @@ module dmocks.method_mock;
 
 import std.stdio;
 import std.traits;
-import std.metastrings;
 import std.conv;
 
 import dmocks.util;
