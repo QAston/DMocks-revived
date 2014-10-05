@@ -37,10 +37,10 @@ class CallExpectation : Expectation
 
     Action action;
 
-    override string toString(string intendation)
+    override string toString(string indentation)
     {
         auto apndr = appender!(string);
-        apndr.put(intendation);
+        apndr.put(indentation);
         apndr.put("Expectation: ");
         bool details = !satisfied;
 
@@ -49,13 +49,13 @@ class CallExpectation : Expectation
         else
             apndr.put("not satisfied, ");
 
-        apndr.put("Method: " ~ name.toString() ~ " " ~ arguments.toString() ~" "~ qualifiers.toString() ~ " ExpectedCalls: " ~ repeatInterval.toString());
+        apndr.put("Method: " ~ name.toString() ~ " " ~ arguments.toString() ~ " " ~ qualifiers.toString() ~ " ExpectedCalls: " ~ repeatInterval.toString());
         if (details)
         {
-            apndr.put("\n" ~ intendation ~ "Calls: " ~ _matchedCalls.length.to!string);
+            apndr.put("\n" ~ indentation ~ "Calls: " ~ _matchedCalls.length.to!string);
             foreach(Call call; _matchedCalls)
             {
-                apndr.put(intendation ~"  "~call.toString());
+                apndr.put("\n" ~ indentation ~ "  " ~ call.toString());
             }
         }
         return apndr.data;
@@ -146,10 +146,10 @@ class GroupExpectation : Expectation
         return true;
     }
 
-    override string toString(string intendation)
+    override string toString(string indentation)
     {
         auto apndr = appender!(string);
-        apndr.put(intendation);
+        apndr.put(indentation);
         apndr.put("GroupExpectation: ");
         bool details = !satisfied;
 
@@ -165,13 +165,13 @@ class GroupExpectation : Expectation
 
         apndr.put("Interval: ");
         apndr.put(repeatInterval.toString());
-        apndr.put("\n");
 
         if (details)
         {
             foreach(Expectation expectation; expectations)
             {
-                apndr.put(expectation.toString(intendation ~ "  "));
+                apndr.put("\n");
+                apndr.put(expectation.toString(indentation ~ "  "));
             }
         }
         return apndr.data;
@@ -195,7 +195,7 @@ interface Expectation
 {
     CallExpectation match(Call call);
     bool satisfied();
-    string toString(string intendation);
+    string toString(string indentation);
     string toString();
 }
 
