@@ -49,13 +49,13 @@ class CallExpectation : Expectation
         else
             apndr.put("not satisfied, ");
 
-        apndr.put("Method: " ~ name.toString() ~ " " ~ arguments.toString() ~" "~ qualifiers.toString() ~ " ExpectedCalls: " ~ repeatInterval.toString());
+        apndr.put("Method: " ~ name.toString() ~ " " ~ arguments.toString() ~ " " ~ qualifiers.toString() ~ " ExpectedCalls: " ~ repeatInterval.toString());
         if (details)
         {
             apndr.put("\n" ~ intendation ~ "Calls: " ~ _matchedCalls.length.to!string);
             foreach(Call call; _matchedCalls)
             {
-                apndr.put(intendation ~"  "~call.toString());
+                apndr.put("\n" ~ intendation ~ "  " ~ call.toString());
             }
         }
         return apndr.data;
@@ -165,12 +165,12 @@ class GroupExpectation : Expectation
 
         apndr.put("Interval: ");
         apndr.put(repeatInterval.toString());
-        apndr.put("\n");
 
         if (details)
         {
             foreach(Expectation expectation; expectations)
             {
+                apndr.put("\n");
                 apndr.put(expectation.toString(intendation ~ "  "));
             }
         }
