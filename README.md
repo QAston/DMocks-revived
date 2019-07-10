@@ -1,6 +1,11 @@
 DMocks-revived
 ====================
 
+Status
+------------------
+The project is no longer maintained as I'm no longer using dlang and I no longer think mocking frameworks are a good idea.
+There's a fork maintained by https://github.com/funkwerk/DMocks-revived feel free to check it out!
+
 What is it?
 ---------------------
 DMocks-revived is a mock object framework for the D Programming Language, written also in D.
@@ -89,7 +94,7 @@ Example:
         funcToTest(new Dependency());
     }
 
-###Mocking using templates (compile-time polymorphism)
+### Mocking using templates (compile-time polymorphism)
 
 This type of mocking isn't much widespread as there're only few languages providing templates (D, C++).
 In this case mock object type is a final class or struct containing same methods as mocked type and a reference to object of that type.
@@ -134,7 +139,7 @@ Example:
     }
 
 
-###Other features
+### Other features
 
 DMocks supports repetition intervals:
 
@@ -159,16 +164,16 @@ Hacking
 ---------------------
 DMocks uses dub (github.com/rejectedsoftware/dub) as a build system. Dub was chosen because it supports generation of visuald and monod projects and is actively maintained. You can use any other build system if you wish.
 
-###Build using dub:
+### Build using dub:
 - install dub (github.com/rejectedsoftware/dub)
 - in root directory of DMocks run using your shell (or cmd.exe on windows): `dub build` or `dub build --config=[build configuration, see below]
 - more info about using dub is available on their git repository
 
-###Available dub build configurations:
+### Available dub build configurations:
 - library - produces dmocks-revived.lib file which can be included in your project, see examples/with-lib in the repository to see how this can be used
 - tests - produces standalone executable useful for debugging the library itself
 
-###Available version switches:
+### Available version switches:
 - DMocksTest - compile unit tests into the library (works only when unittest build enabled)
 - DMocksTestStandalone - produce main function to run tests, so standalone executable can be generated
 - DMocksDebug - add various debug messages, mostly internal dmocks stuff
