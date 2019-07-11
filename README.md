@@ -4,7 +4,7 @@ DMocks-revived
 Status
 ------------------
 The project is no longer maintained as I'm no longer using dlang and I no longer think mocking frameworks are a good idea.
-There's a fork maintained by https://github.com/funkwerk/DMocks-revived feel free to check it out!
+There's an active fork here: https://github.com/funkwerk/dmocks feel free to check it out!
 
 What is it?
 ---------------------
